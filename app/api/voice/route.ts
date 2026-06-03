@@ -1,5 +1,5 @@
 import { generateText, type UserModelMessage } from "ai";
-import { getModel } from "@/lib/ai/model";
+import { google } from "@ai-sdk/google";
 
 export const maxDuration = 30;
 
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   };
 
   const { text } = await generateText({
-    model: getModel(),
+    model: google("gemini-2.0-flash"),
     messages: [message],
   });
 
