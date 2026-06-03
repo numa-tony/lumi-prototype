@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/nav/BottomNav";
 import { Fab } from "@/components/nav/Fab";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { VoiceSheet } from "@/components/voice/VoiceSheet";
+import { BookingSheet } from "@/components/booking/BookingSheet";
 import { ExploreScreen } from "@/components/screens/ExploreScreen";
 import { MyTripsScreen } from "@/components/screens/MyTripsScreen";
 import { TripDetailScreen } from "@/components/screens/TripDetailScreen";
@@ -24,6 +25,7 @@ const SCREENS: Record<ScreenId, React.ComponentType> = {
 export function AppShell() {
   const screen = useApp((s) => s.screen);
   const voiceOpen = useApp((s) => s.voiceOpen);
+  const bookingOpen = useApp((s) => s.bookingOpen);
   const Active = SCREENS[screen];
 
   return (
@@ -46,6 +48,9 @@ export function AppShell() {
       <Fab />
       <BottomNav />
       <ChatSheet />
+      <AnimatePresence>
+        {bookingOpen && <BookingSheet />}
+      </AnimatePresence>
       <AnimatePresence>
         {voiceOpen && <VoiceSheet />}
       </AnimatePresence>

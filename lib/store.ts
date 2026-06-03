@@ -12,6 +12,7 @@ interface AppState {
   tripId: string | null;
   chat: ChatContext | null;
   voiceOpen: boolean;
+  bookingOpen: boolean;
   inStay: boolean;
   threads: PersistedThread[];
 
@@ -21,6 +22,8 @@ interface AppState {
   closeChat: () => void;
   openVoice: () => void;
   closeVoice: () => void;
+  openBooking: () => void;
+  closeBooking: () => void;
   setInStay: (v: boolean) => void;
 
   createThread: (firstUserText: string) => string;
@@ -44,6 +47,7 @@ export const useApp = create<AppState>()(
       tripId: null,
       chat: null,
       voiceOpen: false,
+      bookingOpen: false,
       inStay: false,
       threads: [],
 
@@ -56,6 +60,8 @@ export const useApp = create<AppState>()(
       closeChat: () => set({ chat: null }),
       openVoice: () => set({ voiceOpen: true }),
       closeVoice: () => set({ voiceOpen: false }),
+      openBooking: () => set({ bookingOpen: true }),
+      closeBooking: () => set({ bookingOpen: false }),
       setInStay: (v) => set({ inStay: v }),
 
       createThread: (firstUserText) => {

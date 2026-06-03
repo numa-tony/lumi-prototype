@@ -280,7 +280,29 @@ export function ThreadView({
   }, [messages, status]);
 
   const [inputFocused, setInputFocused] = useState(false);
+  const [aiStarters, setAiStarters] = useState<string[] | null>(null);
+  const [startersLoading, setStartersLoading] = useState(false);
+  const startersFetchedRef = useRef(false);
   const isEmpty = messages.length === 0;
+
+  // Fetch AI-generated starters once when keyboard mode opens
+  useEffect(() => {
+    if (!inputFocused || !isEmpty || startersFetchedRef.current) return;
+    if (!context.hint) return;
+    startersFetchedRef.current = true;
+    setStartersLoading(true);
+    fetch("/api/starters", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hint: context.hint }),
+    })
+      .then((r) => r.json())
+      .then(({ starters }: { starters: string[] }) => {
+        if (starters?.length) setAiStarters(starters);
+      })
+      .catch(() => { /* keep fallback */ })
+      .finally(() => setStartersLoading(false));
+  }, [inputFocused, isEmpty, context.hint]);
 
   if (isEmpty) {
     return (
@@ -290,12 +312,20 @@ export function ThreadView({
           <div className="flex flex-1 flex-col px-4 pt-6">
             <p className="text-center text-[28px] font-semibold tracking-[-0.5px] text-ink">Numa</p>
             <div className="mt-auto flex flex-col gap-5 pb-4 pl-6">
-              {(context.starters ?? []).slice(0, 3).map((s, i) => (
-                <button key={s} onClick={() => send(s)} className="flex items-center gap-4 text-left active:opacity-60">
-                  <span className="shrink-0 text-ink-soft">{STARTER_ICONS[i % STARTER_ICONS.length]}</span>
-                  <span className="text-[16px] font-light tracking-[-0.2px] text-ink-soft">{s}</span>
-                </button>
-              ))}
+              {startersLoading
+                ? [0, 1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <span className="shrink-0 text-ink-soft opacity-30">{STARTER_ICONS[i]}</span>
+                      <div className={`h-[18px] animate-pulse rounded-full bg-surface-muted ${i === 0 ? "w-48" : i === 1 ? "w-40" : "w-44"}`} />
+                    </div>
+                  ))
+                : (aiStarters ?? context.starters ?? []).slice(0, 3).map((s, i) => (
+                    <button key={s} onClick={() => send(s)} className="flex items-center gap-4 text-left active:opacity-60">
+                      <span className="shrink-0 text-ink-soft">{STARTER_ICONS[i % STARTER_ICONS.length]}</span>
+                      <span className="text-[16px] font-light tracking-[-0.2px] text-ink-soft">{s}</span>
+                    </button>
+                  ))
+              }
             </div>
           </div>
         ) : (

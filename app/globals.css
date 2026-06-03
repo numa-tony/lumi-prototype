@@ -232,7 +232,7 @@ html, body {
       from var(--fab-gradient-angle),
       transparent 0%,
       #ffc9d2 6%,
-      #ffffff 12%,
+      #ffc9d2 12%,
       #ffc9d2 18%,
       transparent 24%
     ) border-box;

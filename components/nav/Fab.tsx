@@ -10,8 +10,6 @@ export function Fab() {
   const openChat = useApp((s) => s.openChat);
   const inStay = useApp((s) => s.inStay);
 
-  if (screen === "profile") return null;
-
   const ctx = screen === "explore" ? CHAT_CONTEXTS.explore : CHAT_CONTEXTS.stay;
 
   return (

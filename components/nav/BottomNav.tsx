@@ -33,12 +33,12 @@ const ICON_PATHS: Record<string, [string, string]> = {
   ],
 };
 
-type Tab = { id: ScreenId; label: string; dot?: boolean };
+type Tab = { id: ScreenId; label: string };
 
 const TABS: Tab[] = [
   { id: "explore", label: "Explore" },
   { id: "trips", label: "My Trips" },
-  { id: "messages", label: "Messages", dot: true },
+  { id: "messages", label: "Messages" },
   { id: "profile", label: "Profile" },
 ];
 
@@ -54,6 +54,7 @@ function TabIcon({ tabId, active }: { tabId: string; active: boolean }) {
 export function BottomNav() {
   const screen = useApp((s) => s.screen);
   const go = useApp((s) => s.go);
+  const hasUnread = useApp((s) => s.threads.some((t) => t.unread));
 
   const activeTab: ScreenId = screen === "tripDetail" ? "trips" : screen;
 
@@ -70,7 +71,7 @@ export function BottomNav() {
             >
               <span className="relative">
                 <TabIcon tabId={t.id} active={active} />
-                {t.dot && (
+                {t.id === "messages" && hasUnread && (
                   <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-numa ring-2 ring-surface" />
                 )}
               </span>

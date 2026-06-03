@@ -61,6 +61,7 @@ const USP_CARDS = [
 // ---------------------------------------------------------------------------
 export function ExploreScreen() {
   const openTrip = useApp((s) => s.openTrip);
+  const openBooking = useApp((s) => s.openBooking);
   const [activeChip, setActiveChip] = useState("Amsterdam");
 
   return (
@@ -80,7 +81,7 @@ export function ExploreScreen() {
           -mt-9 = -36px pulls it up to overlap the hero bottom.
           py-2 outer padding + py-4 inner = matches Figma's py-[8px] container. */}
       <div className="relative -mt-9 z-10 px-6 py-2">
-        <div className="flex items-center gap-3 rounded-full border-2 border-[#191919] bg-white px-4 py-4">
+        <button onClick={openBooking} className="flex w-full items-center gap-3 rounded-full border-2 border-[#191919] bg-white px-4 py-4 text-left active:bg-surface-muted">
           <svg
             width="20" height="20" viewBox="0 0 24 24"
             fill="none" stroke="#191919" strokeWidth="2"
@@ -92,7 +93,7 @@ export function ExploreScreen() {
           <span className="whitespace-nowrap text-[18px] font-semibold leading-6 tracking-[-0.2px] text-[#212322]">
             Where do you want to go?
           </span>
-        </div>
+        </button>
       </div>
 
       {/* ── Scrollable content – gap-6 (spacing/xl 24px) between sections ── */}
