@@ -1,33 +1,34 @@
-# Progress — Updated 2026-06-03 (voice)
+# Progress — Updated 2026-06-03 (deploy)
 
 ## Done
 
 - **App shell & device frame** — iPhone frame wrapper, `AppShell` with animated screen transitions
 - **Bottom navigation** — 4 tabs with Figma DS SVG icons; `text-text` (active) / `text-text-secondary` (inactive); `tripDetail` maps to trips tab
 - **ChatSheet** — bottom sheet, spring animation, `rounded-t-[38px]`, grabber pill
-- **ThreadView — idle state** — Numa wordmark + Lumi orb + "Ask anything" input
-- **ThreadView — keyboard mode** — 3 starters + visual iOS keyboard + send button
-- **DS tokens** — full `@theme` in `app/globals.css`
-- **TWK Lausanne font** — woff2 weights 300 + 600
-- **Zustand store** — `useApp()` with screen, chat, openChat, closeChat, go
+- **ThreadView — idle / keyboard / active** — Numa wordmark + Lumi orb + starters + send
+- **DS tokens** — full `@theme` in `app/globals.css`; TWK Lausanne font woff2 300 + 600
+- **Zustand store** — `useApp()` with screen, chat, voice, inStay, threads
 - **Screen shells** — Explore, MyTrips, TripDetail, Messages, Profile
 - **Mock data** — threads, trips, properties in `lib/mock/`
-- **Trip consistency (Explore ↔ My Trips)** — both read YAYS Amsterdam from single `UPCOMING_TRIP` source in `lib/mock/guest.ts`; matching "Check-in required" badge + image; `openTrip("amsterdam")` everywhere
-- **FAB shiny border** — Ryan Mulligan technique: `border: 2px solid transparent` + `background-clip: padding-box, border-box` with conic-gradient comet (pink → white → pink) animated via `@property --fab-gradient-angle`
-- **MyTripsScreen (Figma v2)** — Figma node 7242-32301: 36px H1, filter tabs (Current/Past/Cancelled), warning badge, "Add missing reservation" tertiary button
-- **TripDetailScreen (Figma v2)** — Figma node 7242-32467: pink hero bg + Amsterdam color `#d31779`, room photos, check-in/out dates card with dashed divider, "Check-in now" CTA, essential list (Your room + Manage booking), promo banners (extras + member benefits), Helpful tips with Arrival/Staying/Departing chips
-- **Project management md system** — CLAUDE.md auto-loads context+progress; `docs/project/{context,vision,decisions}.md`; `/wrap-session` + `/lumi-screen` skills
-- **Voice mode** — `components/voice/VoiceSheet.tsx` + `Waveform.tsx`; Web Speech API STT + Web Speech Synthesis TTS + Web Audio API waveform; FAB → text chat → "Speak" pill → voice overlay; threads auto-saved to Messages on first turn; voice-optimised AI hint (1–2 sentence replies for TTS); Chrome auto-restart guard for `continuous` mode
+- **Trip consistency** — Explore ↔ My Trips both read from `UPCOMING_TRIP` in `lib/mock/guest.ts`
+- **FAB shiny border** — conic-gradient comet animation via `@property --fab-gradient-angle`
+- **MyTripsScreen + TripDetailScreen** — Figma v2 faithful implementations
+- **Project management md system** — CLAUDE.md, context/vision/decisions docs, skills
+- **Voice mode** — `VoiceSheet.tsx` + `Waveform.tsx`; MediaRecorder → `/api/voice` (Gemini STT) → `/api/chat` → `/api/tts` (Gemini TTS, voice "Kore"); auto-starts recording on open; browser TTS fallback; response text shown visually
+- **Voice design** — white bg, Figma 3D torus image (`public/lumi-torus.png`), waveform card with swipe gestures (swipe left cancel, swipe up send)
+- **In stay mode toggle** — DevBar prototype control (top-left, outside device frame); off by default; controls FAB Doors button visibility
+- **GitHub repo** — https://github.com/numa-tony/lumi-prototype
+- **Vercel deployment** — https://numa-lumi-prototype.vercel.app (under `numa` Vercel team; auto-deploys on push to main)
 
 ## In Progress
 
-- **Voice mode — browser testing** — code complete; needs live test in headed Chrome for mic/TTS validation
+- **Voice TTS validation** — Gemini TTS endpoint deployed; needs live confirmation that audio plays back correctly (browser speech-synthesis fallback is in place)
 
 ## Next (ordered)
 
 1. **Execute persistent messages plan** — tasks #1–8 in plan file
-2. **MessagesScreen (inbox)** — replace direct THREADS import with store reads (part of persist plan)
-3. **ExploreScreen** — location/property browsing polish with FAB in explore context
+2. **MessagesScreen (inbox)** — replace direct THREADS import with store reads
+3. **ExploreScreen** — location/property browsing polish
 4. **Real AI integration end-to-end** — verify Gemini stream + tool calls in ThreadView active mode
 5. **ThreadView rich widgets** — reservation card, quick-reply chips, in-thread status widget
 
