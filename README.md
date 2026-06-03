@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Numa — Lumi Prototype
 
-## Getting Started
+A web prototype of the Numa mobile app, shown in a phone frame, built to demo **Lumi**, the
+AI concierge. Screens (Explore, My Trips, Trip Detail, Messages, Profile) are visual
+scaffolding; the live subsystem is **Lumi** — streaming chat that renders rich generative
+widgets, grounded in a mock guest stay.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+# add a free Google Gemini key (no credit card): https://aistudio.google.com/apikey
+cp .env.local.example .env.local   # then paste your key into GOOGLE_GENERATIVE_AI_API_KEY
+npm run dev                        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open in a tall window so the whole phone fits.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Try Lumi
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Tap **Ask AI** (the floating pill) on Explore or a trip → contextual starters.
+- Open **Messages** → seeded threads already render widgets (status, map, carousel, decision).
+- Ask things like: *"the AC in my room isn't cooling"*, *"any good ramen near here?"*,
+  *"show me the Barcelona property"*, *"how do I use the AC?"* → Lumi replies with widgets.
 
-## Learn More
+## Swapping the model
 
-To learn more about Next.js, take a look at the following resources:
+The model is chosen in `lib/ai/model.ts` from `LUMI_MODEL` (`provider:model`, default
+`google:gemini-2.5-flash`). To switch to Groq/Claude/etc.: `npm i @ai-sdk/<provider>`, add a
+`case` in that file, set `LUMI_MODEL` + the provider's key. Nothing else changes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things live
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `components/device/` — phone frame, app shell.
+- `components/screens/` — the five screens.
+- `components/chat/` — chat sheet, thread view, composer, and `widgets/` (the generative UI).
+- `lib/ai/` — model factory, Lumi's system prompt, widget tools.
+- `lib/mock/` — guest persona, seeded inbox threads, properties/POIs. Edit these to restyle the
+  demo's content. Design tokens live in `app/globals.css`.

@@ -1,4 +1,4 @@
-# Progress — Updated 2026-06-02
+# Progress — Updated 2026-06-03 (voice)
 
 ## Done
 
@@ -13,23 +13,23 @@
 - **Screen shells** — Explore, MyTrips, TripDetail, Messages, Profile
 - **Mock data** — threads, trips, properties in `lib/mock/`
 - **Trip consistency (Explore ↔ My Trips)** — both read YAYS Amsterdam from single `UPCOMING_TRIP` source in `lib/mock/guest.ts`; matching "Check-in required" badge + image; `openTrip("amsterdam")` everywhere
-- **FAB shiny border** — Ryan Mulligan technique: `border: 2px solid transparent` + `background-clip: padding-box, border-box` with conic-gradient comet (pink → white → pink) animated via `@property --fab-gradient-angle`. Static pink→teal gradient temporarily removed; only comet visible. Outer radius now 18px to match border-box; inner div stays 16px.
+- **FAB shiny border** — Ryan Mulligan technique: `border: 2px solid transparent` + `background-clip: padding-box, border-box` with conic-gradient comet (pink → white → pink) animated via `@property --fab-gradient-angle`
+- **MyTripsScreen (Figma v2)** — Figma node 7242-32301: 36px H1, filter tabs (Current/Past/Cancelled), warning badge, "Add missing reservation" tertiary button
+- **TripDetailScreen (Figma v2)** — Figma node 7242-32467: pink hero bg + Amsterdam color `#d31779`, room photos, check-in/out dates card with dashed divider, "Check-in now" CTA, essential list (Your room + Manage booking), promo banners (extras + member benefits), Helpful tips with Arrival/Staying/Departing chips
 - **Project management md system** — CLAUDE.md auto-loads context+progress; `docs/project/{context,vision,decisions}.md`; `/wrap-session` + `/lumi-screen` skills
+- **Voice mode** — `components/voice/VoiceSheet.tsx` + `Waveform.tsx`; Web Speech API STT + Web Speech Synthesis TTS + Web Audio API waveform; FAB → text chat → "Speak" pill → voice overlay; threads auto-saved to Messages on first turn; voice-optimised AI hint (1–2 sentence replies for TTS); Chrome auto-restart guard for `continuous` mode
 
 ## In Progress
 
-- **FAB shine — visual QA** — Ryan Mulligan port awaiting browser confirmation
-- **ThreadView — active chat mode** — message bubbles, composer, scroll to bottom
-- **Persistent Messages & Reset (planned, not started)** — plan approved at `~/.claude/plans/lets-work-on-the-floofy-alpaca.md`. Adds zustand persist + `PersistedThread`, empty Messages by default, FAB chats persist as threads, DevBar with Reset / Load demo, `setThreadTopic` tool for AI naming.
+- **Voice mode — browser testing** — code complete; needs live test in headed Chrome for mic/TTS validation
 
 ## Next (ordered)
 
-1. **Execute persistent messages plan** — tasks #1–8 in TaskList
-2. **TripDetailScreen** — currently still reads Berlin Novela from `GUEST.stay`; align with YAYS Amsterdam
-3. **MessagesScreen (inbox)** — replace direct THREADS import with store reads (part of persist plan)
-4. **ExploreScreen** — location/property browsing polish with FAB in explore context
-5. **Real AI integration end-to-end** — verify Gemini stream + tool calls in ThreadView active mode
-6. **ThreadView rich widgets** — reservation card, quick-reply chips, in-thread status widget
+1. **Execute persistent messages plan** — tasks #1–8 in plan file
+2. **MessagesScreen (inbox)** — replace direct THREADS import with store reads (part of persist plan)
+3. **ExploreScreen** — location/property browsing polish with FAB in explore context
+4. **Real AI integration end-to-end** — verify Gemini stream + tool calls in ThreadView active mode
+5. **ThreadView rich widgets** — reservation card, quick-reply chips, in-thread status widget
 
 ## Deferred (not in prototype scope)
 

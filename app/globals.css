@@ -1,26 +1,281 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   TWK Lausanne — the Numa typeface.
+   DS uses weight-light (300) and weight-semibold (600).
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/fonts/TWKLausanne-300.woff2") format("woff2"),
+       url("/fonts/TWKLausanne-300.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/fonts/TWKLausanne-300Italic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/fonts/TWKLausanne-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/fonts/TWKLausanne-600Italic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ---------------------------------------------------------------------------
+   Numa design tokens — sourced from the actual Figma design system.
+   Two weights only: 300 (light body) · 600 (semibold headings).
+   Update this single block when brand tokens change; screens auto-follow.
+--------------------------------------------------------------------------- */
+@theme {
+  /* ── Font ─────────────────────────────────────────────────── */
+  --font-sans: "TWK Lausanne", ui-sans-serif, system-ui, sans-serif;
+  --font-weight-light:    300;
+  --font-weight-semibold: 600;
+
+  /* ── Color primitives ───────────────────────────────────────
+     Variable naming mirrors the DS JSON for traceability.       */
+
+  /* brand */
+  --color-brand-pink:  #ffc9d2;
+  --color-brand-black: #191919;
+
+  /* greyscale */
+  --color-black:      #000000;
+  --color-black-400:  #212322;
+  --color-black-300:  #3e3f3e;
+  --color-black-280:  #6d706f;
+  --color-black-250:  #b2b2b2;
+  --color-black-200:  #dedddb;
+  --color-black-150:  #eceae7;
+  --color-black-100:  #f4f4f4;
+  --color-white:      #ffffff;
+
+  /* functional */
+  --color-green-400: #1e7868;
+  --color-green-200: #c2e2d1;
+  --color-green-100: #e1f1e8;
+  --color-orange-500: #b24612;
+  --color-orange-400: #ff671f;
+  --color-orange-300: #ffb38f;
+  --color-orange-100: #fff0e9;
+  --color-red-500:   #cf3e3e;
+  --color-pink-400:  #fcafc0;
+  --color-pink-300:  #fdd7df;
+  --color-pink-200:  #fee7ec;
+  --color-pink-100:  #fff7f9;
+  --color-blue-300:  #176ecc;
+
+  /* ── Semantic color tokens ─────────────────────────────────── */
+  /* background */
+  --color-bg:            #ffffff;
+  --color-bg-secondary:  #f4f4f4;
+  --color-bg-brand-pink: #ffc9d2;
+  --color-bg-brand-black:#191919;
+  --color-bg-action:     #191919;
+  --color-bg-positive:   #e1f1e8;
+  --color-bg-warning:    #fff0e9;
+  --color-bg-danger:     #fff7f9;
+
+  /* content / text */
+  --color-text:           #191919;
+  --color-text-secondary: #6d706f;
+  --color-text-disabled:  #b2b2b2;
+  --color-text-on-action: #ffffff;
+  --color-text-positive:  #1e7868;
+  --color-text-warning:   #b24612;
+  --color-text-danger:    #cf3e3e;
+
+  /* outline / border */
+  --color-border:          #dedddb;
+  --color-border-light:    #eceae7;
+  --color-border-prominent:#191919;
+  --color-border-positive: #85c5a2;
+  --color-border-warning:  #ffb38f;
+  --color-border-danger:   #cf3e3e;
+
+  /* ── Spacing ───────────────────────────────────────────────── */
+  --spacing-xxxs: 2px;
+  --spacing-xxs:  4px;
+  --spacing-xs:   8px;
+  --spacing-s:    12px;
+  --spacing-m:    16px;
+  --spacing-l:    20px;
+  --spacing-xl:   24px;
+  --spacing-2xl:  32px;
+  --spacing-3xl:  40px;
+  --spacing-4xl:  48px;
+  --spacing-5xl:  64px;
+  --spacing-6xl:  96px;
+
+  /* ── Corner radius ─────────────────────────────────────────── */
+  --radius-s:    4px;
+  --radius-m:    8px;
+  --radius-l:    16px;
+  --radius-full: 999px;
+
+  /* ── Stroke ────────────────────────────────────────────────── */
+  --stroke-thin:    1px;
+  --stroke-default: 2px;
+
+  /* ── Semantic aliases (used in component Tailwind classes) ─────
+     These map the old utility names to the real DS values so
+     components don't need a mass rename. Screen-by-screen Figma
+     restyle will naturally migrate to DS names.                   */
+  --color-ink:          #191919;   /* content.base.default */
+  --color-ink-soft:     #6d706f;   /* content.base.secondary */
+  --color-ink-faint:    #b2b2b2;   /* content.action.disabled */
+  --color-surface:      #ffffff;   /* background.base.default */
+  --color-surface-muted:#f4f4f4;   /* background.base.secondary */
+  --color-line:         #dedddb;   /* outline.base.default */
+  --color-line-light:   #eceae7;   /* outline.base.light */
+  /* Lumi / active accent: orange-400 from DS functional palette */
+  --color-numa:         #ff671f;
+  --color-numa-soft:    #fff0e9;   /* orange-100 */
+  --color-numa-tint:    #ffd1bc;   /* orange-200 */
+  /* Status semantic */
+  --color-go:           #1e7868;   /* positive */
+  --color-warn:         #b24612;   /* warning */
+  --color-warn-soft:    #fff0e9;   /* warning bg */
+  /* Lumi brand pink (decorative, e.g. thread avatars) */
+  --color-lumi-pink:    #ffc9d2;   /* brand.pink */
+  --color-lumi-pink-soft: #fee7ec; /* pink-200 */
+
+  /* ── Mobile typography scale ───────────────────────────────── */
+  /* Display */
+  --text-display-large:  52px;   --leading-display-large:  64px; --tracking-display-large:  -0.5px;
+  --text-display-medium: 42px;   --leading-display-medium: 46px; --tracking-display-medium: -0.5px;
+  /* Headline */
+  --text-headline-large:  36px;  --leading-headline-large:  44px; --tracking-headline-large:  -0.5px;
+  --text-headline-medium: 28px;  --leading-headline-medium: 36px; --tracking-headline-medium: -0.4px;
+  --text-headline-small:  24px;  --leading-headline-small:  32px; --tracking-headline-small:  -0.2px;
+  /* Title */
+  --text-title-large:  20px;  --leading-title-large:  28px; --tracking-title-large:  -0.2px;
+  --text-title-medium: 18px;  --leading-title-medium: 24px; --tracking-title-medium: -0.2px;
+  /* Body */
+  --text-body-medium: 16px;  --leading-body-medium: 24px; --tracking-body-medium: -0.2px;
+  --text-body-small:  14px;  --leading-body-small:  20px; --tracking-body-small:  -0.2px;
+  /* Label */
+  --text-label-large:   18px;  --leading-label-large:   24px; --tracking-label-large:   -0.2px;
+  --text-label-medium:  16px;  --leading-label-medium:  20px; --tracking-label-medium:  -0.2px;
+  --text-label-small:   14px;  --leading-label-small:   16px; --tracking-label-small:   -0.2px;
+  --text-label-xsmall:  12px;  --leading-label-xsmall:  16px; --tracking-label-xsmall:  -0.2px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base styles ────────────────────────────────────────────── */
+html, body {
+  background: #000;
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-light);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Utility: hide scrollbars (native-feel) ─────────────────── */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.app-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+/* ── Lumi typing indicator ─────────────────────────────────────── */
+@keyframes lumi-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-2px); }
+}
+.lumi-typing span {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 999px;
+  background: var(--color-text-secondary);
+  animation: lumi-dot 1.2s infinite ease-in-out;
+}
+.lumi-typing span:nth-child(2) { animation-delay: 0.15s; }
+.lumi-typing span:nth-child(3) { animation-delay: 0.30s; }
+
+/* ── FAB shiny border (Ryan Mulligan's background-clip + @property technique)
+   https://ryanmulligan.dev/blog/css-property-new-style/
+
+   Two background layers stacked on the FAB:
+     1. padding-box: transparent — the inner glass div paints the pill body
+     2. border-box: a conic-gradient "comet" with pink edges and a white core,
+        rotated by animating --fab-gradient-angle via @property.
+   With `border: 2px solid transparent`, the border-box area is exactly the
+   2px ring around the pill. The conic gradient lives inside that ring.
+
+   @property registers the angle as a real <angle> so the browser can
+   interpolate it on the compositor — required for the smooth sweep.
+-------------------------------------------------------------------------- */
+@property --fab-gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.fab-border {
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background:
+    linear-gradient(transparent, transparent) padding-box,
+    conic-gradient(
+      from var(--fab-gradient-angle),
+      transparent 0%,
+      #ffc9d2 6%,
+      #ffffff 12%,
+      #ffc9d2 18%,
+      transparent 24%
+    ) border-box;
+  animation: fab-gradient-angle 3s linear infinite;
+}
+
+@keyframes fab-gradient-angle {
+  to { --fab-gradient-angle: 360deg; }
+}
+
+/* ── FAB dot texture — revealed by the comet sweep via a synced conic mask.
+   .fab-dots runs the same animation as .fab-border (both start at 0deg on
+   page load) so they stay in sync without inheriting the CSS variable.
+   The conic mask originates from the pill's center and points outward toward
+   the comet's current position — dots near the light catch it, all others stay
+   invisible. Max dot opacity = 5% (extremely subtle, like a glinting texture). */
+.fab-dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 16px;
+  background-image: radial-gradient(circle, rgba(25,25,25,0.07) 1px, transparent 1px);
+  background-size: 8px 8px;
+  -webkit-mask-image: conic-gradient(
+    from var(--fab-gradient-angle),
+    transparent 0%,
+    rgba(0,0,0,0.3) 8%,
+    rgba(0,0,0,1) 14%,
+    rgba(0,0,0,0.3) 20%,
+    transparent 30%
+  );
+  mask-image: conic-gradient(
+    from var(--fab-gradient-angle),
+    transparent 0%,
+    rgba(0,0,0,0.3) 8%,
+    rgba(0,0,0,1) 14%,
+    rgba(0,0,0,0.3) 20%,
+    transparent 30%
+  );
+  animation: fab-gradient-angle 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab-border { animation: none; }
+  .fab-dots   { animation: none; -webkit-mask-image: none; mask-image: none; }
 }
