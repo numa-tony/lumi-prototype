@@ -8,31 +8,6 @@ import { useApp } from "@/lib/store";
 import { Waveform } from "./Waveform";
 import Image from "next/image";
 
-// Web Speech API — not in TS DOM lib by default
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognitionInstance;
-    webkitSpeechRecognition: new () => SpeechRecognitionInstance;
-  }
-}
-interface SpeechRecognitionInstance extends EventTarget {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  maxAlternatives: number;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onstart: (() => void) | null;
-  onend: (() => void) | null;
-  onerror: ((e: { error: string }) => void) | null;
-  onresult: ((e: SpeechRecognitionResultEvent) => void) | null;
-}
-interface SpeechRecognitionResultEvent {
-  resultIndex: number;
-  results: { length: number; [i: number]: { isFinal: boolean; 0: { transcript: string } } };
-}
-
 const VOICE_HINT =
   "The guest is in voice mode. Your response will be read aloud by text-to-speech. " +
   "Rules: reply in 1–2 short sentences maximum — no bullet lists, no headers, no markdown. " +
@@ -40,6 +15,55 @@ const VOICE_HINT =
   "Sound like you are talking to the guest, not writing to them.";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
+
+// ── WAV encoder ───────────────────────────────────────────────────────────────
+// Converts any MediaRecorder blob (webm / mp4 / ogg) to WAV PCM16 via
+// AudioContext.decodeAudioData so Gemini STT always receives a supported format.
+async function toWav(blob: Blob): Promise<Blob> {
+  const ab = await blob.arrayBuffer();
+  const audioCtx = new AudioContext();
+  let decoded: AudioBuffer;
+  try {
+    decoded = await audioCtx.decodeAudioData(ab);
+  } finally {
+    audioCtx.close();
+  }
+
+  const numCh = decoded.numberOfChannels;
+  const sr = decoded.sampleRate;
+  const len = decoded.length;
+  const bps = 2; // 16-bit PCM
+  const dataSize = len * numCh * bps;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buf);
+
+  const str = (off: number, s: string) => {
+    for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+  };
+  str(0, "RIFF");
+  v.setUint32(4, 36 + dataSize, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); // PCM
+  v.setUint16(22, numCh, true);
+  v.setUint32(24, sr, true);
+  v.setUint32(28, sr * numCh * bps, true);
+  v.setUint16(32, numCh * bps, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, dataSize, true);
+
+  let off = 44;
+  for (let i = 0; i < len; i++) {
+    for (let ch = 0; ch < numCh; ch++) {
+      const s = Math.max(-1, Math.min(1, decoded.getChannelData(ch)[i]));
+      v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      off += 2;
+    }
+  }
+  return new Blob([buf], { type: "audio/wav" });
+}
 
 // ── Typing dots ───────────────────────────────────────────────────────────────
 function ThinkingDots() {
@@ -62,17 +86,21 @@ export function VoiceSheet() {
   const [voiceState, setVoiceStateRaw] = useState<VoiceState>("idle");
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [liveTranscript, setLiveTranscript] = useState("");
 
   const voiceStateRef = useRef<VoiceState>("idle");
   const threadIdRef = useRef<string | null>(null);
   const namedRef = useRef(false);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
 
-  // SpeechRecognition refs
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const finalTranscriptRef = useRef("");
-  const cancelledRef = useRef(false);
+  // MediaRecorder refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  // Silence-detection timer: auto-send if no loud audio for SILENCE_MS
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const SILENCE_MS = 2200;
 
   const setVoiceState = useCallback((s: VoiceState) => {
     voiceStateRef.current = s;
@@ -127,7 +155,7 @@ export function VoiceSheet() {
         if (p.state !== "output-available") continue;
         const { topic, emoji } = p.output ?? {};
         if (typeof topic === "string" || typeof emoji === "string") {
-          renameThread(threadIdRef.current, topic ?? "", emoji);
+          renameThread(threadIdRef.current!, topic ?? "", emoji);
           namedRef.current = true;
         }
         return;
@@ -159,7 +187,7 @@ export function VoiceSheet() {
     });
   }, []);
 
-  // ── Gemini TTS (falls back to browser TTS on failure) ────────────────────────
+  // ── Gemini TTS ───────────────────────────────────────────────────────────────
   const speakWithGemini = useCallback(
     async (text: string): Promise<void> => {
       try {
@@ -168,29 +196,16 @@ export function VoiceSheet() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
         });
-
-        if (!res.ok) {
-          return browserSpeak(text);
-        }
-
+        if (!res.ok) return browserSpeak(text);
         const blob = await res.blob();
-        if (!blob.size) {
-          return browserSpeak(text);
-        }
-
+        if (!blob.size) return browserSpeak(text);
         return new Promise((resolve) => {
           const url = URL.createObjectURL(blob);
           const audio = new Audio(url);
           audioElRef.current = audio;
           audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-          audio.onerror = () => {
-            URL.revokeObjectURL(url);
-            browserSpeak(text).then(resolve);
-          };
-          audio.play().catch(() => {
-            URL.revokeObjectURL(url);
-            browserSpeak(text).then(resolve);
-          });
+          audio.onerror = () => { URL.revokeObjectURL(url); browserSpeak(text).then(resolve); };
+          audio.play().catch(() => { URL.revokeObjectURL(url); browserSpeak(text).then(resolve); });
         });
       } catch {
         return browserSpeak(text);
@@ -202,110 +217,185 @@ export function VoiceSheet() {
   // ── Send transcript to AI ────────────────────────────────────────────────────
   const doSend = useCallback(
     (text: string) => {
-      if (!threadIdRef.current) {
-        threadIdRef.current = createThread(text);
-      }
+      if (!threadIdRef.current) threadIdRef.current = createThread(text);
       setStatusLabel(`You: ${text}`);
-      setLiveTranscript("");
-      finalTranscriptRef.current = "";
       setVoiceState("processing");
       sendMessage({ text });
     },
     [createThread, sendMessage, setVoiceState],
   );
 
-  // ── Start recording via Web Speech API ──────────────────────────────────────
-  const startRecording = useCallback(() => {
-    setErrorMsg(null);
-    setLiveTranscript("");
-    finalTranscriptRef.current = "";
-    cancelledRef.current = false;
+  // ── Silence detection loop ───────────────────────────────────────────────────
+  const startSilenceDetection = useCallback((sendFn: () => void) => {
+    const analyser = analyserRef.current;
+    if (!analyser) return;
+    const data = new Uint8Array(analyser.frequencyBinCount);
 
-    const SR: (new () => SpeechRecognitionInstance) | undefined =
-      (window as Window & typeof globalThis).SpeechRecognition ??
-      (window as Window & typeof globalThis).webkitSpeechRecognition;
-    if (!SR) {
-      setErrorMsg("Voice input not supported in this browser.");
+    const check = () => {
+      if (voiceStateRef.current !== "recording") return;
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+
+      if (avg > 8) {
+        // Sound detected — reset silence timer
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(sendFn, SILENCE_MS);
+      }
+      requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
+  }, []);
+
+  // ── Cleanup audio pipeline ───────────────────────────────────────────────────
+  const teardownAudio = useCallback(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    silenceTimerRef.current = null;
+    analyserRef.current = null;
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
+  // ── Start recording ──────────────────────────────────────────────────────────
+  const startRecording = useCallback(async () => {
+    setErrorMsg(null);
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      const name = (err as Error)?.name ?? "";
+      setErrorMsg(
+        name === "NotAllowedError" || name === "PermissionDeniedError"
+          ? "Microphone blocked — allow it in browser settings."
+          : "Could not access microphone.",
+      );
       return;
     }
 
-    const recognition = new SR();
-    recognition.lang = "en-US";
-    recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
+    streamRef.current = stream;
+    chunksRef.current = [];
 
-    recognition.onstart = () => {
-      setVoiceState("recording");
+    // Wire up AnalyserNode for real waveform + silence detection
+    const audioCtx = new AudioContext();
+    audioCtxRef.current = audioCtx;
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
+    // Pick best supported MIME type (Safari → mp4, Chrome → webm)
+    const mimeType = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+      "audio/mp4",
+      "video/mp4",
+    ].find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
     };
+    mediaRecorderRef.current = recorder;
+    recorder.start(100);
+    setVoiceState("recording");
 
-    recognition.onresult = (event: SpeechRecognitionResultEvent) => {
-      let interim = "";
-      let final = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          final += result[0].transcript;
-        } else {
-          interim += result[0].transcript;
-        }
-      }
-      if (final) {
-        finalTranscriptRef.current += final;
-      }
-      setLiveTranscript(finalTranscriptRef.current + interim);
-    };
+    // Start silence-detection → auto-send
+    startSilenceDetection(() => void sendRecordingInternal(recorder));
+  }, [setVoiceState, startSilenceDetection]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    recognition.onend = () => {
-      if (cancelledRef.current) return;
-      const transcript = finalTranscriptRef.current.trim();
-      if (transcript) {
-        doSend(transcript);
-      } else {
+  // ── Send recording (internal — called by silence detection OR manual button) ─
+  const sendRecordingInternal = useCallback(
+    async (recorder: MediaRecorder) => {
+      if (recorder.state === "inactive") return;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      setVoiceState("processing");
+      setStatusLabel("Transcribing…");
+
+      const blob = await new Promise<Blob>((resolve) => {
+        recorder.onstop = () => {
+          resolve(new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" }));
+        };
+        recorder.stop();
+      });
+      mediaRecorderRef.current = null;
+      chunksRef.current = [];
+      teardownAudio();
+
+      if (blob.size < 1000) {
         setVoiceState("idle");
-        setErrorMsg("Didn't catch that. Tap to try again.");
+        setErrorMsg("No audio captured. Tap to try again.");
+        return;
       }
-    };
 
-    recognition.onerror = (event: { error: string }) => {
-      if (event.error === "aborted") return; // handled by cancelRecording
-      if (event.error === "not-allowed") {
-        setErrorMsg("Microphone blocked — allow it in browser settings.");
-      } else if (event.error === "no-speech") {
-        setErrorMsg("No speech detected. Tap to try again.");
-      } else {
-        setErrorMsg("Voice error. Tap to try again.");
+      try {
+        const wavBlob = await toWav(blob);
+        const audioBase64 = await new Promise<string>((res, rej) => {
+          const reader = new FileReader();
+          reader.onloadend = () => res((reader.result as string).split(",")[1]);
+          reader.onerror = rej;
+          reader.readAsDataURL(wavBlob);
+        });
+
+        const resp = await fetch("/api/voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioBase64, mimeType: "audio/wav" }),
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const { transcript } = (await resp.json()) as { transcript: string };
+
+        if (!transcript?.trim()) {
+          setVoiceState("idle");
+          setErrorMsg("Couldn't understand that. Try again.");
+          return;
+        }
+        doSend(transcript.trim());
+      } catch {
+        setVoiceState("idle");
+        setErrorMsg("Something went wrong. Try again.");
       }
-      setVoiceState("idle");
-    };
+    },
+    [setVoiceState, teardownAudio, doSend],
+  );
 
-    recognitionRef.current = recognition;
-    recognition.start();
-  }, [doSend, setVoiceState]);
+  // ── Public send (called by ✓ button / swipe-up) ───────────────────────────────
+  const sendRecording = useCallback(() => {
+    const rec = mediaRecorderRef.current;
+    if (rec) void sendRecordingInternal(rec);
+  }, [sendRecordingInternal]);
 
   // ── Cancel ───────────────────────────────────────────────────────────────────
   const cancelRecording = useCallback(() => {
-    cancelledRef.current = true;
-    recognitionRef.current?.abort();
-    recognitionRef.current = null;
-    setLiveTranscript("");
-    finalTranscriptRef.current = "";
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      rec.ondataavailable = null;
+      rec.stop();
+    }
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+    teardownAudio();
     setVoiceState("idle");
-  }, [setVoiceState]);
-
-  // ── Manual send (stop recognition → onend fires → doSend) ────────────────────
-  const sendRecording = useCallback(() => {
-    recognitionRef.current?.stop();
-  }, []);
+  }, [setVoiceState, teardownAudio]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       audioElRef.current?.pause();
-      cancelledRef.current = true;
-      recognitionRef.current?.abort();
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      const rec = mediaRecorderRef.current;
+      if (rec && rec.state !== "inactive") {
+        rec.ondataavailable = null;
+        rec.stop();
+      }
+      teardownAudio();
     };
-  }, []);
+  }, [teardownAudio]);
 
   const isListening = voiceState === "recording";
   const showCard = voiceState === "recording";
@@ -340,21 +430,13 @@ export function VoiceSheet() {
           transition={{ duration: 1.6, ease: "easeInOut", repeat: Infinity }}
           className="relative h-[260px] w-[260px]"
         >
-          <Image
-            src="/lumi-torus.png"
-            alt="Lumi"
-            fill
-            className="object-contain"
-            priority
-          />
+          <Image src="/lumi-torus.png" alt="Lumi" fill className="object-contain" priority />
         </motion.div>
 
         {/* Status label */}
         <div className="flex min-h-[60px] flex-col items-center justify-center gap-2 px-8">
           {voiceState === "recording" && (
-            <p className="text-center text-[14px] text-[#191919]/40">
-              {liveTranscript || "Listening…"}
-            </p>
+            <p className="text-center text-[14px] text-[#191919]/40">Listening…</p>
           )}
 
           {voiceState === "processing" && (
@@ -381,11 +463,9 @@ export function VoiceSheet() {
 
           {voiceState === "idle" && errorMsg && (
             <div className="flex flex-col items-center gap-3">
-              <p className="text-center text-[12px] leading-relaxed text-red-500/80">
-                {errorMsg}
-              </p>
+              <p className="text-center text-[12px] leading-relaxed text-red-500/80">{errorMsg}</p>
               <button
-                onClick={startRecording}
+                onClick={() => void startRecording()}
                 className="flex items-center gap-2 rounded-full bg-[#191919] px-6 py-3 text-[14px] font-semibold text-white active:opacity-75"
               >
                 Tap to speak
@@ -395,7 +475,7 @@ export function VoiceSheet() {
 
           {voiceState === "idle" && !errorMsg && (
             <button
-              onClick={startRecording}
+              onClick={() => void startRecording()}
               className="flex items-center gap-2 rounded-full bg-[#191919] px-6 py-3 text-[14px] font-semibold text-white active:opacity-75"
             >
               Tap to speak
@@ -404,7 +484,7 @@ export function VoiceSheet() {
         </div>
       </div>
 
-      {/* Bottom — waveform card (shown while recording) */}
+      {/* Bottom — waveform card */}
       <AnimatePresence>
         {showCard && (
           <motion.div
@@ -414,7 +494,6 @@ export function VoiceSheet() {
             exit={{ y: 40, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
           >
-            {/* "Swipe up to send" hint */}
             <div className="mb-2.5 flex items-center justify-center gap-1 text-[#191919]/25">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -432,12 +511,8 @@ export function VoiceSheet() {
               }}
               whileDrag={{ scale: 1.02 }}
               className="relative overflow-hidden rounded-[24px] border border-white/60 p-4"
-              style={{
-                background: "rgba(255,201,210,0.2)",
-                boxShadow: "0px 10px 40px rgba(0,0,0,0.1)",
-              }}
+              style={{ background: "rgba(255,201,210,0.2)", boxShadow: "0px 10px 40px rgba(0,0,0,0.1)" }}
             >
-              {/* Background blobs */}
               <div
                 className="pointer-events-none absolute -left-24 -top-14 h-[327px] w-[327px] rounded-full"
                 style={{ background: "rgba(255,150,200,0.3)", filter: "blur(40px)" }}
@@ -447,14 +522,11 @@ export function VoiceSheet() {
                 style={{ background: "rgba(180,140,255,0.25)", filter: "blur(36px)" }}
               />
 
-              {/* Waveform canvas */}
               <div className="relative">
-                <Waveform active={isListening} />
+                <Waveform active={isListening} analyser={analyserRef.current} />
               </div>
 
-              {/* Controls row */}
               <div className="mt-3 flex items-center justify-between">
-                {/* Cancel */}
                 <button
                   onClick={cancelRecording}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-black/15 text-[#191919]/50 active:bg-black/5"
@@ -465,7 +537,6 @@ export function VoiceSheet() {
                   </svg>
                 </button>
 
-                {/* Swipe hint */}
                 <div className="flex items-center gap-1 text-[#191919]/30">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -473,7 +544,6 @@ export function VoiceSheet() {
                   <span className="text-[11px] font-light tracking-[-0.2px]">Swipe left to cancel</span>
                 </div>
 
-                {/* Send */}
                 <button
                   onClick={sendRecording}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#191919] text-white active:scale-95"

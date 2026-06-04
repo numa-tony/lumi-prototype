@@ -3,8 +3,8 @@
 import { useRef, useEffect } from "react";
 
 interface WaveformProps {
-  /** true = user is speaking (animated bars); false = idle (small scrolling dots) */
   active: boolean;
+  analyser?: AnalyserNode | null;
 }
 
 const COLS = 52;
@@ -14,17 +14,25 @@ const MAX_BAR_H = 38;
 const DOT_H = 3;
 const UPDATE_MS = 55; // ~18fps
 
-export function Waveform({ active }: WaveformProps) {
+export function Waveform({ active, analyser }: WaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const bufferRef = useRef<number[]>(Array(COLS).fill(DOT_H));
   const lastTimeRef = useRef<number>(0);
+  const freqDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Allocate frequency buffer when analyser is available
+    if (analyser) {
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
+    } else {
+      freqDataRef.current = null;
+    }
 
     const prefersReduced =
       typeof window !== "undefined" &&
@@ -61,16 +69,26 @@ export function Waveform({ active }: WaveformProps) {
 
         let newH = DOT_H;
         if (active) {
-          // Combine three sine waves at different frequencies + a small random component
-          // so each new column looks naturally different as it scrolls left.
-          const t = time / 1000;
-          const amp =
-            Math.sin(t * 2.3) * 0.28 +
-            Math.sin(t * 6.1) * 0.18 +
-            Math.sin(t * 13.7) * 0.08 +
-            (Math.random() - 0.5) * 0.12 +
-            0.44; // baseline keeps bars clearly visible
-          newH = Math.max(DOT_H, Math.round(Math.min(1, amp) * MAX_BAR_H));
+          if (analyser && freqDataRef.current) {
+            // Real microphone data — map average amplitude to bar height
+            analyser.getByteFrequencyData(freqDataRef.current);
+            const avg =
+              freqDataRef.current.reduce((a, b) => a + b, 0) /
+              freqDataRef.current.length;
+            // avg is 0–255; scale to bar height with a floor so bars are always visible
+            const norm = Math.min(1, (avg / 255) * 3.5);
+            newH = Math.max(DOT_H + 4, Math.round(norm * MAX_BAR_H));
+          } else {
+            // Synthetic fallback — three sine waves + noise
+            const t = time / 1000;
+            const amp =
+              Math.sin(t * 2.3) * 0.28 +
+              Math.sin(t * 6.1) * 0.18 +
+              Math.sin(t * 13.7) * 0.08 +
+              (Math.random() - 0.5) * 0.12 +
+              0.44;
+            newH = Math.max(DOT_H, Math.round(Math.min(1, amp) * MAX_BAR_H));
+          }
         }
 
         bufferRef.current = [...bufferRef.current.slice(1), newH];
@@ -81,7 +99,7 @@ export function Waveform({ active }: WaveformProps) {
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [active]);
+  }, [active, analyser]);
 
   return (
     <canvas
