@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Composer } from "./Composer";
 import { Widget, toolPartToWidgetType } from "./widgets/WidgetRenderer";
+import { StatusWidget } from "./widgets/Widgets";
 import { useApp } from "@/lib/store";
 import type { ChatContext, PersistedThread, WidgetData } from "@/lib/types";
+import type { StatusWidgetData } from "@/lib/types";
 
 const IMG_LUMI_LARGE = "https://www.figma.com/api/mcp/asset/c5fa1451-f3c3-4672-bad0-97cc1122794d";
 
@@ -279,6 +281,21 @@ export function ThreadView({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
 
+  // Pin any active (non-resolved) statusWidget to the top of the thread view.
+  const pinnedStatus = useMemo((): StatusWidgetData | null => {
+    for (const m of messages) {
+      for (const part of m.parts) {
+        if (part.type !== "tool-statusWidget") continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p = part as any;
+        if (p.state !== "output-available") continue;
+        if (p.output?.state === "resolved") continue;
+        return p.output as StatusWidgetData;
+      }
+    }
+    return null;
+  }, [messages]);
+
   const [inputFocused, setInputFocused] = useState(false);
   const [aiStarters, setAiStarters] = useState<string[] | null>(null);
   const [startersLoading, setStartersLoading] = useState(false);
@@ -365,6 +382,13 @@ export function ThreadView({
       </div>
       <div className="h-px shrink-0 bg-line" />
 
+      {/* Pinned status widget — shown at top when active (not resolved) */}
+      {pinnedStatus && (
+        <div className="shrink-0 border-b border-line px-3.5 py-3">
+          <StatusWidget data={pinnedStatus} />
+        </div>
+      )}
+
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3.5 py-4 no-scrollbar app-scroll">
         {messages.map((message) => (
           <div key={message.id} className="space-y-3">
@@ -380,6 +404,8 @@ export function ThreadView({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const p = part as any;
                 if (p.state === "output-available") {
+                  // Skip statusWidget inline when it's pinned at the top
+                  if (wtype === "statusWidget" && pinnedStatus && p.output?.state !== "resolved") return null;
                   return (
                     <Row key={idx} role="assistant">
                       <div className="w-[92%]"><Widget type={wtype} data={p.output} onRespond={send} /></div>
