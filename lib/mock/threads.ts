@@ -132,6 +132,34 @@ export const THREADS: Thread[] = [
     ],
   },
   {
+    id: "lisbon-booking",
+    topic: "Lisbon trip",
+    emoji: "✈️",
+    state: "open",
+    filter: "support",
+    preview: "Check-in Mon Oct 7 · Book stay",
+    time: "09:31",
+    hint: "The guest is asking about booking a trip to Lisbon. Show a reservation card for Numa Lisbon with check-in Oct 7 and check-out Oct 9.",
+    seed: [
+      { role: "user", text: "Can I book the dates of the Lisbon trip?", time: "09:31" },
+      {
+        role: "assistant",
+        text: "Here's the stay — tap the button below to confirm your booking.",
+        time: "09:31",
+        widget: {
+          type: "reservationCard",
+          data: {
+            property: "Numa Lisbon Baixa",
+            location: "Lisbon, Portugal",
+            checkIn: "Mon, Oct 7 · 2:00 PM CET",
+            checkOut: "Wed, Oct 9 · 11:00 AM CET",
+            action: "Book stay",
+          },
+        },
+      },
+    ],
+  },
+  {
     id: "barcelona",
     topic: "Barcelona Palmera",
     emoji: "🏠",
