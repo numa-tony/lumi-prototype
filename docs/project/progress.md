@@ -1,4 +1,4 @@
-# Progress — Updated 2026-06-03 (deploy)
+# Progress — Updated 2026-06-03
 
 ## Done
 
@@ -7,30 +7,35 @@
 - **ChatSheet** — bottom sheet, spring animation, `rounded-t-[38px]`, grabber pill
 - **ThreadView — idle / keyboard / active** — Numa wordmark + Lumi orb + starters + send
 - **DS tokens** — full `@theme` in `app/globals.css`; TWK Lausanne font woff2 300 + 600
-- **Zustand store** — `useApp()` with screen, chat, voice, inStay, threads
+- **Zustand store** — `useApp()` with screen, chat, voice, inStay, threads, booking
 - **Screen shells** — Explore, MyTrips, TripDetail, Messages, Profile
 - **Mock data** — threads, trips, properties in `lib/mock/`
 - **Trip consistency** — Explore ↔ My Trips both read from `UPCOMING_TRIP` in `lib/mock/guest.ts`
-- **FAB shiny border** — conic-gradient comet animation via `@property --fab-gradient-angle`
+- **FAB shiny border** — conic-gradient comet, solid `#ffc9d2` (no white core)
+- **FAB on all screens** — visible on Profile and all other screens
 - **MyTripsScreen + TripDetailScreen** — Figma v2 faithful implementations
+- **ProfileScreen** — Figma redesign: pink header, savings card with shadow, menu rows with inline SVGs, `#9162CA` since-2024 badge
 - **Project management md system** — CLAUDE.md, context/vision/decisions docs, skills
-- **Voice mode** — `VoiceSheet.tsx` + `Waveform.tsx`; MediaRecorder → `/api/voice` (Gemini STT) → `/api/chat` → `/api/tts` (Gemini TTS, voice "Kore"); auto-starts recording on open; browser TTS fallback; response text shown visually
-- **Voice design** — white bg, Figma 3D torus image (`public/lumi-torus.png`), waveform card with swipe gestures (swipe left cancel, swipe up send)
-- **In stay mode toggle** — DevBar prototype control (top-left, outside device frame); off by default; controls FAB Doors button visibility
+- **Voice mode** — `VoiceSheet.tsx` + `Waveform.tsx`; MediaRecorder → `/api/voice` (Gemini STT) → `/api/chat` → `/api/tts`; browser TTS fallback
+- **Voice design** — white bg, Figma 3D torus (`public/lumi-torus.png`), waveform card with swipe gestures
+- **In stay mode toggle** — DevBar prototype control; controls FAB Doors button visibility
+- **AI starters** — `/api/starters` generates context-aware conversation starters; ThreadView fetches once per keyboard open
+- **Messages badge** — only shown when unread threads exist
+- **Booking flow (4 steps)** — Where (city search) → When (date range calendar) → Guests (steppers) → Results (city-aware property listings, search summary pill, pink price badge, floating List/Map toggle)
 - **GitHub repo** — https://github.com/numa-tony/lumi-prototype
-- **Vercel deployment** — https://numa-lumi-prototype.vercel.app (under `numa` Vercel team; auto-deploys on push to main)
+- **Vercel deployment** — https://numa-lumi-prototype.vercel.app (auto-deploys on push to main)
 
 ## In Progress
 
-- **Voice TTS validation** — Gemini TTS endpoint deployed; needs live confirmation that audio plays back correctly (browser speech-synthesis fallback is in place)
+- **Voice TTS validation** — Gemini TTS endpoint deployed; needs live confirmation audio plays back correctly
 
 ## Next (ordered)
 
-1. **Execute persistent messages plan** — tasks #1–8 in plan file
-2. **MessagesScreen (inbox)** — replace direct THREADS import with store reads
-3. **ExploreScreen** — location/property browsing polish
-4. **Real AI integration end-to-end** — verify Gemini stream + tool calls in ThreadView active mode
-5. **ThreadView rich widgets** — reservation card, quick-reply chips, in-thread status widget
+1. **ThreadView rich widgets** — quick-reply chips, reservation card, in-thread status widget
+2. **MessagesScreen (inbox)** — Figma-faithful design, replace direct THREADS import with store reads
+3. **Demo thread quality** — "Sarah's day" walkthrough: AC broken → In Progress, Towels → resolved, Ramen Q&A
+4. **Real AI end-to-end** — verify Gemini stream + tool calls fire correctly in ThreadView active mode
+5. **ExploreScreen image URLs** — Figma MCP asset URLs expire ~7 days from Jun 1; replace with permanent CDN URLs
 
 ## Deferred (not in prototype scope)
 
