@@ -9,13 +9,6 @@ const IMG_LUMI_ORB = "https://www.figma.com/api/mcp/asset/f6a78c87-538f-46da-97a
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
-const COLLAGE_IMGS = [
-  "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=400&q=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80&auto=format&fit=crop",
-];
-
 const ROOMS = [
   { id: "r1", name: "Medium Studio with Kitchenette", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80&auto=format&fit=crop", guests: "Max 2", size: "23 m²", bed: "Queen bed", price: 69 },
   { id: "r2", name: "Medium Studio — Accessible", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80&auto=format&fit=crop", guests: "Max 2", size: "27 m²", bed: "Queen bed", price: 69 },
@@ -114,13 +107,13 @@ function HeroSection({ propertyName, city, heroImage, onBack }: {
 }) {
   return (
     <div>
-    <div className="relative h-[400px] w-full overflow-hidden">
+    <div className="relative h-[56vh] w-full overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={heroImage} alt="" className="h-full w-full object-cover" />
-      {/* Fade image to near-white at bottom so pink text reads cleanly */}
+      {/* Dark fade at bottom so pink text reads on dark */}
       <div
         className="absolute inset-0"
-        style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(255,255,255,0.4) 65%, rgba(255,255,255,0.75) 100%)" }}
+        style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.65) 100%)" }}
       />
       {/* Back button */}
       <button
@@ -172,16 +165,6 @@ function HeroSection({ propertyName, city, heroImage, onBack }: {
 function IntroSection({ propertyName, city }: { propertyName: string; city: string }) {
   return (
     <div className="bg-white">
-      {/* 4-photo 2×2 collage */}
-      <div className="grid grid-cols-2 gap-1 px-4 pb-1 pt-2">
-        {COLLAGE_IMGS.map((src, i) => (
-          <div key={i} className="aspect-[4/3] overflow-hidden rounded-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" className="h-full w-full object-cover" />
-          </div>
-        ))}
-      </div>
-
       {/* Pull quote */}
       <div className="px-4 pt-6 pb-5">
         <p className="text-[18px] font-light leading-[1.5] tracking-[-0.2px] text-[#191919]">
@@ -690,8 +673,8 @@ export function PropertyStep({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      {/* Scrollable content — extra bottom padding so last content clears FAB + bar */}
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-40">
         <HeroSection propertyName={propertyName} city={city} heroImage={heroImage} onBack={onBack} />
         <IntroSection propertyName={propertyName} city={city} />
         <RoomsSection dates={dates} guests={guests} onEditDates={onEditDates} />
@@ -704,8 +687,8 @@ export function PropertyStep({
         <FaqSection />
       </div>
 
-      {/* Ask AI FAB — same pill style as global Fab */}
-      <div className="pointer-events-none shrink-0 flex justify-center pb-3 pt-3">
+      {/* Ask AI FAB — floats above sticky bar with no white background behind it */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[72px] z-10 flex justify-center py-2">
         <div
           className="pointer-events-auto fab-border"
           style={{ boxShadow: "0px 16px 32px 0px rgba(0,0,0,0.2)" }}
@@ -739,7 +722,7 @@ export function PropertyStep({
             <p className="text-[11px] font-light text-[#6d706f]">From</p>
             <p className="text-[17px] font-semibold tracking-[-0.2px] text-[#191919]">€69 nightly</p>
           </div>
-          <button className="flex items-center justify-center rounded-2xl bg-white border border-[#dedddb] px-5 py-3 text-[15px] font-semibold text-[#191919] shadow-sm active:bg-[#f4f4f4]">
+          <button className="flex items-center justify-center rounded-2xl bg-[#191919] px-5 py-3 text-[15px] font-semibold text-white active:opacity-80">
             Check availability
           </button>
         </div>
