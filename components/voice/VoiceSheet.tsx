@@ -106,7 +106,8 @@ export function VoiceSheet() {
         setVoiceState("speaking");
         setStatusLabel(responseText);
         void speakWithGemini(responseText).then(() => {
-          setTimeout(() => startRecording(), 300);
+          setVoiceState("idle");
+          setStatusLabel(null);
         });
       } else {
         setVoiceState("idle");
@@ -295,12 +296,6 @@ export function VoiceSheet() {
   // ── Manual send (stop recognition → onend fires → doSend) ────────────────────
   const sendRecording = useCallback(() => {
     recognitionRef.current?.stop();
-  }, []);
-
-  // Auto-start recording when the sheet opens
-  useEffect(() => {
-    startRecording();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cleanup on unmount
