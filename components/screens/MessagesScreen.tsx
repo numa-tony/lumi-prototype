@@ -158,6 +158,11 @@ export function MessagesScreen() {
         <EmptyState />
       ) : (
         <div className="mt-3 divide-y divide-line">
+          {pinned.length > 0 && (
+            <p className="px-5 pb-1 pt-4 text-[12px] font-semibold uppercase tracking-wide text-ink-faint">
+              In progress
+            </p>
+          )}
           {pinned.map((t) => (
             <ThreadRow key={t.id} thread={t} />
           ))}
