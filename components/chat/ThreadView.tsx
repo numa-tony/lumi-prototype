@@ -281,7 +281,7 @@ export function ThreadView({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
 
-  // Pin any active (non-resolved) statusWidget to the top of the thread view.
+  // Pin the most recent statusWidget to the top of the thread view (any state).
   const pinnedStatus = useMemo((): StatusWidgetData | null => {
     for (const m of messages) {
       for (const part of m.parts) {
@@ -289,7 +289,6 @@ export function ThreadView({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const p = part as any;
         if (p.state !== "output-available") continue;
-        if (p.output?.state === "resolved") continue;
         return p.output as StatusWidgetData;
       }
     }
@@ -404,8 +403,8 @@ export function ThreadView({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const p = part as any;
                 if (p.state === "output-available") {
-                  // Skip statusWidget inline when it's pinned at the top
-                  if (wtype === "statusWidget" && pinnedStatus && p.output?.state !== "resolved") return null;
+                  // Skip statusWidget inline — always shown pinned at top
+                  if (wtype === "statusWidget" && pinnedStatus) return null;
                   return (
                     <Row key={idx} role="assistant">
                       <div className="w-[92%]"><Widget type={wtype} data={p.output} onRespond={send} /></div>

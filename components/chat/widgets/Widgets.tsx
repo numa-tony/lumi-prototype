@@ -70,7 +70,7 @@ export function StatusWidget({ data }: { data: StatusWidgetData }) {
       </div>
       {data.eta && <p className="mt-1 text-[13px] font-medium text-ink">{data.eta}</p>}
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
-        <div className="h-full rounded-full bg-numa transition-all" style={{ width: `${pct}%` }} />
+        <div className={`h-full rounded-full transition-all ${data.state === "resolved" ? "bg-go" : "bg-numa"}`} style={{ width: `${pct}%` }} />
       </div>
       {data.stages && (
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
