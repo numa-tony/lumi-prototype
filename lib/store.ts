@@ -123,6 +123,8 @@ export const useApp = create<AppState>()(
           screen: "explore",
           tripId: null,
           chat: null,
+          voiceOpen: false,
+          bookingOpen: false,
           threads: [],
         });
       },

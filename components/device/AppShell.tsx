@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useApp } from "@/lib/store";
 import type { ScreenId } from "@/lib/types";
@@ -26,7 +27,16 @@ export function AppShell() {
   const screen = useApp((s) => s.screen);
   const voiceOpen = useApp((s) => s.voiceOpen);
   const bookingOpen = useApp((s) => s.bookingOpen);
+  const resetSession = useApp((s) => s.resetSession);
   const Active = SCREENS[screen];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") resetSession();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [resetSession]);
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
