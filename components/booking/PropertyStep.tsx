@@ -114,61 +114,55 @@ function HeroSection({ propertyName, city, heroImage, onBack }: {
 }) {
   return (
     <div>
-      {/* Full-bleed image with overlay */}
-      <div className="relative h-[340px] w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroImage} alt="" className="h-full w-full object-cover" />
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 35%, rgba(0,0,0,0.6) 75%, rgba(0,0,0,0.75) 100%)" }}
-        />
-        {/* Back button */}
-        <button
-          onClick={onBack}
-          className="absolute left-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 active:opacity-70"
-          aria-label="Back"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2.2" strokeLinecap="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        {/* Photo counter */}
-        <div className="absolute right-3 top-4 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-light text-white">
-          1/12
-        </div>
-        {/* Bottom text overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-5">
-          <span className="mb-2 inline-block rounded-full bg-[#ffc9d2] px-3 py-1 text-[12px] font-semibold text-[#191919]">
-            New property
-          </span>
-          <h1 className="mb-1.5 text-[22px] font-semibold leading-[1.2] tracking-[-0.3px] text-white">
-            {propertyName}
-          </h1>
-          <div className="flex items-center gap-1.5">
-            <svg width="14" height="13" viewBox="0 0 20 19" fill="#ffc9d2" aria-hidden>
-              <path d="M3.825 19L5.45 11.975L0 7.25L7.2 6.625L10 0L12.8 6.625L20 7.25L14.55 11.975L16.175 19L10 15.275L3.825 19Z" />
-            </svg>
-            <span className="text-[13px] font-semibold text-white">4.63</span>
-            <span className="text-[13px] font-light text-white/80">· 1033 reviews</span>
-          </div>
-          <div className="mt-1 flex items-center gap-1">
-            <svg width="10" height="13" viewBox="0 0 16 20" fill="#ffc9d2" aria-hidden>
-              <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-10C3.58 0 0 3.58 0 8c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" />
-            </svg>
-            <span className="text-[12px] font-light text-white/90">{city}</span>
-          </div>
-        </div>
+    <div className="relative h-[400px] w-full overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={heroImage} alt="" className="h-full w-full object-cover" />
+      {/* Fade image to near-white at bottom so pink text reads cleanly */}
+      <div
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(255,255,255,0.4) 65%, rgba(255,255,255,0.75) 100%)" }}
+      />
+      {/* Back button */}
+      <button
+        onClick={onBack}
+        className="absolute left-3 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 active:opacity-70"
+        aria-label="Back"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2.2" strokeLinecap="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      {/* Photo counter */}
+      <div className="absolute right-3 top-4 rounded-full bg-black/50 px-3 py-1 text-[12px] font-semibold text-white">
+        1/12
       </div>
+      {/* Bottom text overlay — badge + name only */}
+      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+        <span className="mb-2.5 inline-block rounded-full bg-[#ffc9d2] px-4 py-1.5 text-[13px] font-semibold text-[#7a3a25]">
+          New property
+        </span>
+        <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.5px] text-[#ffc9d2]">
+          {propertyName}
+        </h1>
+      </div>
+    </div>
 
-      {/* CTAs below image */}
-      <div className="space-y-2.5 bg-white px-4 pb-4 pt-4">
-        <button className="flex w-full items-center justify-center rounded-2xl bg-[#191919] py-3.5 text-[16px] font-semibold text-white active:opacity-80">
-          Check availability
-        </button>
-        <button className="flex w-full items-center justify-center rounded-2xl border border-[#dedddb] py-3.5 text-[16px] font-semibold text-[#191919] active:bg-[#f4f4f4]">
-          View all images
-        </button>
+    {/* Rating + address below image */}
+    <div className="bg-white px-4 pt-3 pb-4">
+      <div className="flex items-center gap-2">
+        <svg width="15" height="14" viewBox="0 0 20 19" fill="#ffc9d2" aria-hidden>
+          <path d="M3.825 19L5.45 11.975L0 7.25L7.2 6.625L10 0L12.8 6.625L20 7.25L14.55 11.975L16.175 19L10 15.275L3.825 19Z" />
+        </svg>
+        <span className="text-[14px] font-semibold text-[#191919]">4.63</span>
+        <span className="text-[14px] font-light text-[#6d706f]">1033 reviews</span>
       </div>
+      <div className="mt-1 flex items-center gap-1.5">
+        <svg width="10" height="13" viewBox="0 0 16 20" fill="#ffc9d2" aria-hidden>
+          <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-10C3.58 0 0 3.58 0 8c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" />
+        </svg>
+        <span className="text-[13px] font-light text-[#6d706f]">{city}</span>
+      </div>
+    </div>
     </div>
   );
 }
@@ -710,34 +704,44 @@ export function PropertyStep({
         <FaqSection />
       </div>
 
-      {/* Sticky bottom bar — price left, Ask AI FAB right */}
+      {/* Ask AI FAB — same pill style as global Fab */}
+      <div className="pointer-events-none shrink-0 flex justify-center pb-3 pt-3">
+        <div
+          className="pointer-events-auto fab-border"
+          style={{ boxShadow: "0px 16px 32px 0px rgba(0,0,0,0.2)" }}
+        >
+          <div
+            className="relative flex items-center overflow-hidden"
+            style={{ borderRadius: "16px", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)", background: "rgba(255,255,255,0.85)" }}
+          >
+            <div className="fab-dots" />
+            <button
+              onClick={() => openChat({
+                kind: "property",
+                title: propertyName,
+                hint: `The guest is viewing the property page for ${propertyName} in ${city}. Help them decide if it's right for them.`,
+                starters: [`Tell me about ${propertyName}`, "What's nearby?", "Is it good for families?"],
+              })}
+              className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={IMG_LUMI_ORB} alt="" className="h-9 w-9 shrink-0 object-cover" />
+              Ask AI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky bottom bar — price + Check availability */}
       <div className="shrink-0 border-t border-[#dedddb] bg-white px-4 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-light text-[#6d706f]">From</p>
             <p className="text-[17px] font-semibold tracking-[-0.2px] text-[#191919]">€69 nightly</p>
           </div>
-          <div className="fab-border" style={{ boxShadow: "0px 8px 20px rgba(0,0,0,0.14)" }}>
-            <div
-              className="relative flex items-center overflow-hidden"
-              style={{ borderRadius: "14px", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)", background: "rgba(255,255,255,0.9)" }}
-            >
-              <div className="fab-dots" />
-              <button
-                onClick={() => openChat({
-                  kind: "property",
-                  title: propertyName,
-                  hint: `The guest is viewing the property page for ${propertyName} in ${city}. Help them decide if it's right for them.`,
-                  starters: [`Tell me about ${propertyName}`, "What's nearby?", "Is it good for families?"],
-                })}
-                className="flex h-[48px] items-center gap-1 px-5 text-[15px] font-semibold text-[#191919]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG_LUMI_ORB} alt="" className="h-8 w-8 shrink-0 object-cover" />
-                Ask AI
-              </button>
-            </div>
-          </div>
+          <button className="flex items-center justify-center rounded-2xl bg-white border border-[#dedddb] px-5 py-3 text-[15px] font-semibold text-[#191919] shadow-sm active:bg-[#f4f4f4]">
+            Check availability
+          </button>
         </div>
       </div>
     </div>
