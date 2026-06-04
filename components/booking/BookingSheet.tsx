@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
+import { PropertyStep } from "./PropertyStep";
 
 // ── City list ────────────────────────────────────────────────────────────────
 
@@ -279,16 +280,13 @@ const DEFAULT_PROPERTIES: Property[] = [
 
 // ── Property card ─────────────────────────────────────────────────────────────
 
-function PropertyCard({ property, nights }: { property: Property; nights: number }) {
-  const totalPrice = property.pricePerNight * nights;
-
+function PropertyCard({ property }: { property: Property }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#dedddb] bg-white">
       {/* Image */}
       <div className="relative h-[200px] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={property.image} alt="" className="h-full w-full object-cover" />
-        {/* Dot pagination */}
         {property.dotCount > 1 && (
           <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
             {Array.from({ length: property.dotCount }).map((_, i) => (
@@ -319,25 +317,23 @@ function PropertyCard({ property, nights }: { property: Property; nights: number
           <p className="text-[13px] font-light tracking-[-0.1px] text-[#6d706f]">{property.location}</p>
         </div>
 
-        {/* Stay types + price */}
+        {/* Stay types count + price */}
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            {property.stayTypes.map((t) => (
-              <span key={t} className="rounded-full border border-[#dedddb] px-2.5 py-1 text-[12px] font-semibold text-[#191919]">
-                {t}
-              </span>
-            ))}
+          <div className="flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6d706f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0">
+              <path d="M2 9V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3" />
+              <path d="M2 11v8a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-8" />
+              <path d="M2 11h20" />
+              <path d="M7 11V9" />
+            </svg>
+            <span className="text-[13px] font-light tracking-[-0.1px] text-[#6d706f]">
+              {property.stayTypes.length} stay type{property.stayTypes.length !== 1 ? "s" : ""}
+            </span>
           </div>
           <span className="shrink-0 rounded-full bg-[#ffc9d2] px-3 py-1 text-[13px] font-semibold text-[#191919]">
-            €{property.pricePerNight} / night
+            from €{property.pricePerNight} / night
           </span>
         </div>
-
-        {nights > 1 && (
-          <p className="text-[12px] font-light tracking-[-0.1px] text-[#6d706f]">
-            €{totalPrice.toLocaleString()} total · {nights} night{nights !== 1 ? "s" : ""}
-          </p>
-        )}
       </div>
     </div>
   );
@@ -653,19 +649,24 @@ function GuestsStep({ onBack, onConfirm }: {
 
 // ── Results step ──────────────────────────────────────────────────────────────
 
+const IMG_LUMI_ORB = "https://www.figma.com/api/mcp/asset/f6a78c87-538f-46da-97aa-4b86ebbb85db";
+
 function ResultsStep({
   city,
   dates,
   guests,
   onBack,
   onClose,
+  onSelectProperty,
 }: {
   city: string;
   dates: { checkIn: Date; checkOut: Date };
   guests: GuestCounts;
   onBack: () => void;
   onClose: () => void;
+  onSelectProperty: (id: string, name: string, image: string) => void;
 }) {
+  const openChat = useApp((s) => s.openChat);
   const properties = CITY_PROPERTIES[city] ?? DEFAULT_PROPERTIES;
   const nights = Math.round((dates.checkOut.getTime() - dates.checkIn.getTime()) / 86400000);
   const totalGuests = guests.adults + guests.children;
@@ -674,23 +675,8 @@ function ResultsStep({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {/* Header */}
-      <div className="relative flex shrink-0 items-center justify-center px-4 pb-3 pt-3">
-        <button onClick={onBack} className="absolute left-3 flex h-9 w-9 items-center justify-center rounded-full active:bg-surface-muted" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <h2 className="text-[22px] font-semibold tracking-[-0.3px] text-text">Results</h2>
-        <button onClick={onClose} className="absolute right-3 flex h-9 w-9 items-center justify-center rounded-full active:bg-surface-muted" aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Search summary pill */}
-      <div className="shrink-0 px-4 pb-4">
+      {/* Sticky search summary pill */}
+      <div className="shrink-0 px-4 pb-3 pt-4">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar rounded-full border-2 border-[#191919] px-4 py-2.5">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2.2" strokeLinecap="round" className="shrink-0" aria-hidden>
             <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
@@ -703,49 +689,79 @@ function ResultsStep({
         </div>
       </div>
 
-      {/* Count + filter row */}
-      <div className="shrink-0 flex items-center justify-between px-4 pb-4">
-        <h3 className="text-[18px] font-semibold tracking-[-0.3px] text-[#191919]">
-          {properties.length} Available propert{properties.length !== 1 ? "ies" : "y"}
-        </h3>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-1 rounded-full border border-[#dedddb] px-3 py-1.5 text-[13px] font-semibold text-[#191919] active:bg-surface-muted">
+      {/* Scrollable content — pb-32 keeps cards clear of the FAB */}
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+        {/* Property count */}
+        <div className="px-4 pb-2 pt-1">
+          <h3 className="text-[18px] font-semibold tracking-[-0.3px] text-[#191919]">
+            {properties.length} Available propert{properties.length !== 1 ? "ies" : "y"}
+          </h3>
+        </div>
+
+        {/* Filter + Sort + List/Map row */}
+        <div className="flex items-center gap-2 px-4 pb-4">
+          <button className="flex shrink-0 items-center gap-1 rounded-full border border-[#dedddb] px-3 py-1.5 text-[13px] font-semibold text-[#191919] active:bg-surface-muted whitespace-nowrap">
             + Filter
           </button>
-          <button className="flex items-center gap-1 rounded-full border border-[#dedddb] px-3 py-1.5 text-[13px] font-semibold text-[#191919] active:bg-surface-muted">
+          <button className="flex shrink-0 items-center gap-1 rounded-full border border-[#dedddb] px-3 py-1.5 text-[13px] font-semibold text-[#191919] active:bg-surface-muted whitespace-nowrap">
             ↓ Sort: Price
           </button>
+          {/* List / Map segmented toggle — icons only to fit 300px frame */}
+          <div className="ml-auto flex shrink-0 items-center rounded-full bg-[#191919] p-[3px] gap-0.5">
+            <button className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#191919]" aria-label="List view">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+                <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+                <circle cx="3" cy="6" r="1" fill="currentColor" /><circle cx="3" cy="12" r="1" fill="currentColor" /><circle cx="3" cy="18" r="1" fill="currentColor" />
+              </svg>
+            </button>
+            <button className="flex h-7 w-7 items-center justify-center rounded-full text-white/50" aria-label="Map view">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Scrollable property list — pb-24 keeps content clear of the floating pill */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
-        <div className="flex flex-col gap-4">
+        {/* Property cards */}
+        <div className="flex flex-col gap-4 px-4">
           {properties.map((prop) => (
-            <PropertyCard key={prop.id} property={prop} nights={nights} />
+            <button
+              key={prop.id}
+              className="block w-full text-left active:opacity-80"
+              onClick={() => onSelectProperty(prop.id, prop.name, prop.image)}
+            >
+              <PropertyCard property={prop} />
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Floating List / Map toggle */}
-      <div className="pointer-events-none absolute bottom-6 left-0 right-0 flex justify-center">
-        <button className="pointer-events-auto flex items-center gap-2 rounded-full bg-[#191919] px-5 py-3 shadow-[0px_4px_20px_rgba(0,0,0,0.25)]">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <line x1="8" y1="6" x2="21" y2="6" />
-            <line x1="8" y1="12" x2="21" y2="12" />
-            <line x1="8" y1="18" x2="21" y2="18" />
-            <circle cx="3" cy="6" r="0.5" fill="white" />
-            <circle cx="3" cy="12" r="0.5" fill="white" />
-            <circle cx="3" cy="18" r="0.5" fill="white" />
-          </svg>
-          <span className="text-[15px] font-semibold tracking-[-0.2px] text-white">List</span>
-          <span className="mx-0.5 text-white/30">|</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          <span className="text-[15px] font-semibold tracking-[-0.2px] text-white/50">Map</span>
-        </button>
+      {/* FAB — same as other screens */}
+      <div className="pointer-events-none absolute bottom-8 left-0 right-0 z-50 flex justify-center">
+        <div
+          className="pointer-events-auto fab-border"
+          style={{ boxShadow: "0px 16px 32px 0px rgba(0,0,0,0.2)" }}
+        >
+          <div
+            className="relative flex items-center overflow-hidden"
+            style={{
+              borderRadius: "16px",
+              backdropFilter: "blur(7px)",
+              WebkitBackdropFilter: "blur(7px)",
+              background: "rgba(255,255,255,0.85)",
+            }}
+          >
+            <div className="fab-dots" />
+            <button
+              onClick={() => openChat({ kind: "explore", title: "Lumi", hint: "The guest is browsing properties in the booking flow. Help them pick the right Numa property.", starters: ["What makes Numa different?", "Is this good for families?", "Help me choose"] })}
+              className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={IMG_LUMI_ORB} alt="" className="h-9 w-9 shrink-0 object-cover" />
+              Ask AI
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -753,7 +769,7 @@ function ResultsStep({
 
 // ── BookingSheet ──────────────────────────────────────────────────────────────
 
-type BookingStep = "where" | "when" | "guests" | "results";
+type BookingStep = "where" | "when" | "guests" | "results" | "property";
 
 export function BookingSheet() {
   const closeBooking = useApp((s) => s.closeBooking);
@@ -761,6 +777,9 @@ export function BookingSheet() {
   const [city, setCity] = useState<string | null>(null);
   const [dates, setDates] = useState<{ checkIn: Date; checkOut: Date } | null>(null);
   const [guests, setGuests] = useState<GuestCounts | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedPropertyName, setSelectedPropertyName] = useState<string | null>(null);
+  const [selectedPropertyImage, setSelectedPropertyImage] = useState<string | null>(null);
 
   return (
     <motion.div
@@ -770,8 +789,8 @@ export function BookingSheet() {
       exit={{ y: "100%" }}
       transition={{ type: "spring", damping: 32, stiffness: 300 }}
     >
-      {/* Grabber — hidden on results step since we have a full header */}
-      {step !== "results" && (
+      {/* Grabber — hidden on results and property steps */}
+      {step !== "results" && step !== "property" && (
         <div className="flex shrink-0 justify-center pb-1 pt-3">
           <div className="h-1 w-10 rounded-full bg-line" />
         </div>
@@ -820,6 +839,28 @@ export function BookingSheet() {
               guests={guests}
               onBack={() => setStep("guests")}
               onClose={closeBooking}
+              onSelectProperty={(id, name, image) => {
+                setSelectedPropertyId(id);
+                setSelectedPropertyName(name);
+                setSelectedPropertyImage(image);
+                setStep("property");
+              }}
+            />
+          </motion.div>
+        )}
+        {step === "property" && city && dates && guests && selectedPropertyName && selectedPropertyImage && (
+          <motion.div key="property" className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.18 }}
+          >
+            <PropertyStep
+              propertyName={selectedPropertyName}
+              city={city}
+              heroImage={selectedPropertyImage}
+              dates={dates}
+              guests={guests}
+              onBack={() => setStep("results")}
+              onEditDates={() => setStep("when")}
             />
           </motion.div>
         )}
