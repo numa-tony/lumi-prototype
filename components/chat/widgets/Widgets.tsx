@@ -20,25 +20,32 @@ const card = "overflow-hidden rounded-2xl border border-line bg-surface";
 export function ReservationCard({ data }: { data: ReservationCardData }) {
   return (
     <div className={card}>
-      <img src={data.image} alt="" className="h-36 w-full object-cover" />
+      {data.image && <img src={data.image} alt="" className="h-36 w-full object-cover" />}
       <div className="p-4">
         <p className="text-[16px] font-semibold text-ink">{data.property}</p>
         <p className="text-[13px] text-ink-soft">{data.location}</p>
         <div className="mt-3 flex rounded-2xl bg-surface-muted">
           <div className="flex-1 px-4 py-3">
             <p className="text-[11px] text-ink-faint">Check-in</p>
-            <p className="text-[13px] font-semibold text-ink">{data.checkIn}</p>
+            <p className="text-[14px] font-semibold text-ink">{data.checkIn}</p>
           </div>
           <div className="my-2 w-px bg-line" />
           <div className="flex-1 px-4 py-3">
             <p className="text-[11px] text-ink-faint">Check-out</p>
-            <p className="text-[13px] font-semibold text-ink">{data.checkOut}</p>
+            <p className="text-[14px] font-semibold text-ink">{data.checkOut}</p>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between text-[13px]">
-          <span className="text-ink-soft">Room {data.room}{data.doorCode ? ` · Code ${data.doorCode}` : ""}</span>
-          <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[12px] font-semibold text-go">{data.status}</span>
-        </div>
+        {(data.room || data.status) && (
+          <div className="mt-3 flex items-center justify-between text-[13px]">
+            {data.room && <span className="text-ink-soft">Room {data.room}{data.doorCode ? ` · Code ${data.doorCode}` : ""}</span>}
+            {data.status && <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[12px] font-semibold text-go">{data.status}</span>}
+          </div>
+        )}
+        {data.action && (
+          <button className="mt-3 w-full rounded-2xl bg-ink py-3.5 text-[15px] font-semibold text-surface active:opacity-80">
+            {data.action}
+          </button>
+        )}
       </div>
     </div>
   );

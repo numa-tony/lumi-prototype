@@ -46,12 +46,13 @@ export type WidgetType =
 export interface ReservationCardData {
   property: string;
   location: string;
-  image: string;
+  image?: string;
   checkIn: string;
   checkOut: string;
-  room: string;
+  room?: string;
   doorCode?: string;
-  status: string;
+  status?: string;
+  action?: string;
 }
 
 export interface ListItem {
