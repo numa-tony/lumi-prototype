@@ -16,7 +16,7 @@ export function DevBar() {
     <div className="fixed left-4 top-4 z-50 flex flex-col gap-2 text-[13px]">
       <button
         onClick={resetSession}
-        className="rounded-md bg-fuchsia-500 px-3 py-2 font-semibold text-white shadow-lg active:scale-95"
+        className="rounded-md bg-[#ffc9d2] px-3 py-2 font-semibold text-[#191919] shadow-lg active:scale-95"
       >
         Reset session
       </button>
