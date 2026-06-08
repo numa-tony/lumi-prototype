@@ -28,6 +28,9 @@
 - **Vercel deployment** — https://numa-lumi-prototype.vercel.app (auto-deploys on push to main)
 - **Local env vars fixed** — `.env.local` has KV Redis vars + Google AI key; app fully functional locally
 - **WhatsApp demo mode** — dual phone layout; second iPhone styled as WA; real Gemini responses via WA hint; thread bridging via `setThreadTopic`; topic markers (🛁🧊) in WA linear stream; 6-step "Sarah's day" scenario buttons; channel asymmetry (app→WA silent) demonstrated live; WA state persisted to localStorage
+- **WA widget deep-links** — widget tool parts in WA bubbles render as tappable "Open in Lumi ↗" links (blue, bordered) pointing to the Vercel deployment instead of plain text labels
+- **Modal scrollability** — Settings panel now scrollable; both modals respect `max-h-[80vh]` correctly
+- **AI model stabilised** — switched default to `gemini-2.5-flash-lite` (only free-tier model with quota available); improved error messages (rate-limit vs generic); try/catch in `/api/chat` route
 
 ## In Progress
 
@@ -35,11 +38,11 @@
 
 ## Next (ordered)
 
-1. **ExploreScreen image URLs** — Figma MCP asset URLs expire ~7 days from Jun 1; replace with permanent CDN URLs
+1. **Cross-channel thread logic design** — align with Oliver/Matthew on thread identity, split rules, and channel continuity before building further (Oliver meeting context captured)
 2. **MessagesScreen (inbox)** — Figma-faithful design, replace direct THREADS import with store reads
-3. **ThreadView rich widgets** — quick-reply chips, reservation card, in-thread status widget
-4. **Real AI end-to-end** — verify Gemini stream + tool calls fire correctly in ThreadView active mode
-5. **WA demo polish** — add timestamp metadata to ops-update/outbound messages; scenario step "app only" silent toast on WA phone
+3. **ExploreScreen image URLs** — Figma MCP asset URLs expired ~Jun 8; replace with permanent CDN URLs
+4. **ThreadView rich widgets** — quick-reply chips, reservation card, in-thread status widget
+5. **WA demo polish** — timestamp metadata on ops-update/outbound messages; "app only" silent toast on WA phone for S4
 
 ## Deferred (not in prototype scope)
 
