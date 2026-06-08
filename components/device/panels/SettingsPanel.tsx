@@ -1,6 +1,7 @@
 "use client";
 
 import { useApp } from "@/lib/store";
+import { WaScenarioPanel } from "./WaScenarioPanel";
 
 export function SettingsPanel() {
   const resetSession = useApp((s) => s.resetSession);
@@ -8,6 +9,9 @@ export function SettingsPanel() {
   const threadCount = useApp((s) => s.threads.length);
   const inStay = useApp((s) => s.inStay);
   const setInStay = useApp((s) => s.setInStay);
+  const waEnabled = useApp((s) => s.wa.enabled);
+  const setWaEnabled = useApp((s) => s.setWaEnabled);
+  const resetWa = useApp((s) => s.resetWa);
 
   return (
     <div className="flex flex-col gap-3 p-5">
@@ -39,18 +43,64 @@ export function SettingsPanel() {
             <p className="text-[12px] text-[#888]">Shows Doors button on FAB</p>
           </div>
         </div>
-        <span
-          className={`relative inline-flex h-[24px] w-[42px] shrink-0 rounded-full transition-colors duration-200 ${
-            inStay ? "bg-[#ff671f]" : "bg-[#333]"
-          }`}
-        >
-          <span
-            className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              inStay ? "translate-x-[21px]" : "translate-x-[3px]"
-            }`}
-          />
-        </span>
+        <Toggle on={inStay} />
       </button>
+
+      {/* WhatsApp demo mode toggle */}
+      <button
+        role="switch"
+        aria-checked={waEnabled}
+        onClick={() => setWaEnabled(!waEnabled)}
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3.5 transition-colors hover:bg-[#252525] active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl leading-none">💬</span>
+          <div className="text-left">
+            <p className="text-[14px] font-semibold text-[#f0f0f0]">WhatsApp demo mode</p>
+            <p className="text-[12px] text-[#888]">Shows a second phone — Sarah&apos;s WhatsApp</p>
+          </div>
+        </div>
+        <Toggle on={waEnabled} />
+      </button>
+
+      {/* Sarah's day scenario panel — only when WA is enabled */}
+      {waEnabled && (
+        <div className="rounded-xl border border-[#2a2a2a] bg-[#171717] p-4">
+          <WaScenarioPanel />
+          <div className="mt-4 border-t border-[#2a2a2a] pt-3">
+            <button
+              onClick={resetWa}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] text-[#555] hover:text-[#888] active:opacity-70"
+            >
+              <span>↺</span>
+              <span>Reset WhatsApp conversation</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Channel asymmetry legend */}
+      {waEnabled && (
+        <div className="rounded-xl border border-[#2a2a2a] bg-[#171717] px-4 py-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#555]">
+            Channel model
+          </p>
+          <div className="flex flex-col gap-1.5 text-[12px]">
+            <div className="flex items-center gap-2">
+              <span className="text-[#25d366]">WhatsApp → Lumi</span>
+              <span className="text-[#444]">pulls in, creates threads</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#555] line-through">Lumi → WhatsApp</span>
+              <span className="text-[#444]">app stays silent</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#4a7fa3]">Lumi-initiated</span>
+              <span className="text-[#444]">fires to both surfaces</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <button
         onClick={resetSession}
@@ -71,5 +121,21 @@ export function SettingsPanel() {
         {threadCount} thread{threadCount === 1 ? "" : "s"} in session · Press Esc to reset
       </p>
     </div>
+  );
+}
+
+function Toggle({ on }: { on: boolean }) {
+  return (
+    <span
+      className={`relative inline-flex h-[24px] w-[42px] shrink-0 rounded-full transition-colors duration-200 ${
+        on ? "bg-[#ff671f]" : "bg-[#333]"
+      }`}
+    >
+      <span
+        className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          on ? "translate-x-[21px]" : "translate-x-[3px]"
+        }`}
+      />
+    </span>
   );
 }

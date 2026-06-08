@@ -238,7 +238,7 @@ function seedMessageId(threadId: string): string {
   return `seed-${threadId}-${seedMessageCounter}`;
 }
 
-function seedMessageToUIMessage(threadId: string, m: SeedMessage): UIMessage {
+export function seedMessageToUIMessage(threadId: string, m: SeedMessage): UIMessage {
   const parts: UIMessage["parts"] = [];
 
   if (m.text) {
