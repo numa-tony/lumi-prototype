@@ -68,7 +68,7 @@ export function SidePanel() {
   return (
     <>
       {/* Permanent sidebar */}
-      <aside className="flex w-[210px] shrink-0 flex-col px-6 py-8">
+      <aside className="relative z-20 flex w-[210px] shrink-0 flex-col px-6 py-8">
         <div className="mb-5">
           <h1 className="text-[28px] font-bold leading-none tracking-tight text-white">
             Numa

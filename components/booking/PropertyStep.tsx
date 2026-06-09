@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
 import type { GuestCounts } from "./BookingSheet";
 
-const IMG_LUMI_ORB = "https://www.figma.com/api/mcp/asset/f6a78c87-538f-46da-97aa-4b86ebbb85db";
+const IMG_LUMI_ORB = "/lumi-torus.png";
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 

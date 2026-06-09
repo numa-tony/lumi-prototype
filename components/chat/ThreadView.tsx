@@ -10,7 +10,20 @@ import { useApp } from "@/lib/store";
 import type { ChatContext, PersistedThread, WidgetData } from "@/lib/types";
 import type { StatusWidgetData } from "@/lib/types";
 
-const IMG_LUMI_LARGE = "https://www.figma.com/api/mcp/asset/c5fa1451-f3c3-4672-bad0-97cc1122794d";
+const IMG_LUMI_LARGE = "/lumi-torus.png";
+
+function isRateLimitError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return (
+    msg.includes("429") ||
+    msg.includes("quota") ||
+    msg.includes("resource_exhausted") ||
+    msg.includes("rate limit") ||
+    msg.includes("too many") ||
+    (err as { statusCode?: number }).statusCode === 429
+  );
+}
 
 const STARTER_ICONS = [
   <svg key="a" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" /><path d="m9 9 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
@@ -228,6 +241,8 @@ export function ThreadView({
   const createThread = useApp((s) => s.createThread);
   const saveThreadMessages = useApp((s) => s.saveThreadMessages);
   const renameThread = useApp((s) => s.renameThread);
+  const setSmartRoom = useApp((s) => s.setSmartRoom);
+  const setInStay = useApp((s) => s.setInStay);
 
   // Stash the thread id this chat is bound to. For an existing thread we have
   // it from the start; for a fresh FAB chat it's null until the user sends
@@ -235,8 +250,10 @@ export function ThreadView({
   const threadIdRef = useRef<string | null>(thread?.id ?? null);
   // Avoid calling renameThread on every render once the AI has set a topic.
   const namedRef = useRef<boolean>(false);
+  // Track already-applied controlDevice parts (Set of toolCallIds) so each fires once.
+  const handledDeviceParts = useRef<Set<string>>(new Set());
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     messages: thread?.messages,
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -275,6 +292,25 @@ export function ThreadView({
       }
     }
   }, [messages, renameThread]);
+
+  // React to controlDevice tool calls: update smart room state in the background.
+  useEffect(() => {
+    for (const m of messages) {
+      for (let i = 0; i < (m.parts ?? []).length; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const part = m.parts[i] as any;
+        if (part.type !== "tool-controlDevice" || part.state !== "output-available") continue;
+        const key = part.toolCallId ?? `${m.id}:${i}`;
+        if (handledDeviceParts.current.has(key)) continue;
+        handledDeviceParts.current.add(key);
+        const { device, patch } = part.output ?? {};
+        if (patch) {
+          setSmartRoom({ ...patch, lastDevice: device });
+          setInStay(true);
+        }
+      }
+    }
+  }, [messages, setSmartRoom, setInStay]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -396,8 +432,9 @@ export function ThreadView({
                 if (!part.text) return null;
                 return <TextBubble key={idx} role={message.role as "user" | "assistant"} text={part.text} />;
               }
-              // setThreadTopic is metadata-only — never render it.
+              // Metadata-only tools — never render as chat bubbles.
               if (part.type === "tool-setThreadTopic") return null;
+              if (part.type === "tool-controlDevice") return null;
               const wtype = toolPartToWidgetType(part.type);
               if (wtype) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -431,7 +468,9 @@ export function ThreadView({
 
         {status === "error" && (
           <p className="px-1 text-center text-[12px] text-numa">
-            Lumi had trouble responding. Check the API key and try again.
+            {isRateLimitError(error)
+              ? "Rate limit reached — wait a moment and try again."
+              : "Lumi had trouble responding. Try again."}
           </p>
         )}
 

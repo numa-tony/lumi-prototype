@@ -5,7 +5,7 @@ import type { UIMessage } from "ai";
 import { useApp } from "@/lib/store";
 import type { PersistedThread, ThreadFilter } from "@/lib/types";
 
-const IMG_LUMI = "https://www.figma.com/api/mcp/asset/c5fa1451-f3c3-4672-bad0-97cc1122794d";
+const IMG_LUMI = "/lumi-torus.png";
 
 const CHIPS: { id: "all" | ThreadFilter; label: string }[] = [
   { id: "all", label: "All" },

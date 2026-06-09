@@ -9,12 +9,47 @@ import { Waveform } from "./Waveform";
 import Image from "next/image";
 
 const VOICE_HINT =
-  "The guest is in voice mode. Your response will be read aloud by text-to-speech. " +
-  "Rules: reply in 1–2 short sentences maximum — no bullet lists, no headers, no markdown. " +
-  "Give your spoken answer first, then call any widget if needed. " +
+  "The guest is speaking to Lumi by voice during their current stay at Numa. " +
+  "This is an in-stay session — smart room controls are active. " +
+  "When the guest asks to change anything physical (lights, TV, blinds, AC, door): " +
+  "step 1 — call the controlDevice tool; step 2 — YOU MUST ALWAYS speak a 1-sentence confirmation aloud (e.g. 'Lights on!' or 'Done!'). " +
+  "Never skip the spoken confirmation. Even after calling a tool, you MUST produce a text response. " +
+  "Your response will be read aloud: 1–2 short sentences, no markdown, no lists. " +
   "Sound like you are talking to the guest, not writing to them.";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
+
+// Synthesise a spoken confirmation when the model called controlDevice but returned no text.
+// patch is device-keyed: { lights: { on: true } } — read the nested object for the device.
+function synthDeviceConfirmation(device?: string, patch?: Record<string, unknown>): string {
+  const dp = (device && patch ? patch[device] : {}) as Record<string, unknown>;
+  switch (device) {
+    case "lights":
+      if (dp?.on === false) return "Lights off.";
+      if (typeof dp?.level === "number") return `Lights at ${dp.level}%.`;
+      if (dp?.warmth === "warm") return "Warm lighting on.";
+      if (dp?.warmth === "cool") return "Cool lighting on.";
+      return "Lights on!";
+    case "blinds":
+      if (dp?.level === 0) return "Blinds closed.";
+      if (dp?.level === 100) return "Blinds open.";
+      if (typeof dp?.level === "number") return `Blinds at ${dp.level}%.`;
+      return "Blinds adjusted.";
+    case "tv":
+      if (dp?.on === false) return "TV off.";
+      if (dp?.app) return `Opening ${dp.app}.`;
+      return "TV on!";
+    case "ac":
+      if (dp?.on === false) return "AC off.";
+      if (typeof dp?.setpoint === "number") return `AC set to ${dp.setpoint}°.`;
+      return "AC adjusted.";
+    case "door":
+      if (dp?.door === "unlocked" || dp?.door === "open") return "Door unlocked.";
+      return "Door locked.";
+    default:
+      return "Done!";
+  }
+}
 
 // ── WAV encoder ───────────────────────────────────────────────────────────────
 // Converts any MediaRecorder blob (webm / mp4 / ogg) to WAV PCM16 via
@@ -82,6 +117,8 @@ export function VoiceSheet() {
   const createThread = useApp((s) => s.createThread);
   const saveThreadMessages = useApp((s) => s.saveThreadMessages);
   const renameThread = useApp((s) => s.renameThread);
+  const setSmartRoom = useApp((s) => s.setSmartRoom);
+  const setInStay = useApp((s) => s.setInStay);
 
   const [voiceState, setVoiceStateRaw] = useState<VoiceState>("idle");
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
@@ -90,7 +127,7 @@ export function VoiceSheet() {
   const voiceStateRef = useRef<VoiceState>("idle");
   const threadIdRef = useRef<string | null>(null);
   const namedRef = useRef(false);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const handledDeviceParts = useRef<Set<string>>(new Set());
 
   // MediaRecorder refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -116,17 +153,36 @@ export function VoiceSheet() {
     onFinish: ({ messages: latest }) => {
       if (threadIdRef.current) saveThreadMessages(threadIdRef.current, latest);
 
-      const lastAI = [...latest].reverse().find((m) => m.role === "assistant");
-      let responseText = "";
-      if (lastAI) {
-        responseText = lastAI.parts
-          .filter((p) => p.type === "text")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((p) => (p as any).text as string)
-          .join(" ")
-          .trim();
-        if (!responseText && typeof (lastAI as unknown as { content?: string }).content === "string") {
+      // Collect text from all assistant messages in this response cycle
+      // (multi-step tool calls mean the final message may be a tool call, not text)
+      const assistantMsgs = latest.filter((m) => m.role === "assistant");
+      let responseText = assistantMsgs
+        .flatMap((m) => m.parts ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((p) => p.type === "text" && typeof (p as any).text === "string")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((p) => ((p as any).text as string).trim())
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      // Fallback 2: try the raw content string if parts yielded nothing
+      if (!responseText) {
+        const lastAI = [...assistantMsgs].pop();
+        if (lastAI && typeof (lastAI as unknown as { content?: string }).content === "string") {
           responseText = ((lastAI as unknown as { content: string }).content).trim();
+        }
+      }
+
+      // Fallback 3: model called controlDevice but produced no text — synthesise a confirmation
+      // from the tool output so the user always hears voice feedback after a room control action
+      if (!responseText) {
+        const allParts = assistantMsgs.flatMap((m) => m.parts ?? []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const devicePart = allParts.find((p) => (p as any).type === "tool-controlDevice" && (p as any).state === "output-available") as any;
+        if (devicePart?.output) {
+          const { device, patch } = devicePart.output as { device?: string; patch?: Record<string, unknown> };
+          responseText = synthDeviceConfirmation(device, patch);
         }
       }
 
@@ -163,6 +219,27 @@ export function VoiceSheet() {
     }
   }, [messages, renameThread]);
 
+  // Voice mode always implies in-stay — activate the room scene immediately on mount
+  useEffect(() => { setInStay(true); }, [setInStay]);
+
+  // Dispatch controlDevice tool outputs to the smart room store
+  useEffect(() => {
+    for (const m of messages) {
+      for (let i = 0; i < (m.parts ?? []).length; i++) {
+        const part = m.parts[i] as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (part.type !== "tool-controlDevice" || part.state !== "output-available") continue;
+        const key = part.toolCallId ?? `${m.id}:${i}`;
+        if (handledDeviceParts.current.has(key)) continue;
+        handledDeviceParts.current.add(key);
+        const { device, patch } = part.output ?? {};
+        if (patch) {
+          setSmartRoom({ ...patch, lastDevice: device });
+          setInStay(true);
+        }
+      }
+    }
+  }, [messages, setSmartRoom, setInStay]);
+
   // ── Browser TTS fallback ─────────────────────────────────────────────────────
   const browserSpeak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
@@ -187,7 +264,7 @@ export function VoiceSheet() {
     });
   }, []);
 
-  // ── Gemini TTS ───────────────────────────────────────────────────────────────
+  // ── Kokoro TTS (HF Space) with browser fallback ───────────────────────────────
   const speakWithGemini = useCallback(
     async (text: string): Promise<void> => {
       try {
@@ -202,7 +279,6 @@ export function VoiceSheet() {
         return new Promise((resolve) => {
           const url = URL.createObjectURL(blob);
           const audio = new Audio(url);
-          audioElRef.current = audio;
           audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
           audio.onerror = () => { URL.revokeObjectURL(url); browserSpeak(text).then(resolve); };
           audio.play().catch(() => { URL.revokeObjectURL(url); browserSpeak(text).then(resolve); });
@@ -346,7 +422,14 @@ export function VoiceSheet() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ audioBase64, mimeType: "audio/wav" }),
         });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (!resp.ok) {
+          if (resp.status === 429) {
+            setVoiceState("idle");
+            setErrorMsg("Lumi is busy — try again in a moment.");
+            return;
+          }
+          throw new Error(`HTTP ${resp.status}`);
+        }
         const { transcript } = (await resp.json()) as { transcript: string };
 
         if (!transcript?.trim()) {
@@ -386,7 +469,6 @@ export function VoiceSheet() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      audioElRef.current?.pause();
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       const rec = mediaRecorderRef.current;
       if (rec && rec.state !== "inactive") {

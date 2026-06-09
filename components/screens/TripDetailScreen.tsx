@@ -4,18 +4,14 @@ import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { UPCOMING_TRIP } from "@/lib/mock/guest";
 
-// ---------------------------------------------------------------------------
-// Figma MCP asset URLs (valid ~7 days from Jun 3 2026).
-// Replace with permanent CDN URLs if they expire.
-// ---------------------------------------------------------------------------
 const IMG_ROOM_LEFT =
-  "https://www.figma.com/api/mcp/asset/42b01db0-b7b5-4121-9ec0-d06cc3e9b5b1";
+  "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80&auto=format&fit=crop";
 const IMG_ROOM_RIGHT =
-  "https://www.figma.com/api/mcp/asset/c7e3cd8d-acac-496f-8d49-a76a226b7a38";
+  "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=400&q=80&auto=format&fit=crop";
 const IMG_EXTRAS =
-  "https://www.figma.com/api/mcp/asset/81be3436-22e9-4b6a-869d-05b959f4a74b";
+  "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=400&q=80&auto=format&fit=crop";
 const IMG_BENEFITS =
-  "https://www.figma.com/api/mcp/asset/8f3daede-c3b9-44f5-9b90-659135368db1";
+  "https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=400&q=80&auto=format&fit=crop";
 
 // Amsterdam brand color (Numa city palette)
 const AMSTERDAM = "#d31779";

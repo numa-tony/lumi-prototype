@@ -1,39 +1,46 @@
 import type { UIMessage } from "ai";
 
-// Widget tool parts degrade to text labels in WA — same content, channel-appropriate rendering.
+const APP_URL = "https://numa-lumi-prototype.vercel.app";
+
+// Widget parts degrade to a "View in Lumi app" deep-link in WA.
 const WIDGET_LABELS: Record<string, string> = {
-  statusWidget: "📋 Status update",
+  statusWidget: "📋 Request status",
   quickReply: "💬 Reply options",
   reservationCard: "🏠 Reservation details",
-  mapWidget: "📍 Location & map",
-  listWidget: "📝 List",
+  mapWidget: "📍 Nearby places",
+  listWidget: "📝 Details",
   propertyCarousel: "🏠 Properties",
   roomCard: "🛏 Room details",
   locationPin: "📍 Location",
   videoCard: "🎬 Video",
-  imageCard: "🖼 Image",
+  imageCard: "🖼 Photos",
 };
 
-function getDisplayText(message: UIMessage): string {
-  const texts: string[] = [];
+function getTextContent(message: UIMessage): string {
+  return message.parts
+    .filter((p) => p.type === "text" && (p as any).text)
+    .map((p) => (p as any).text as string)
+    .join("\n");
+}
+
+function getWidgetLinks(message: UIMessage): string[] {
+  const links: string[] = [];
   for (const part of message.parts) {
-    if (part.type === "text" && part.text) {
-      texts.push(part.text);
-    } else if (part.type?.startsWith("tool-")) {
-      const widgetType = part.type.replace("tool-", "");
-      if (widgetType === "setThreadTopic") continue;
-      const label = WIDGET_LABELS[widgetType];
-      if (label) texts.push(label);
-    }
+    if (!part.type?.startsWith("tool-")) continue;
+    const widgetType = part.type.replace("tool-", "");
+    if (widgetType === "setThreadTopic") continue;
+    const label = WIDGET_LABELS[widgetType];
+    if (label) links.push(label);
   }
-  return texts.join("\n") || "";
+  return links;
 }
 
 export function WaBubble({ message }: { message: UIMessage }) {
   const isGuest = message.role === "user";
   const isOutbound = (message as any).metadata?.origin === "outbound";
-  const text = getDisplayText(message);
-  if (!text) return null;
+  const text = getTextContent(message);
+  const widgetLinks = getWidgetLinks(message);
+  if (!text && widgetLinks.length === 0) return null;
 
   const time = (message as any).metadata?.time ?? "9:41";
 
@@ -45,9 +52,9 @@ export function WaBubble({ message }: { message: UIMessage }) {
         </div>
         <div className="ml-3 max-w-[78%] self-start">
           <div className="relative rounded-[8px] rounded-tl-none bg-white px-3 py-2 shadow-sm">
-            {/* tail */}
             <div className="absolute -left-[6px] top-0 h-0 w-0 border-b-[8px] border-r-[7px] border-t-0 border-b-transparent border-r-white" />
-            <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>
+            {text && <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>}
+            <WidgetLinks links={widgetLinks} />
             <p className="mt-1 text-right text-[11px] text-[#8a8a8a]">{time}</p>
           </div>
         </div>
@@ -59,12 +66,11 @@ export function WaBubble({ message }: { message: UIMessage }) {
     return (
       <div className="flex justify-end px-3 py-0.5">
         <div className="relative max-w-[78%] rounded-[8px] rounded-tr-none bg-[#dcf8c6] px-3 py-2 shadow-sm">
-          {/* tail */}
           <div className="absolute -right-[6px] top-0 h-0 w-0 border-b-[8px] border-l-[7px] border-t-0 border-b-transparent border-l-[#dcf8c6]" />
-          <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>
+          {text && <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>}
+          <WidgetLinks links={widgetLinks} />
           <div className="mt-1 flex items-center justify-end gap-1">
             <span className="text-[11px] text-[#8a8a8a]">{time}</span>
-            {/* double-tick */}
             <svg width="16" height="10" viewBox="0 0 16 10" fill="none" aria-hidden>
               <path d="M1 5l3 3 5-7" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M6 5l3 3 5-7" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -79,11 +85,31 @@ export function WaBubble({ message }: { message: UIMessage }) {
   return (
     <div className="flex px-3 py-0.5">
       <div className="relative max-w-[78%] rounded-[8px] rounded-tl-none bg-white px-3 py-2 shadow-sm">
-        {/* tail */}
         <div className="absolute -left-[6px] top-0 h-0 w-0 border-b-[8px] border-r-[7px] border-t-0 border-b-transparent border-r-white" />
-        <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>
+        {text && <p className="whitespace-pre-line text-[14px] leading-[1.4] text-[#111]">{text}</p>}
+        <WidgetLinks links={widgetLinks} />
         <p className="mt-1 text-right text-[11px] text-[#8a8a8a]">{time}</p>
       </div>
+    </div>
+  );
+}
+
+function WidgetLinks({ links }: { links: string[] }) {
+  if (links.length === 0) return null;
+  return (
+    <div className="mt-1.5 flex flex-col gap-1">
+      {links.map((label) => (
+        <a
+          key={label}
+          href={APP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white/60 px-2.5 py-1.5 text-[13px] text-[#0b6ea8] no-underline active:opacity-70"
+        >
+          <span>{label}</span>
+          <span className="ml-auto text-[10px] text-[#8a8a8a]">Open in Lumi ↗</span>
+        </a>
+      ))}
     </div>
   );
 }

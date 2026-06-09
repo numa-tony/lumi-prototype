@@ -200,6 +200,71 @@ export const tools = {
       return { title: input.title, caption: input.caption, images: pool };
     },
   }),
+
+  controlDevice: tool({
+    description:
+      "Control a smart device in the guest's Numa room (door, lights, TV, blinds, AC). " +
+      "Call whenever the guest asks to change something physical in the room — e.g. " +
+      "'turn on the lights', 'dim to 30%', 'open the blinds', 'put on Netflix', " +
+      "'set 22 degrees', 'unlock the door'. Only set the fields you intend to change. " +
+      "After calling it, confirm in one short warm sentence. Do NOT render any widget.",
+    inputSchema: z.object({
+      device:   z.enum(["door", "lights", "tv", "blinds", "ac"]),
+      power:    z.enum(["on", "off"]).optional()
+                  .describe("Turn the device on or off (lights, tv)."),
+      door:     z.enum(["locked", "unlocked", "open"]).optional()
+                  .describe("Door state. 'open' for open door, 'unlocked' to just unlock."),
+      level:    z.number().min(0).max(100).optional()
+                  .describe("0–100. lights=brightness, tv=volume, blinds=position (0 closed, 100 open)."),
+      warmth:   z.enum(["warm", "neutral", "cool"]).optional()
+                  .describe("Light color temperature."),
+      muted:    z.boolean().optional(),
+      channel:  z.string().optional().describe("TV channel name, e.g. 'ARTE'."),
+      app:      z.string().optional().describe("Streaming app, e.g. 'Netflix', 'Spotify'."),
+      mode:     z.enum(["cool", "heat", "off"]).optional().describe("AC mode."),
+      setpoint: z.number().min(15).max(30).optional().describe("Target temperature in °C."),
+    }),
+    execute: async (input) => {
+      const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+      const patch: Record<string, unknown> = {};
+
+      switch (input.device) {
+        case "door":
+          patch.door = { state: input.door ?? "unlocked" };
+          break;
+        case "lights":
+          patch.lights = {
+            ...(input.power  ? { on: input.power === "on" } : {}),
+            ...(input.level != null ? { brightness: clamp(input.level), on: true } : {}),
+            ...(input.warmth ? { warmth: input.warmth, on: true } : {}),
+          };
+          break;
+        case "tv":
+          patch.tv = {
+            ...(input.power   ? { on: input.power === "on" } : {}),
+            ...(input.level  != null ? { volume: clamp(input.level) } : {}),
+            ...(input.muted  != null ? { muted: input.muted } : {}),
+            ...(input.channel ? { channel: input.channel, on: true, app: null } : {}),
+            ...(input.app     ? { app: input.app, on: true, channel: null } : {}),
+          };
+          break;
+        case "blinds":
+          patch.blinds = { position: clamp(input.level ?? 100) };
+          break;
+        case "ac":
+          patch.ac = {
+            ...(input.mode ? { mode: input.mode } : {}),
+            ...(input.setpoint != null
+                ? { setpoint: Math.max(15, Math.min(30, Math.round(input.setpoint))),
+                    ...(input.mode ? {} : { mode: "cool" }) }
+                : {}),
+          };
+          break;
+      }
+
+      return { device: input.device, patch };
+    },
+  }),
 };
 
 export type LumiTools = typeof tools;

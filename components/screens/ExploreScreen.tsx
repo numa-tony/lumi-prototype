@@ -5,34 +5,32 @@ import { useApp } from "@/lib/store";
 import { UPCOMING_TRIP } from "@/lib/mock/guest";
 
 // ---------------------------------------------------------------------------
-// Images: hero + guest video are stable Unsplash URLs.
-// All other images are Figma MCP asset URLs (valid ~7 days from Jun 1 2026) —
-// replace with permanent CDN URLs if they expire.
-// NOTE: never use full-frame Figma exports as images — they bake in UI elements
-// (status bar, search bar). Check with `file` command: should NOT be 1179x2556.
+// All images use stable Unsplash URLs (replaced Jun 8 2026 after Figma MCP
+// asset URLs expired). NOTE: never use full-frame Figma exports as images —
+// they bake in UI elements (status bar, search bar).
 // ---------------------------------------------------------------------------
 const IMG_HERO =
-  "https://www.figma.com/api/mcp/asset/b32401c1-9c0f-4d7f-ad7f-74b14bc88845";
+  "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=800&q=80&auto=format&fit=crop";
 const IMG_PROP_1 =
-  "https://www.figma.com/api/mcp/asset/1048cfdc-53f2-4ee7-a9b7-c09e29a61a10";
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80&auto=format&fit=crop";
 const IMG_PROP_2 =
-  "https://www.figma.com/api/mcp/asset/c2ab2452-c0b6-4da3-8ac1-bb5f3386ec4e";
+  "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80&auto=format&fit=crop";
 const IMG_PROP_3 =
-  "https://www.figma.com/api/mcp/asset/6a996d5d-5e14-47f6-bacb-d1a89ef6fefd";
+  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80&auto=format&fit=crop";
 const IMG_GUEST_VIDEO =
   "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80&auto=format&fit=crop";
 const IMG_USP_1 =
-  "https://www.figma.com/api/mcp/asset/eac539a5-131f-45e8-b3ae-b782903fc812";
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&q=80&auto=format&fit=crop";
 const IMG_USP_2 =
-  "https://www.figma.com/api/mcp/asset/d8765b47-1d54-4eff-bc3c-1aaf1b39e97e";
+  "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80&auto=format&fit=crop";
 const IMG_AVT: [string, string][] = [
   // [url, ring-color] — first avatar gets brand pink ring
-  ["https://www.figma.com/api/mcp/asset/43eded61-9ad9-4efd-a442-601f4f11f363", "#ffc9d2"],
-  ["https://www.figma.com/api/mcp/asset/acfe66af-17a7-4696-870c-dbb33d2b03f0", "#dedddb"],
-  ["https://www.figma.com/api/mcp/asset/3ebe5426-b400-4860-9135-6f205d89a1bd", "#dedddb"],
-  ["https://www.figma.com/api/mcp/asset/5580dfbd-7444-4082-95f1-075c46e42274", "#dedddb"],
-  ["https://www.figma.com/api/mcp/asset/1ec311ff-2151-4913-85c4-7a7cf6c70f0a", "#dedddb"],
-  ["https://www.figma.com/api/mcp/asset/43eded61-9ad9-4efd-a442-601f4f11f363", "#dedddb"],
+  ["https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80&auto=format&fit=crop&crop=face", "#ffc9d2"],
+  ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80&auto=format&fit=crop&crop=face", "#dedddb"],
+  ["https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&q=80&auto=format&fit=crop&crop=face", "#dedddb"],
+  ["https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&q=80&auto=format&fit=crop&crop=face", "#dedddb"],
+  ["https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&q=80&auto=format&fit=crop&crop=face", "#dedddb"],
+  ["https://images.unsplash.com/photo-1488161628813-04466f872be2?w=80&q=80&auto=format&fit=crop&crop=face", "#dedddb"],
 ];
 
 const LOCATION_CHIPS = ["Amsterdam", "Antwerp", "Barcelona", "Berlin"];

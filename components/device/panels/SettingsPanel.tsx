@@ -1,6 +1,7 @@
 "use client";
 
 import { useApp } from "@/lib/store";
+import { INITIAL_SMART_ROOM } from "@/lib/smartRoom";
 import { WaScenarioPanel } from "./WaScenarioPanel";
 
 export function SettingsPanel() {
@@ -9,12 +10,13 @@ export function SettingsPanel() {
   const threadCount = useApp((s) => s.threads.length);
   const inStay = useApp((s) => s.inStay);
   const setInStay = useApp((s) => s.setInStay);
+  const setSmartRoom = useApp((s) => s.setSmartRoom);
   const waEnabled = useApp((s) => s.wa.enabled);
   const setWaEnabled = useApp((s) => s.setWaEnabled);
   const resetWa = useApp((s) => s.resetWa);
 
   return (
-    <div className="flex flex-col gap-3 p-5">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-[#555]">
         Demo Controls
       </p>
@@ -40,11 +42,25 @@ export function SettingsPanel() {
           <span className="text-xl leading-none">🏠</span>
           <div className="text-left">
             <p className="text-[14px] font-semibold text-[#f0f0f0]">In-stay mode</p>
-            <p className="text-[12px] text-[#888]">Shows Doors button on FAB</p>
+            <p className="text-[12px] text-[#888]">Doors button + smart-room scene behind phone</p>
           </div>
         </div>
         <Toggle on={inStay} />
       </button>
+
+      {/* Reset room — only relevant when in-stay mode is on */}
+      {inStay && (
+        <button
+          onClick={() => setSmartRoom(INITIAL_SMART_ROOM)}
+          className="flex w-full items-center gap-3 rounded-xl border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left transition-colors hover:bg-[#252525] active:scale-[0.99]"
+        >
+          <span className="text-xl leading-none">🌙</span>
+          <div>
+            <p className="text-[14px] font-semibold text-[#f0f0f0]">Reset room</p>
+            <p className="text-[12px] text-[#888]">Lights off, blinds closed, TV off</p>
+          </div>
+        </button>
+      )}
 
       {/* WhatsApp demo mode toggle */}
       <button

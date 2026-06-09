@@ -2,8 +2,7 @@
 
 import { useApp, CHAT_CONTEXTS } from "@/lib/store";
 
-const IMG_LUMI_ORB = "https://www.figma.com/api/mcp/asset/f6a78c87-538f-46da-97aa-4b86ebbb85db";
-const IMG_DOOR = "https://www.figma.com/api/mcp/asset/75b7454b-141d-4e30-a0bb-8eb2859eceb4";
+const IMG_LUMI_ORB = "/lumi-torus.png";
 
 export function Fab() {
   const screen = useApp((s) => s.screen);
@@ -45,8 +44,10 @@ export function Fab() {
             <>
               <span className="h-[56px] w-px shrink-0 bg-[#eee]" />
               <button className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG_DOOR} alt="" className="h-8 w-8 shrink-0 object-cover" />
+                <svg className="h-8 w-8 shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="6" y="4" width="20" height="26" rx="2" stroke="#191919" strokeWidth="2"/>
+                  <circle cx="21" cy="17" r="1.5" fill="#191919"/>
+                </svg>
                 Doors
               </button>
             </>

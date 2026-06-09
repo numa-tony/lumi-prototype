@@ -4,6 +4,7 @@ import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import type { ChatContext, PersistedThread, ScreenId, ThreadFilter, WaState, WaTopicMarker } from "./types";
 import { demoSeedThreads } from "./mock/threads";
+import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
 
 const STORAGE_KEY = "lumi-session-v1";
 
@@ -14,6 +15,7 @@ interface AppState {
   voiceOpen: boolean;
   bookingOpen: boolean;
   inStay: boolean;
+  smartRoom: SmartRoomDevices;
   threads: PersistedThread[];
   wa: WaState;
 
@@ -26,6 +28,7 @@ interface AppState {
   openBooking: () => void;
   closeBooking: () => void;
   setInStay: (v: boolean) => void;
+  setSmartRoom: (update: Partial<SmartRoomDevices>) => void;
 
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
@@ -67,6 +70,7 @@ export const useApp = create<AppState>()(
       voiceOpen: false,
       bookingOpen: false,
       inStay: false,
+      smartRoom: INITIAL_SMART_ROOM,
       threads: [],
       wa: {
         enabled: false,
@@ -91,6 +95,20 @@ export const useApp = create<AppState>()(
       openBooking: () => set({ bookingOpen: true }),
       closeBooking: () => set({ bookingOpen: false }),
       setInStay: (v) => set({ inStay: v }),
+
+      setSmartRoom: (update) =>
+        set((s) => ({
+          smartRoom: {
+            ...s.smartRoom,
+            ...update,
+            door:   update.door   ? { ...s.smartRoom.door,   ...update.door }   : s.smartRoom.door,
+            lights: update.lights ? { ...s.smartRoom.lights, ...update.lights } : s.smartRoom.lights,
+            tv:     update.tv     ? { ...s.smartRoom.tv,     ...update.tv }     : s.smartRoom.tv,
+            blinds: update.blinds ? { ...s.smartRoom.blinds, ...update.blinds } : s.smartRoom.blinds,
+            ac:     update.ac     ? { ...s.smartRoom.ac,     ...update.ac }     : s.smartRoom.ac,
+            lastChangedAt: Date.now(),
+          },
+        })),
 
       createThread: (firstUserText) => {
         const id = `th_${nanoid(8)}`;
@@ -153,6 +171,7 @@ export const useApp = create<AppState>()(
           chat: null,
           voiceOpen: false,
           bookingOpen: false,
+          smartRoom: INITIAL_SMART_ROOM,
           threads: [],
           wa: {
             ...s.wa,
@@ -289,7 +308,7 @@ export const useApp = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       // Only threads survive across reloads. screen/chat/tripId stay ephemeral
       // so refreshing always lands you on a clean Explore with no open sheet.
-      partialize: (s) => ({ threads: s.threads, wa: s.wa }),
+      partialize: (s) => ({ threads: s.threads, wa: s.wa, inStay: s.inStay }),
     },
   ),
 );

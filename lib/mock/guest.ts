@@ -39,6 +39,6 @@ export const UPCOMING_TRIP = {
   dates: "Apr 14 – 15, 2026",
   reservationId: "FJKD3K",
   image:
-    "https://www.figma.com/api/mcp/asset/7be2e8e0-2877-431f-b26f-854b33414bd7",
+    "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80&auto=format&fit=crop",
   needsCheckIn: true,
 };

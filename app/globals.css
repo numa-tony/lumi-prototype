@@ -278,4 +278,16 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .fab-border { animation: none; }
   .fab-dots   { animation: none; -webkit-mask-image: none; mask-image: none; }
+  .ac-shimmer-streak { animation: none; }
+}
+
+/* ── Smart room: AC shimmer streaks ─────────────────────────────────────── */
+.ac-shimmer-streak {
+  animation: ac-shimmer-drift 2.4s ease-in-out infinite;
+}
+
+@keyframes ac-shimmer-drift {
+  0%   { transform: translateY(0)    scaleY(1);   opacity: 0.4; }
+  50%  { transform: translateY(20px) scaleY(1.4); opacity: 0.15; }
+  100% { transform: translateY(0)    scaleY(1);   opacity: 0.4; }
 }
