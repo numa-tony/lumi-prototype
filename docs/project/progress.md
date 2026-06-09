@@ -1,4 +1,4 @@
-# Progress — Updated 2026-06-08
+# Progress — Updated 2026-06-09
 
 ## Done
 
@@ -16,29 +16,29 @@
 - **MyTripsScreen + TripDetailScreen** — Figma v2 faithful implementations
 - **ProfileScreen** — Figma redesign: pink header, savings card with shadow, menu rows with inline SVGs, `#9162CA` since-2024 badge
 - **Project management md system** — CLAUDE.md, context/vision/decisions docs, skills
-- **Voice mode** — `VoiceSheet.tsx` + `Waveform.tsx`; MediaRecorder → `/api/voice` (Gemini STT) → `/api/chat` → `/api/tts`; browser TTS fallback
 - **Voice design** — white bg, Figma 3D torus (`public/lumi-torus.png`), waveform card with swipe gestures
 - **In stay mode toggle** — DevBar → SidePanel control; controls FAB Doors button visibility
-- **AI starters** — `/api/starters` generates context-aware conversation starters; ThreadView fetches once per keyboard open
+- **AI starters** — `/api/starters` generates context-aware conversation starters; ThreadView fetches once per keyboard open; 3-tier JSON parse prevents "json" / "[" literals
 - **Messages badge** — only shown when unread threads exist
 - **Booking flow (4 steps)** — Where → When → Guests → Results with city-aware listings
 - **SidePanel + Settings/Todos modals** — permanent left sidebar; dark-mode modals; todos Kanban with priority, delete, status edit
-- **Todo persistence** — Upstash Redis via Vercel Marketplace (`upstash-kv-citron-envelope`); localStorage cache + server sync on save
+- **Todo persistence** — Upstash Redis via Vercel Marketplace; localStorage cache + server sync on save
 - **GitHub repo** — https://github.com/numa-tony/lumi-prototype
 - **Vercel deployment** — https://numa-lumi-prototype.vercel.app (auto-deploys on push to main)
-- **Local env vars fixed** — `.env.local` has KV Redis vars + Google AI key; app fully functional locally
-- **WhatsApp demo mode** — dual phone layout; second iPhone styled as WA; real Gemini responses via WA hint; thread bridging via `setThreadTopic`; topic markers (🛁🧊) in WA linear stream; 6-step "Sarah's day" scenario buttons; channel asymmetry (app→WA silent) demonstrated live; WA state persisted to localStorage
-- **WA widget deep-links** — widget tool parts in WA bubbles render as tappable "Open in Lumi ↗" links (blue, bordered) pointing to the Vercel deployment instead of plain text labels
-- **Modal scrollability** — Settings panel now scrollable; both modals respect `max-h-[80vh]` correctly
-- **AI model stabilised** — switched default to `gemini-2.5-flash-lite` (only free-tier model with quota available); improved error messages (rate-limit vs generic); try/catch in `/api/chat` route
+- **WhatsApp demo mode** — dual phone layout; real Gemini responses; thread bridging; topic markers; 6-step "Sarah's day" scenario; channel asymmetry; WA state persisted
+- **WA widget deep-links** — tool parts render as tappable "Open in Lumi ↗" links
+- **Modal scrollability** — Settings panel scrollable; modals respect `max-h-[80vh]`
+- **Smart room controls (fully working)** — `controlDevice` tool → `SmartRoomScene` background animates behind phone; `inStay` auto-set on first device control or voice open; persisted to localStorage; WA blocked at API level with redirect message
+- **Voice pipeline (fully working)** — Groq Whisper STT (Gemini fallback) → `/api/chat` with tools → Kokoro TTS (browser TTS fallback); synthetic confirmation if model returns no text; silence detection auto-send
+- **Multi-provider fallback chain** — Gemini → Qwen3-32b → Llama-3.3-70b → Gemini2 (second key slot) → Llama-3.1-8b; cooldowns persisted to Redis (survives cold starts); smart cooldown: 6h daily exhaustion vs 90s per-minute
 
 ## In Progress
 
-- **Voice TTS validation** — Gemini TTS endpoint deployed; needs live confirmation audio plays back correctly
+- **Rate limit exposure** — add `GOOGLE_GENERATIVE_AI_API_KEY_2` to `.env.local` + Vercel env for extra Gemini quota
 
 ## Next (ordered)
 
-1. **Cross-channel thread logic design** — align with Oliver/Matthew on thread identity, split rules, and channel continuity before building further (Oliver meeting context captured)
+1. **Cross-channel thread logic design** — align with Oliver/Matthew on thread identity, split rules, and channel continuity
 2. **MessagesScreen (inbox)** — Figma-faithful design, replace direct THREADS import with store reads
 3. **ExploreScreen image URLs** — Figma MCP asset URLs expired ~Jun 8; replace with permanent CDN URLs
 4. **ThreadView rich widgets** — quick-reply chips, reservation card, in-thread status widget
