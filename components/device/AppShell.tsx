@@ -14,11 +14,15 @@ import { MyTripsScreen } from "@/components/screens/MyTripsScreen";
 import { TripDetailScreen } from "@/components/screens/TripDetailScreen";
 import { MessagesScreen } from "@/components/screens/MessagesScreen";
 import { ProfileScreen } from "@/components/screens/ProfileScreen";
+import { RoomControlsScreen } from "@/components/screens/RoomControlsScreen";
+import { TvRemoteScreen } from "@/components/screens/TvRemoteScreen";
 
 const SCREENS: Record<ScreenId, React.ComponentType> = {
   explore: ExploreScreen,
   trips: MyTripsScreen,
   tripDetail: TripDetailScreen,
+  roomControls: RoomControlsScreen,
+  tvRemote: TvRemoteScreen,
   messages: MessagesScreen,
   profile: ProfileScreen,
 };
@@ -55,8 +59,8 @@ export function AppShell() {
         </AnimatePresence>
       </div>
 
-      <Fab />
-      <BottomNav />
+      {screen !== "tvRemote" && <Fab />}
+      {screen !== "tvRemote" && <BottomNav />}
       <ChatSheet />
       <AnimatePresence>
         {bookingOpen && <BookingSheet />}

@@ -87,6 +87,18 @@ function IconDoor() {
   );
 }
 
+function IconRemote() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
+      <rect x="8" y="2" width="8" height="20" rx="3" />
+      <circle cx="12" cy="6.5" r="1.2" fill="#191919" stroke="none" />
+      <line x1="10" y1="11" x2="14" y2="11" strokeLinecap="round" />
+      <line x1="10" y1="14" x2="14" y2="14" strokeLinecap="round" />
+      <line x1="10" y1="17" x2="14" y2="17" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconChevronRight() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b2b2b2" strokeWidth="1.5" aria-hidden>
@@ -222,6 +234,28 @@ export function TripDetailScreen() {
                 </p>
                 <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
                   Photos, amenities, and more
+                </p>
+              </div>
+              <div className="shrink-0">
+                <IconChevronRight />
+              </div>
+            </button>
+
+            <div className="border-t border-[#eceae7]" />
+
+            <button
+              onClick={() => go("roomControls")}
+              className="flex w-full items-center gap-4 py-2 text-left active:opacity-70"
+            >
+              <div className="shrink-0">
+                <IconRemote />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
+                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
+                  Room controls
+                </p>
+                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  Control TV, lights, and more
                 </p>
               </div>
               <div className="shrink-0">

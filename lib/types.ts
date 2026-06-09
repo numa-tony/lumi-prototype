@@ -33,6 +33,8 @@ export type ScreenId =
   | "explore"
   | "trips"
   | "tripDetail"
+  | "roomControls"
+  | "tvRemote"
   | "messages"
   | "profile";
 
