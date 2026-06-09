@@ -3,6 +3,7 @@
 import { useApp } from "@/lib/store";
 import { INITIAL_SMART_ROOM } from "@/lib/smartRoom";
 import { WaScenarioPanel } from "./WaScenarioPanel";
+import { TvShaderSection } from "./TvShaderSection";
 
 export function SettingsPanel() {
   const resetSession = useApp((s) => s.resetSession);
@@ -117,6 +118,14 @@ export function SettingsPanel() {
           </div>
         </div>
       )}
+
+      {/* TV Shader inspector */}
+      <div className="rounded-xl border border-[#2a2a2a] bg-[#171717] px-4 py-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#555]">
+          📺 TV Shader
+        </p>
+        <TvShaderSection />
+      </div>
 
       <button
         onClick={resetSession}

@@ -6,6 +6,31 @@ import type { ChatContext, PersistedThread, ScreenId, ThreadFilter, WaState, WaT
 import { demoSeedThreads } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
 
+// ── TV Shader params ───────────────────────────────────────────────────────────
+export interface TvShaderParams {
+  bgColor: string;    // hex — background
+  dotColor: string;   // hex — dot color
+  cellSize: number;   // CSS px per cell
+  minDot: number;     // smallest dot half-extent (0–0.45)
+  maxDot: number;     // largest dot half-extent (0.1–0.5)
+  density: number;    // FBM scale (0.5–10)
+  contrast: number;   // noise contrast multiplier (0–2)
+  secMix: number;     // secondary FBM blend (0–1)
+  speed: number;      // animation time scale (0–0.15)
+}
+
+export const DEFAULT_TV_SHADER: TvShaderParams = {
+  bgColor: "#ffc9d2",
+  dotColor: "#6060ee",
+  cellSize: 12,
+  minDot: 0.07,
+  maxDot: 0.44,
+  density: 3.2,
+  contrast: 1.15,
+  secMix: 0.45,
+  speed: 0.030,
+};
+
 const STORAGE_KEY = "lumi-session-v1";
 
 interface AppState {
@@ -18,6 +43,7 @@ interface AppState {
   smartRoom: SmartRoomDevices;
   threads: PersistedThread[];
   wa: WaState;
+  tvShader: TvShaderParams;
 
   go: (screen: ScreenId) => void;
   openTrip: (tripId: string) => void;
@@ -29,6 +55,7 @@ interface AppState {
   closeBooking: () => void;
   setInStay: (v: boolean) => void;
   setSmartRoom: (update: Partial<SmartRoomDevices>) => void;
+  setTvShader: (update: Partial<TvShaderParams>) => void;
 
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
@@ -71,6 +98,7 @@ export const useApp = create<AppState>()(
       bookingOpen: false,
       inStay: false,
       smartRoom: INITIAL_SMART_ROOM,
+      tvShader: DEFAULT_TV_SHADER,
       threads: [],
       wa: {
         enabled: false,
@@ -95,6 +123,7 @@ export const useApp = create<AppState>()(
       openBooking: () => set({ bookingOpen: true }),
       closeBooking: () => set({ bookingOpen: false }),
       setInStay: (v) => set({ inStay: v }),
+      setTvShader: (update) => set((s) => ({ tvShader: { ...s.tvShader, ...update } })),
 
       setSmartRoom: (update) =>
         set((s) => ({
@@ -308,7 +337,7 @@ export const useApp = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       // Only threads survive across reloads. screen/chat/tripId stay ephemeral
       // so refreshing always lands you on a clean Explore with no open sheet.
-      partialize: (s) => ({ threads: s.threads, wa: s.wa, inStay: s.inStay }),
+      partialize: (s) => ({ threads: s.threads, wa: s.wa, inStay: s.inStay, tvShader: s.tvShader }),
     },
   ),
 );
