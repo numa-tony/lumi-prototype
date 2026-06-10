@@ -7,30 +7,33 @@
 - **ChatSheet** — bottom sheet, spring animation, `rounded-t-[38px]`, grabber pill
 - **ThreadView — idle / keyboard / active** — Numa wordmark + Lumi orb + starters + send
 - **DS tokens** — full `@theme` in `app/globals.css`; TWK Lausanne font woff2 300 + 600
-- **Zustand store** — `useApp()` with screen, chat, voice, inStay, threads, booking, wa
+- **Zustand store** — `useApp()` with screen, chat, voice, inStay, threads, booking, wa, tvShader
 - **Screen shells** — Explore, MyTrips, TripDetail, Messages, Profile
 - **Mock data** — threads, trips, properties in `lib/mock/`
 - **Trip consistency** — Explore ↔ My Trips both read from `UPCOMING_TRIP` in `lib/mock/guest.ts`
 - **FAB shiny border** — conic-gradient comet, solid `#ffc9d2` (no white core)
-- **FAB on all screens** — visible on Profile and all other screens
+- **FAB — holographic cone on Doors button** — `lumi-cone.png` replaces SVG door icon
 - **MyTripsScreen + TripDetailScreen** — Figma v2 faithful implementations
-- **ProfileScreen** — Figma redesign: pink header, savings card with shadow, menu rows with inline SVGs, `#9162CA` since-2024 badge
+- **ProfileScreen** — Figma redesign: pink header, savings card with shadow, menu rows with inline SVGs
 - **Project management md system** — CLAUDE.md, context/vision/decisions docs, skills
-- **Voice design** — white bg, Figma 3D torus (`public/lumi-torus.png`), waveform card with swipe gestures
-- **In stay mode toggle** — DevBar → SidePanel control; controls FAB Doors button visibility
-- **AI starters** — `/api/starters` generates context-aware conversation starters; ThreadView fetches once per keyboard open; 3-tier JSON parse prevents "json" / "[" literals
+- **Voice design** — white bg, Figma 3D torus, waveform card with swipe gestures
+- **In stay mode toggle** — SidePanel control; controls FAB Doors button + SmartRoomScene visibility
+- **AI starters** — `/api/starters` generates context-aware conversation starters; 3-tier JSON parse
 - **Messages badge** — only shown when unread threads exist
 - **Booking flow (4 steps)** — Where → When → Guests → Results with city-aware listings
-- **SidePanel + Settings/Todos modals** — permanent left sidebar; dark-mode modals; todos Kanban with priority, delete, status edit
-- **Todo persistence** — Upstash Redis via Vercel Marketplace; localStorage cache + server sync on save
+- **SidePanel + Settings/Todos modals** — permanent left sidebar; dark-mode modals; todos Kanban
+- **Todo persistence** — Upstash Redis via Vercel Marketplace; localStorage cache + server sync
 - **GitHub repo** — https://github.com/numa-tony/lumi-prototype
 - **Vercel deployment** — https://numa-lumi-prototype.vercel.app (auto-deploys on push to main)
-- **WhatsApp demo mode** — dual phone layout; real Gemini responses; thread bridging; topic markers; 6-step "Sarah's day" scenario; channel asymmetry; WA state persisted
+- **WhatsApp demo mode** — dual phone layout; real Gemini; thread bridging; 6-step "Sarah's day" scenario
 - **WA widget deep-links** — tool parts render as tappable "Open in Lumi ↗" links
-- **Modal scrollability** — Settings panel scrollable; modals respect `max-h-[80vh]`
-- **Smart room controls (fully working)** — `controlDevice` tool → `SmartRoomScene` background animates behind phone; `inStay` auto-set on first device control or voice open; persisted to localStorage; WA blocked at API level with redirect message
-- **Voice pipeline (fully working)** — Groq Whisper STT (Gemini fallback) → `/api/chat` with tools → Kokoro TTS (browser TTS fallback); synthetic confirmation if model returns no text; silence detection auto-send
-- **Multi-provider fallback chain** — Gemini → Qwen3-32b → Llama-3.3-70b → Gemini2 (second key slot) → Llama-3.1-8b; cooldowns persisted to Redis (survives cold starts); smart cooldown: 6h daily exhaustion vs 90s per-minute
+- **Smart room controls (fully working)** — `controlDevice` tool → `SmartRoomScene`; `inStay` auto-set on first device control or voice open; persisted to localStorage
+- **Voice pipeline (fully working)** — Groq Whisper STT → `/api/chat` with tools → Kokoro TTS; synthetic confirmation; silence detection auto-send
+- **Multi-provider fallback chain** — Gemini → Qwen3-32b → Llama-3.3-70b → Gemini2 → Llama-3.1-8b; Redis-persisted cooldowns; smart cooldown: 6h daily vs 90s per-minute
+- **Room Controls screen** — "Room controls" list item in TripDetail → 2-column smart device tile grid (TV, AC, Lighting, Blinds, Nest mini, Spotlight); live state from store
+- **TV Remote screen** — full remote UI: D-pad ring, volume + channel pills, back/play/mute row; tabs Remote / Channels; FAB + BottomNav hidden on this screen only
+- **Pixel beams shader background** — WebGL halftone dot-grid on TV remote screen: blue-purple squares on pink, dot size driven by slow FBM noise blobs
+- **TV shader live inspector** — "📺 TV SHADER" card in Settings: color pickers (bg + dot), Dither / Plasma / Animation sliders; all params stored in Zustand, passed as WebGL uniforms, update live without remount
 
 ## In Progress
 
