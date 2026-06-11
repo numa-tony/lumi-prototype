@@ -1,4 +1,4 @@
-# Progress — Updated 2026-06-11
+# Progress — Updated 2026-06-12
 
 ## Done
 
@@ -35,7 +35,8 @@
 - **Pixel beams shader background** — WebGL halftone dot-grid on TV remote screen: blue-purple squares on pink, dot size driven by slow FBM noise blobs
 - **TV shader live inspector** — "📺 TV SHADER" card in Settings: color pickers (bg + dot), Dither / Plasma / Animation sliders; all params stored in Zustand, passed as WebGL uniforms, update live without remount
 - **Story Mode — full "Sarah's Day" (27 beats)** — scripted presenter demo, right-arrow driven; PressBeat engine with typed step sequencer; StoryThreadView (in-app), WaStoryView (WA phone); typewriter in both channels; beats: Title → Arrival (door PIN + FrontDoorScene) → Room (lights + blinds) → Towels (WA cross-channel, thread bridges to inbox) → AC (WA status widget + inbox) → Ramen (quick-reply → map) → Late checkout (reservationCard + offer + accept) → Climax (Netflix + blinds + lights off) → "The End"; backward nav via snapToBeat; fast-forward on rapid →
-- **Story Mode polish** — FrontDoorScene rainy arrival (framer-motion rain — CSS keyframes wouldn't advance in scene layer), closed→open door swing; window sky day/night (`windowSky` in smartRoom): morning for Sunday checkout, evening for climax; Stay thread pre-loaded in app inbox (RECENT, below Towels); "The End" card with Replay (`setBeatIndex(0)` + snapToBeat + playBeat) + Back to main; tap-vs-typewriter for quick-reply chips
+- **Story Mode polish** — FrontDoorScene rainy arrival (framer-motion rain — CSS keyframes wouldn't advance in scene layer), closed→open door swing; window sky day/night (`windowSky` in smartRoom): morning for Sunday checkout, evening for climax; Stay thread pre-loaded in app inbox (RECENT, below Towels); "The End" card with Replay + Back to main; tap-vs-typewriter for quick-reply chips; title "Sarah's epic stay with Lumi"; larger keycap arrow hints
+- **Story Mode voice climax** — `StoryVoiceView` (scripted, no mic): waveform + word-by-word transcript + Kokoro `af_sarah` TTS (distinct from Lumi's `af_heart`); 4 new step kinds (`voiceOpen/Close/Listen/Respond`); `speakAsSarah` awaits audio completion via `onended/onpause` promise so voice is never interrupted mid-phrase; L5 radial-gradient darkening overlay in SmartRoomScene fades in when lights off (transparent hole at TV position so Netflix glow shows through); fixed `roomBreakout` dead-state so room scene stays visible during dark climax; fixed Netflix casing (`"netflix"` → `"Netflix"`)
 
 ## In Progress
 
