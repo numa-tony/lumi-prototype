@@ -53,6 +53,7 @@ function Padlock({ state, className }: { state: "locked" | "unlocked" | "open"; 
 export function SmartRoomScene() {
   const inStay = useApp((s) => s.inStay);
   const smartRoom = useApp((s) => s.smartRoom);
+  const roomBreakout = useApp((s) => s.demo.roomBreakout);
   const { lights, tv, blinds, door, ac, windowSky } = smartRoom;
 
   const warmthColor = WARMTH_COLOR[lights.warmth] ?? WARMTH_COLOR.warm;
@@ -61,8 +62,10 @@ export function SmartRoomScene() {
   const curtainScale = 1 - blindsOpen;
   const doorIsOpen = door.state === "open";
 
-  // Scene only visible when in-stay AND lights are on
-  const sceneVisible = inStay && lights.on;
+  // Story Mode drives visibility explicitly via `roomBreakout` so the scene can
+  // stay mounted (dark) when the climax turns the lights off. Live mode has no
+  // breakout, so it still shows only when in-stay AND lights are on.
+  const sceneVisible = roomBreakout || (inStay && lights.on);
 
   return (
     <AnimatePresence>

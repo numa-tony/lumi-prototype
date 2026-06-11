@@ -478,7 +478,7 @@ export const STORY: PressBeat[] = [
     steps: [
       { kind: "userMsg", text: "can you put Netflix on?" },
       { kind: "lumiTyping", ms: 700 },
-      { kind: "scene", patch: { tv: { on: true, app: "netflix", volume: 35, muted: false, channel: null } } },
+      { kind: "scene", patch: { tv: { on: true, app: "Netflix", volume: 35, muted: false, channel: null } } },
       { kind: "breakout", value: true },
       { kind: "lumiMsg", text: "Netflix is on 🍿 Enjoy!" },
     ],
