@@ -2,16 +2,17 @@
 
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useApp } from "@/lib/store";
 import { SettingsPanel } from "./panels/SettingsPanel";
 import { TodosPanel } from "./panels/TodosPanel";
 
 type ModalView = "settings" | "todos" | null;
+type NavAction = ModalView | "story";
 
-function AppDemoIcon() {
+function StoryDemoIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <rect x="2.5" y="1" width="10" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="7.5" cy="11.5" r="0.75" fill="currentColor" />
+      <polygon points="3,1.5 13,7.5 3,13.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -54,21 +55,31 @@ const NAV: {
   id: string;
   label: string;
   Icon: () => React.ReactElement;
-  modal: ModalView;
+  action: NavAction;
 }[] = [
-  { id: "app-demo", label: "App Demo", Icon: AppDemoIcon, modal: null },
-  { id: "settings", label: "Settings", Icon: SettingsIcon, modal: "settings" },
-  { id: "todos", label: "To-dos", Icon: TodosIcon, modal: "todos" },
-  { id: "prd", label: "PRD", Icon: PRDIcon, modal: null },
+  { id: "story", label: "Sarah's Day", Icon: StoryDemoIcon, action: "story" },
+  { id: "settings", label: "Settings", Icon: SettingsIcon, action: "settings" },
+  { id: "todos", label: "To-dos", Icon: TodosIcon, action: "todos" },
+  { id: "prd", label: "PRD", Icon: PRDIcon, action: null },
 ];
 
 export function SidePanel() {
   const [modal, setModal] = useState<ModalView>(null);
+  const demoActive = useApp((s) => s.demo.active);
+  const startStory = useApp((s) => s.startStory);
+
+  const handleNav = (action: NavAction) => {
+    if (action === "story") { startStory(); return; }
+    if (action === "settings" || action === "todos") setModal(action);
+  };
 
   return (
     <>
-      {/* Permanent sidebar */}
-      <aside className="relative z-20 flex w-[210px] shrink-0 flex-col px-6 py-8">
+      {/* Permanent sidebar — hidden in story mode */}
+      <aside
+        className="relative z-20 flex w-[210px] shrink-0 flex-col px-6 py-8 transition-opacity duration-300"
+        style={{ opacity: demoActive ? 0 : 1, pointerEvents: demoActive ? "none" : "auto" }}
+      >
         <div className="mb-5">
           <h1 className="text-[28px] font-bold leading-none tracking-tight text-white">
             Numa
@@ -78,12 +89,16 @@ export function SidePanel() {
         </div>
 
         <nav className="flex flex-col gap-0.5">
-          {NAV.map(({ id, label, Icon, modal: target }) => (
+          {NAV.map(({ id, label, Icon, action }) => (
             <button
               key={id}
-              onClick={() => target && setModal(target)}
-              className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-[#999] transition-colors ${
-                target ? "hover:bg-white/5 hover:text-white" : "cursor-default"
+              onClick={() => handleNav(action)}
+              className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${
+                id === "story"
+                  ? "text-[#ff671f] hover:bg-[#ff671f]/10 hover:text-[#ff8040]"
+                  : action
+                    ? "text-[#999] hover:bg-white/5 hover:text-white"
+                    : "cursor-default text-[#999]"
               }`}
             >
               <Icon />

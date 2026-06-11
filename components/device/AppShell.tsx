@@ -32,15 +32,18 @@ export function AppShell() {
   const voiceOpen = useApp((s) => s.voiceOpen);
   const bookingOpen = useApp((s) => s.bookingOpen);
   const resetSession = useApp((s) => s.resetSession);
+  const demoActive = useApp((s) => s.demo.active);
   const Active = SCREENS[screen];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Story mode owns Escape — don't also reset the session
+      if (demoActive) return;
       if (e.key === "Escape") resetSession();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [resetSession]);
+  }, [resetSession, demoActive]);
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">

@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import type { ChatContext, PersistedThread, ScreenId, ThreadFilter, WaState, WaTopicMarker } from "./types";
-import { demoSeedThreads } from "./mock/threads";
+import { demoSeedThreads, demoSeedThread } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
 
 // ── TV Shader params ───────────────────────────────────────────────────────────
@@ -33,6 +33,22 @@ export const DEFAULT_TV_SHADER: TvShaderParams = {
 
 const STORAGE_KEY = "lumi-session-v1";
 
+export interface StoryChatState {
+  messages: UIMessage[];
+  draft: string;       // typewriter text in input while she "types"
+  lumiTyping: boolean; // show Lumi typing dots
+}
+
+export interface DemoState {
+  active: boolean;
+  beatIndex: number;
+  roomBreakout: boolean;
+  frontDoor: boolean | null; // null = hidden, false = visible+closed, true = visible+open
+  fade: boolean;
+  storyChat: StoryChatState;
+  storyWa: StoryChatState;
+}
+
 interface AppState {
   screen: ScreenId;
   tripId: string | null;
@@ -44,6 +60,7 @@ interface AppState {
   threads: PersistedThread[];
   wa: WaState;
   tvShader: TvShaderParams;
+  demo: DemoState;
 
   go: (screen: ScreenId) => void;
   openTrip: (tripId: string) => void;
@@ -57,12 +74,39 @@ interface AppState {
   setSmartRoom: (update: Partial<SmartRoomDevices>) => void;
   setTvShader: (update: Partial<TvShaderParams>) => void;
 
+  // Story / demo mode
+  startStory: () => void;
+  exitStory: () => void;
+  nextBeat: () => void;
+  prevBeat: () => void;
+  setBeatIndex: (n: number) => void;
+  setRoomBreakout: (v: boolean) => void;
+  setFrontDoor: (v: boolean | null) => void;
+  setFade: (v: boolean) => void;
+  // Story chat — presentational (no live AI)
+  openStoryChat: () => void;
+  openStoryThread: (id: string) => void;   // load seeded thread into storyChat + open sheet
+  setStoryDraft: (text: string) => void;
+  pushStoryUserMsg: (text: string) => void;
+  setLumiTyping: (v: boolean) => void;
+  pushStoryLumiMsg: (text?: string, widget?: import("./types").WidgetData) => void;
+  clearStoryChat: () => void;
+
+  // WA story chat — presentational (separate from live WaConversation)
+  setStoryWaDraft: (text: string) => void;
+  pushStoryWaUserMsg: (text: string) => void;
+  setStoryWaLumiTyping: (v: boolean) => void;
+  pushStoryWaLumiMsg: (text?: string, widget?: import("./types").WidgetData) => void;
+  clearStoryWa: () => void;
+
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
   renameThread: (id: string, topic: string, emoji?: string) => void;
   markRead: (id: string) => void;
   resetSession: () => void;
   loadDemoData: () => void;
+  clearThreads: () => void;
+  loadThread: (id: string) => void;
 
   // WhatsApp demo channel
   setWaEnabled: (v: boolean) => void;
@@ -100,6 +144,15 @@ export const useApp = create<AppState>()(
       smartRoom: INITIAL_SMART_ROOM,
       tvShader: DEFAULT_TV_SHADER,
       threads: [],
+      demo: {
+        active: false,
+        beatIndex: 0,
+        roomBreakout: false,
+        frontDoor: null,
+        fade: false,
+        storyChat: { messages: [], draft: "", lumiTyping: false },
+        storyWa:   { messages: [], draft: "", lumiTyping: false },
+      },
       wa: {
         enabled: false,
         messages: [],
@@ -124,6 +177,147 @@ export const useApp = create<AppState>()(
       closeBooking: () => set({ bookingOpen: false }),
       setInStay: (v) => set({ inStay: v }),
       setTvShader: (update) => set((s) => ({ tvShader: { ...s.tvShader, ...update } })),
+
+      startStory: () => set((s) => ({
+        demo: {
+          ...s.demo,
+          active: true,
+          beatIndex: 0,
+          roomBreakout: false,
+          frontDoor: false,
+          fade: false,
+          storyChat: { messages: [], draft: "", lumiTyping: false },
+          storyWa:   { messages: [], draft: "", lumiTyping: false },
+        },
+      })),
+      exitStory: () => set((s) => ({
+        demo: {
+          ...s.demo,
+          active: false,
+          beatIndex: 0,
+          roomBreakout: false,
+          frontDoor: false,
+          fade: false,
+          storyChat: { messages: [], draft: "", lumiTyping: false },
+          storyWa:   { messages: [], draft: "", lumiTyping: false },
+        },
+        chat: null,
+      })),
+      nextBeat: () => set((s) => ({ demo: { ...s.demo, beatIndex: s.demo.beatIndex + 1 } })),
+      prevBeat: () => set((s) => ({
+        demo: { ...s.demo, beatIndex: Math.max(s.demo.beatIndex - 1, 0) },
+      })),
+      setBeatIndex: (n) => set((s) => ({ demo: { ...s.demo, beatIndex: n } })),
+      setRoomBreakout: (v) => set((s) => ({ demo: { ...s.demo, roomBreakout: v } })),
+      setFrontDoor: (v) => set((s) => ({ demo: { ...s.demo, frontDoor: v } })),
+      setFade: (v) => set((s) => ({ demo: { ...s.demo, fade: v } })),
+
+      openStoryChat: () => {
+        set((s) => ({
+          demo: { ...s.demo, storyChat: { messages: [], draft: "", lumiTyping: false } },
+          chat: { kind: "stay", title: "Lumi" },
+        }));
+      },
+      openStoryThread: (id) => {
+        const thread = demoSeedThread(id);
+        if (!thread) return;
+        set((s) => ({
+          demo: { ...s.demo, storyChat: { messages: thread.messages, draft: "", lumiTyping: false } },
+          chat: { kind: "thread", title: thread.topic, threadId: id, hint: thread.hint },
+        }));
+      },
+      setStoryDraft: (text) =>
+        set((s) => ({ demo: { ...s.demo, storyChat: { ...s.demo.storyChat, draft: text } } })),
+      pushStoryUserMsg: (text) => {
+        const msg: UIMessage = {
+          id: `story_u_${nanoid(6)}`,
+          role: "user",
+          parts: [{ type: "text", text }],
+        };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            storyChat: {
+              ...s.demo.storyChat,
+              draft: "",
+              messages: [...s.demo.storyChat.messages, msg],
+            },
+          },
+        }));
+      },
+      setLumiTyping: (v) =>
+        set((s) => ({ demo: { ...s.demo, storyChat: { ...s.demo.storyChat, lumiTyping: v } } })),
+      pushStoryLumiMsg: (text, widget) => {
+        const parts: UIMessage["parts"] = [];
+        if (text) parts.push({ type: "text", text });
+        if (widget) {
+          parts.push({
+            type: `tool-${widget.type}`,
+            toolCallId: `story_w_${nanoid(6)}`,
+            state: "output-available",
+            input: {},
+            output: widget.data,
+          } as unknown as UIMessage["parts"][number]);
+        }
+        const msg: UIMessage = { id: `story_l_${nanoid(6)}`, role: "assistant", parts };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            storyChat: {
+              ...s.demo.storyChat,
+              lumiTyping: false,
+              messages: [...s.demo.storyChat.messages, msg],
+            },
+          },
+        }));
+      },
+      clearStoryChat: () =>
+        set((s) => ({
+          demo: { ...s.demo, storyChat: { messages: [], draft: "", lumiTyping: false } },
+          chat: null,
+        })),
+
+      setStoryWaDraft: (text) =>
+        set((s) => ({ demo: { ...s.demo, storyWa: { ...s.demo.storyWa, draft: text } } })),
+      pushStoryWaUserMsg: (text) => {
+        const msg: UIMessage = {
+          id: `storywa_u_${nanoid(6)}`,
+          role: "user",
+          parts: [{ type: "text", text }],
+        };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            storyWa: { ...s.demo.storyWa, draft: "", messages: [...s.demo.storyWa.messages, msg] },
+          },
+        }));
+      },
+      setStoryWaLumiTyping: (v) =>
+        set((s) => ({ demo: { ...s.demo, storyWa: { ...s.demo.storyWa, lumiTyping: v } } })),
+      pushStoryWaLumiMsg: (text, widget) => {
+        const parts: UIMessage["parts"] = [];
+        if (text) parts.push({ type: "text", text });
+        if (widget) {
+          parts.push({
+            type: `tool-${widget.type}`,
+            toolCallId: `storywa_w_${nanoid(6)}`,
+            state: "output-available",
+            input: {},
+            output: widget.data,
+          } as unknown as UIMessage["parts"][number]);
+        }
+        const msg: UIMessage = { id: `storywa_l_${nanoid(6)}`, role: "assistant", parts };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            storyWa: { ...s.demo.storyWa, lumiTyping: false, messages: [...s.demo.storyWa.messages, msg] },
+          },
+        }));
+      },
+      clearStoryWa: () =>
+        set((s) => ({
+          demo: { ...s.demo, storyWa: { messages: [], draft: "", lumiTyping: false } },
+        })),
 
       setSmartRoom: (update) =>
         set((s) => ({
@@ -329,6 +523,16 @@ export const useApp = create<AppState>()(
         // Replace existing demo threads, keep any live ones the user created.
         set((s) => ({
           threads: [...demo, ...s.threads.filter((t) => t.source === "live")],
+        }));
+      },
+      clearThreads: () => set({ threads: [] }),
+      loadThread: (id) => {
+        const thread = demoSeedThread(id);
+        if (!thread) return;
+        set((s) => ({
+          threads: s.threads.some((t) => t.id === id)
+            ? s.threads
+            : [thread, ...s.threads],
         }));
       },
     }),

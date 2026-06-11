@@ -53,7 +53,7 @@ function Padlock({ state, className }: { state: "locked" | "unlocked" | "open"; 
 export function SmartRoomScene() {
   const inStay = useApp((s) => s.inStay);
   const smartRoom = useApp((s) => s.smartRoom);
-  const { lights, tv, blinds, door, ac } = smartRoom;
+  const { lights, tv, blinds, door, ac, windowSky } = smartRoom;
 
   const warmthColor = WARMTH_COLOR[lights.warmth] ?? WARMTH_COLOR.warm;
   const lightOverlayOpacity = lights.on ? 0.12 + 0.42 * (lights.brightness / 100) : 0;
@@ -68,7 +68,7 @@ export function SmartRoomScene() {
     <AnimatePresence>
       {sceneVisible && (
     <motion.div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[6] overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -241,21 +241,56 @@ export function SmartRoomScene() {
           animate={{ opacity: blindsOpen > 0.1 ? blindsOpen : 0 }}
           transition={{ duration: 0.4 }}
         >
-          {/* Sky gradient — dusk */}
-          <div
+          {/* Sky gradient — transitions between morning and evening */}
+          <motion.div
             className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to bottom, #0d1520 0%, #1a2740 30%, #2a3e60 55%, #4a5870 75%, #6a6050 88%, #887060 100%)",
+            animate={{
+              background: windowSky === "morning"
+                ? "linear-gradient(to bottom, #a8d4f5 0%, #c8e8f8 25%, #e8d4b0 55%, #f0c88a 75%, #d4906a 90%, #b87850 100%)"
+                : "linear-gradient(to bottom, #0d1520 0%, #1a2740 30%, #2a3e60 55%, #4a5870 75%, #6a6050 88%, #887060 100%)",
             }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
           />
 
-          {/* Moon */}
-          <div
+          {/* Morning: sun glow low on horizon */}
+          <motion.div
+            className="absolute"
+            style={{
+              left: "20%",
+              bottom: "38%",
+              width: "60%",
+              height: "30%",
+              background: "radial-gradient(ellipse at 50% 100%, rgba(255,220,120,0.55) 0%, rgba(255,180,60,0.2) 50%, transparent 80%)",
+              filter: "blur(6px)",
+            }}
+            animate={{ opacity: windowSky === "morning" ? 1 : 0 }}
+            transition={{ duration: 1.0 }}
+          />
+
+          {/* Sun (morning) */}
+          <motion.div
+            className="absolute rounded-full"
+            style={{
+              right: "22%",
+              top: "28%",
+              width: "14px",
+              height: "14px",
+              background: "radial-gradient(circle at 40% 40%, #fff8d0, #ffd060)",
+              boxShadow: "0 0 14px rgba(255,220,80,0.7), 0 0 40px rgba(255,200,60,0.3)",
+            }}
+            animate={{ opacity: windowSky === "morning" ? 1 : 0 }}
+            transition={{ duration: 1.0 }}
+          />
+
+          {/* Moon (evening) */}
+          <motion.div
             className="absolute right-[15%] top-[12%] h-5 w-5 rounded-full"
             style={{
               background: "radial-gradient(circle at 35% 35%, #fffce8, #f8e0b0)",
               boxShadow: "0 0 12px rgba(255,240,180,0.5), 0 0 30px rgba(255,240,180,0.2)",
             }}
+            animate={{ opacity: windowSky === "morning" ? 0 : 1 }}
+            transition={{ duration: 1.0 }}
           />
 
           {/* City building silhouette */}

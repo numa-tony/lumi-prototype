@@ -1,4 +1,4 @@
-# Progress — Updated 2026-06-09
+# Progress — Updated 2026-06-11
 
 ## Done
 
@@ -34,6 +34,7 @@
 - **TV Remote screen** — full remote UI: D-pad ring, volume + channel pills, back/play/mute row; tabs Remote / Channels; FAB + BottomNav hidden on this screen only
 - **Pixel beams shader background** — WebGL halftone dot-grid on TV remote screen: blue-purple squares on pink, dot size driven by slow FBM noise blobs
 - **TV shader live inspector** — "📺 TV SHADER" card in Settings: color pickers (bg + dot), Dither / Plasma / Animation sliders; all params stored in Zustand, passed as WebGL uniforms, update live without remount
+- **Story Mode — full "Sarah's Day" (26 beats)** — scripted presenter demo, right-arrow driven; PressBeat engine with typed step sequencer; StoryThreadView (in-app), WaStoryView (WA phone); typewriter in both channels; beats: Title → Arrival (door PIN + FrontDoorScene) → Room (lights + blinds) → Towels (WA cross-channel, thread bridges to inbox) → AC (WA status widget + inbox) → Ramen (quick-reply → map) → Late checkout (reservationCard + offer + accept) → Climax (Netflix + blinds + lights off) → Thesis; backward nav via snapToBeat; fast-forward on rapid →
 
 ## In Progress
 

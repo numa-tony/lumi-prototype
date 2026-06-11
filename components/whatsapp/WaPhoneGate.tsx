@@ -7,6 +7,7 @@ import { WaPhone } from "./WaPhone";
 export function WaPhoneGate() {
   const enabled = useApp((s) => s.wa.enabled);
   const resetCount = useApp((s) => s.wa.resetCount);
+  const demoActive = useApp((s) => s.demo.active);
 
   return (
     <AnimatePresence>
@@ -22,7 +23,7 @@ export function WaPhoneGate() {
             WhatsApp
           </p>
           {/* key remounts WaPhone (and thus WaConversation) on reset */}
-          <WaPhone key={resetCount} />
+          <WaPhone key={resetCount} demoActive={demoActive} />
         </motion.div>
       )}
     </AnimatePresence>

@@ -100,35 +100,41 @@ export const THREADS: Thread[] = [
     id: "towels",
     topic: "Towels",
     emoji: "🛁",
-    state: "resolved",
+    state: "open",
     filter: "support",
-    preview: "Delivered. All set?",
-    time: "10:55",
-    hint: "A housekeeping request for extra towels in room 204. It has been delivered and resolved.",
+    preview: "Essentials closet, first floor",
+    time: "9:41",
+    hint: "Guest asked where to find extra towels. Lumi pointed her to the self-service Essentials closet on the first floor.",
     seed: [
       {
         role: "user",
-        text: "hey can i get extra towels in my room? we're 2 people but only got towels for 1",
-        time: "09:14",
+        text: "where can i get extra towels?",
+        time: "9:41",
       },
       {
         role: "assistant",
-        text: "Got it — sending two extra sets to room 204. Should arrive within 20 min.",
-        time: "09:15",
+        text: "Extra towels are in the Essentials closet on the first floor — just past the lift.",
+        time: "9:41",
       },
-      {
-        role: "assistant",
-        text: "Delivered to room 204. Anything else for the towels, or all set?",
-        time: "10:55",
-        widget: {
-          type: "statusWidget",
-          data: {
-            title: "Towels delivered",
-            state: "resolved",
-            detail: "Housekeeping · Room 204",
-          },
-        },
-      },
+    ],
+  },
+  {
+    id: "stay",
+    topic: "Stay",
+    emoji: "🏠",
+    state: "open",
+    filter: "support",
+    unread: false,
+    preview: "Blinds open ✓",
+    time: "9:41",
+    hint: "Sarah's in-app Lumi conversation from her arrival: she asked about getting into the building (door PIN), then turned on the lights and opened the blinds.",
+    seed: [
+      { role: "user", text: "i'm in front of the building? how do i get in?", time: "9:41" },
+      { role: "assistant", text: "I've opened the front door for you. If you want to use the pin pad, the code is 39203 ✔️", time: "9:41" },
+      { role: "user", text: "can you turn on the lights?", time: "9:41" },
+      { role: "assistant", text: "Done! Lights are on 💡", time: "9:41" },
+      { role: "user", text: "can you open the blinds?", time: "9:41" },
+      { role: "assistant", text: "Blinds open ✓", time: "9:41" },
     ],
   },
   {
@@ -291,4 +297,12 @@ export function demoSeedThreads(): PersistedThread[] {
   const now = Date.now();
   seedMessageCounter = 0;
   return THREADS.map((t) => threadToPersisted(t, now));
+}
+
+// Single thread by id — used by story mode to reveal threads one at a time.
+export function demoSeedThread(id: string): PersistedThread | undefined {
+  const thread = THREADS.find((t) => t.id === id);
+  if (!thread) return undefined;
+  seedMessageCounter = 0;
+  return threadToPersisted(thread, Date.now());
 }

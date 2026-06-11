@@ -15,12 +15,34 @@ export function SettingsPanel() {
   const waEnabled = useApp((s) => s.wa.enabled);
   const setWaEnabled = useApp((s) => s.setWaEnabled);
   const resetWa = useApp((s) => s.resetWa);
+  const demoActive = useApp((s) => s.demo.active);
+  const startStory = useApp((s) => s.startStory);
+  const exitStory = useApp((s) => s.exitStory);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-[#555]">
         Demo Controls
       </p>
+
+      {/* Story mode */}
+      <button
+        role="switch"
+        aria-checked={demoActive}
+        onClick={() => demoActive ? exitStory() : startStory()}
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#ff671f]/30 bg-[#ff671f]/8 px-4 py-3.5 transition-colors hover:bg-[#ff671f]/15 active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl leading-none">🎬</span>
+          <div className="text-left">
+            <p className="text-[14px] font-semibold text-[#f0f0f0]">Story mode</p>
+            <p className="text-[12px] text-[#888]">
+              {demoActive ? "Active · Esc or → to navigate" : "Sarah's day · press → to advance"}
+            </p>
+          </div>
+        </div>
+        <Toggle on={demoActive} />
+      </button>
 
       <button
         onClick={loadDemoData}
