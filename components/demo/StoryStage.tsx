@@ -77,7 +77,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
                 className="font-bold leading-[1.08] text-white"
                 style={{ fontSize: "clamp(36px, 4vw, 64px)" }}
               >
-                Sarah&rsquo;s epic day with Lumi
+                Sarah&rsquo;s epic stay with Lumi
               </h1>
               <div className="flex items-center gap-2.5 text-white/50">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0">
@@ -194,16 +194,24 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
           </div>
         )}
 
-        {/* Advance hint — bottom right */}
+        {/* Advance hint — bottom right (prominent keycaps) */}
         {!beat.titleCard && !beat.thesisCard && (
-          <div className="absolute bottom-6 right-6 flex flex-col items-end gap-1.5">
+          <div className="pointer-events-none absolute bottom-7 right-8 flex flex-col items-end gap-3">
             {!isLast ? (
-              <p className="text-[12px] font-medium text-white/30">→ to continue</p>
+              <div className="flex items-center gap-3">
+                <span className="text-[16px] font-semibold text-white/70">to continue</span>
+                <Keycap label="▶" green big />
+              </div>
             ) : (
-              <p className="text-[12px] font-medium text-[#ff671f]/60">End of story</p>
+              <div className="flex items-center gap-3">
+                <span className="text-[16px] font-semibold text-[#ff671f]">End of story</span>
+              </div>
             )}
             {!isFirst && (
-              <p className="text-[11px] text-white/20">← to go back</p>
+              <div className="flex items-center gap-3">
+                <span className="text-[14px] font-medium text-white/40">to go back</span>
+                <Keycap label="◀" big />
+              </div>
             )}
           </div>
         )}
@@ -220,10 +228,12 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
   );
 }
 
-function Keycap({ label, green }: { label: string; green?: boolean }) {
+function Keycap({ label, green, big }: { label: string; green?: boolean; big?: boolean }) {
   return (
     <div
-      className="flex h-10 w-10 items-center justify-center rounded-lg text-[15px] font-semibold shadow-md"
+      className={`flex items-center justify-center rounded-lg font-semibold shadow-md ${
+        big ? "h-12 w-12 text-[19px]" : "h-10 w-10 text-[15px]"
+      }`}
       style={
         green
           ? { background: "#4ade80", color: "#1a2e1a", boxShadow: "0 3px 0 #16a34a" }

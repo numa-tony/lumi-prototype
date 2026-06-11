@@ -39,6 +39,14 @@ export interface StoryChatState {
   lumiTyping: boolean; // show Lumi typing dots
 }
 
+// Scripted voice-mode overlay for Story Mode (mimics VoiceSheet, no mic / no live AI)
+export interface StoryVoiceState {
+  open: boolean;
+  mode: "idle" | "listening" | "speaking";
+  transcript: string;  // her words, appearing word-by-word as if transcribed live
+  response: string;    // Lumi's spoken confirmation
+}
+
 export interface DemoState {
   active: boolean;
   beatIndex: number;
@@ -47,6 +55,7 @@ export interface DemoState {
   fade: boolean;
   storyChat: StoryChatState;
   storyWa: StoryChatState;
+  storyVoice: StoryVoiceState;
 }
 
 interface AppState {
@@ -98,6 +107,13 @@ interface AppState {
   setStoryWaLumiTyping: (v: boolean) => void;
   pushStoryWaLumiMsg: (text?: string, widget?: import("./types").WidgetData) => void;
   clearStoryWa: () => void;
+
+  // Story voice mode — presentational (scripted, no mic / no live AI)
+  openStoryVoice: () => void;
+  closeStoryVoice: () => void;
+  setStoryVoiceMode: (m: StoryVoiceState["mode"]) => void;
+  setStoryVoiceTranscript: (t: string) => void;
+  setStoryVoiceResponse: (t: string) => void;
 
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
@@ -152,6 +168,7 @@ export const useApp = create<AppState>()(
         fade: false,
         storyChat: { messages: [], draft: "", lumiTyping: false },
         storyWa:   { messages: [], draft: "", lumiTyping: false },
+        storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
       },
       wa: {
         enabled: false,
@@ -188,6 +205,7 @@ export const useApp = create<AppState>()(
           fade: false,
           storyChat: { messages: [], draft: "", lumiTyping: false },
           storyWa:   { messages: [], draft: "", lumiTyping: false },
+          storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
         },
       })),
       exitStory: () => set((s) => ({
@@ -200,6 +218,7 @@ export const useApp = create<AppState>()(
           fade: false,
           storyChat: { messages: [], draft: "", lumiTyping: false },
           storyWa:   { messages: [], draft: "", lumiTyping: false },
+          storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
         },
         chat: null,
       })),
@@ -318,6 +337,21 @@ export const useApp = create<AppState>()(
         set((s) => ({
           demo: { ...s.demo, storyWa: { messages: [], draft: "", lumiTyping: false } },
         })),
+
+      openStoryVoice: () =>
+        set((s) => ({
+          demo: { ...s.demo, storyVoice: { open: true, mode: "idle", transcript: "", response: "" } },
+        })),
+      closeStoryVoice: () =>
+        set((s) => ({
+          demo: { ...s.demo, storyVoice: { open: false, mode: "idle", transcript: "", response: "" } },
+        })),
+      setStoryVoiceMode: (mode) =>
+        set((s) => ({ demo: { ...s.demo, storyVoice: { ...s.demo.storyVoice, mode } } })),
+      setStoryVoiceTranscript: (transcript) =>
+        set((s) => ({ demo: { ...s.demo, storyVoice: { ...s.demo.storyVoice, transcript } } })),
+      setStoryVoiceResponse: (response) =>
+        set((s) => ({ demo: { ...s.demo, storyVoice: { ...s.demo.storyVoice, response } } })),
 
       setSmartRoom: (update) =>
         set((s) => ({

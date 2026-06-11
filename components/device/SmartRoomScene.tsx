@@ -668,6 +668,20 @@ export function SmartRoomScene() {
         )}
       </AnimatePresence>
 
+      {/* ── L5: Lights-off darkening — "just you and Netflix" ─────────────────
+          When the lights turn off, dim the whole room toward black, leaving a
+          transparent window around the TV (~84%, 30%) so it keeps glowing. */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 84% 30%, transparent 0%, transparent 15%, rgba(2,2,6,0.6) 38%, rgba(2,2,6,0.9) 70%)",
+        }}
+        animate={{ opacity: lights.on ? 0 : 1 }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+      />
+
     </motion.div>
       )}
     </AnimatePresence>

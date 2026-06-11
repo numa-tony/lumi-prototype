@@ -4,10 +4,11 @@
 export const maxDuration = 30;
 
 const SPACE = "https://dopeyface-kokoro-tts.hf.space";
-const VOICE = "af_heart"; // warm American female — change to bf_alice, bm_george, etc.
+const VOICE = "af_heart"; // Lumi's default — warm American female. Others: af_sarah, bf_alice, bm_george…
 
 export async function POST(req: Request) {
-  const { text }: { text: string } = await req.json();
+  const { text, voice }: { text: string; voice?: string } = await req.json();
+  const selectedVoice = voice || VOICE;
   const sessionHash = Math.random().toString(36).slice(2, 10);
   const hfHeaders: Record<string, string> = {};
   if (process.env.HF_TOKEN) hfHeaders["Authorization"] = `Bearer ${process.env.HF_TOKEN}`;
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   const joinRes = await fetch(`${SPACE}/gradio_api/queue/join`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...hfHeaders },
-    body: JSON.stringify({ fn_index: 4, data: [text, VOICE, 1, false], session_hash: sessionHash }),
+    body: JSON.stringify({ fn_index: 4, data: [text, selectedVoice, 1, false], session_hash: sessionHash }),
   });
   if (!joinRes.ok) {
     console.error("[tts] queue/join failed:", joinRes.status);

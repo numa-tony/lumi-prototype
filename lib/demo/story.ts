@@ -19,6 +19,11 @@ export type Step =
   | { kind: "waUserMsg"; text: string }                // typewriter → send on WA phone
   | { kind: "waLumiTyping"; ms?: number }              // WA typing dots for ms
   | { kind: "waLumiMsg"; text?: string; widget?: WidgetData } // append Lumi bubble on WA
+  // Scripted voice mode (mimics VoiceSheet — no mic / no live AI)
+  | { kind: "voiceOpen" }                              // slide the voice sheet up
+  | { kind: "voiceClose" }
+  | { kind: "voiceListen"; text: string }              // "listening" — waveform + transcript types out + TTS
+  | { kind: "voiceRespond"; text: string }             // "speaking" — Lumi confirmation
   // World / room
   | { kind: "scene"; patch: Partial<SmartRoomDevices> }       // room device change
   | { kind: "breakout"; value: boolean }               // SmartRoomScene visibility
@@ -147,7 +152,7 @@ export const STORY: PressBeat[] = [
     id: "room-setup",
     segmentIndex: 2,
     background: DARK_ROOM,
-    narration: "The room is dark.",
+    narration: "She enters her room. But it's dark and she can't see where the light switch is.",
     steps: [
       { kind: "closeChat" },
       { kind: "fadeToBlack", ms: 500 },
@@ -161,7 +166,7 @@ export const STORY: PressBeat[] = [
     id: "room-open-chat",
     segmentIndex: 2,
     background: DARK_ROOM,
-    narration: "The room is dark.",
+    narration: "She enters her room. But it's dark and she can't see where the light switch is.",
     steps: [
       { kind: "openChat" },
     ],
@@ -172,7 +177,7 @@ export const STORY: PressBeat[] = [
     id: "room-lights",
     segmentIndex: 2,
     background: DARK_ROOM,
-    narration: "The room is dark.",
+    narration: "She enters her room. But it's dark and she can't see where the light switch is.",
     sarah: "can you turn on the lights?",
     sarahEmotion: "neutral",
     steps: [
@@ -189,7 +194,7 @@ export const STORY: PressBeat[] = [
     id: "room-blinds",
     segmentIndex: 2,
     background: WARM_ROOM,
-    narration: "The room is dark.",
+    narration: "Lights on. Now she opens the blinds to the city.",
     sarah: "can you open the blinds?",
     sarahEmotion: "happy",
     steps: [
@@ -443,76 +448,69 @@ export const STORY: PressBeat[] = [
   // SEGMENT 7 — Room climax: Netflix + blinds + lights off
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Press 20 — the last evening; she's earned it
+  // Press 20 — the last evening; she's earned it. Room reveals; she just talks now.
   {
     id: "climax-setup",
     segmentIndex: 7,
     background: DARK_ROOM,
-    narration: "The last evening. She's earned it.",
+    narration: "The last evening. She's earned it — no typing now, she just talks to Lumi.",
     steps: [
       { kind: "closeChat" },
       { kind: "go", screen: "explore" },
       { kind: "scene", patch: { windowSky: "evening" } },
+      { kind: "setInStay", value: true },
+      { kind: "breakout", value: true },
     ],
   },
 
-  // Press 21 — she opens Lumi (fresh chat)
+  // Press 21 — she opens voice mode (the scripted VoiceSheet slides up)
   {
     id: "climax-open",
     segmentIndex: 7,
     background: DARK_ROOM,
-    narration: "The last evening. She's earned it.",
+    narration: "The last evening. She's earned it — no typing now, she just talks to Lumi.",
     steps: [
-      { kind: "openChat" },
+      { kind: "voiceOpen" },
     ],
   },
 
-  // Press 22 — "put Netflix on" → TV switches on; SmartRoom breakout
+  // Press 22 — she SAYS "put Netflix on" → waveform + transcript → TV on
   {
     id: "climax-netflix",
     segmentIndex: 7,
     background: DARK_ROOM,
-    narration: "The last evening. She's earned it.",
-    sarah: "put Netflix on",
-    sarahEmotion: "happy",
+    narration: "The last evening. She's earned it — no typing now, she just talks to Lumi.",
     steps: [
-      { kind: "userMsg", text: "can you put Netflix on?" },
-      { kind: "lumiTyping", ms: 700 },
+      { kind: "voiceListen", text: "put Netflix on" },
       { kind: "scene", patch: { tv: { on: true, app: "Netflix", volume: 35, muted: false, channel: null } } },
       { kind: "breakout", value: true },
-      { kind: "lumiMsg", text: "Netflix is on 🍿 Enjoy!" },
+      { kind: "voiceRespond", text: "Netflix is on 🍿 Enjoy!" },
     ],
   },
 
-  // Press 23 — "close the blinds"
+  // Press 23 — she SAYS "close the blinds"
   {
     id: "climax-blinds",
     segmentIndex: 7,
     background: DARK_ROOM,
-    narration: "The last evening. She's earned it.",
-    sarah: "close the blinds",
-    sarahEmotion: "content",
+    narration: "The last evening. She's earned it — no typing now, she just talks to Lumi.",
     steps: [
-      { kind: "userMsg", text: "and close the blinds" },
-      { kind: "lumiTyping", ms: 600 },
+      { kind: "voiceListen", text: "close the blinds" },
       { kind: "scene", patch: { blinds: { position: 0 } } },
-      { kind: "lumiMsg", text: "Blinds closed ✓" },
+      { kind: "voiceRespond", text: "Blinds closed ✓" },
     ],
   },
 
-  // Press 24 — "turn off the lights" → quiet, earned ending
+  // Press 24 — she SAYS "turn off the lights" → quiet, earned ending
   {
     id: "climax-lights",
     segmentIndex: 7,
     background: DARK_ROOM,
-    narration: "The last evening. She's earned it.",
-    sarah: "turn off the lights",
-    sarahEmotion: "content",
+    narration: "The last evening. She's earned it — no typing now, she just talks to Lumi.",
     steps: [
-      { kind: "userMsg", text: "and turn off the lights" },
-      { kind: "lumiTyping", ms: 600 },
+      { kind: "voiceListen", text: "turn off the lights" },
       { kind: "scene", patch: { lights: { on: false, brightness: 0, warmth: "warm" } } },
-      { kind: "lumiMsg", text: "Lights off. Just you and Netflix 🌙" },
+      { kind: "voiceRespond", text: "Lights off. Just you and Netflix 🌙" },
     ],
   },
 
@@ -525,6 +523,7 @@ export const STORY: PressBeat[] = [
     background: "linear-gradient(160deg, #06040e 0%, #0d0a14 100%)",
     thesisCard: true,
     steps: [
+      { kind: "voiceClose" },
       { kind: "breakout", value: false },
       { kind: "closeChat" },
       { kind: "setWaEnabled", value: false },

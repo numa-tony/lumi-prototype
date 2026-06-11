@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/nav/BottomNav";
 import { Fab } from "@/components/nav/Fab";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { VoiceSheet } from "@/components/voice/VoiceSheet";
+import { StoryVoiceView } from "@/components/voice/StoryVoiceView";
 import { BookingSheet } from "@/components/booking/BookingSheet";
 import { ExploreScreen } from "@/components/screens/ExploreScreen";
 import { MyTripsScreen } from "@/components/screens/MyTripsScreen";
@@ -33,6 +34,7 @@ export function AppShell() {
   const bookingOpen = useApp((s) => s.bookingOpen);
   const resetSession = useApp((s) => s.resetSession);
   const demoActive = useApp((s) => s.demo.active);
+  const storyVoiceOpen = useApp((s) => s.demo.storyVoice.open);
   const Active = SCREENS[screen];
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export function AppShell() {
       </AnimatePresence>
       <AnimatePresence>
         {voiceOpen && <VoiceSheet />}
+        {storyVoiceOpen && <StoryVoiceView />}
       </AnimatePresence>
     </div>
   );
