@@ -19,12 +19,11 @@ export const THREADS: Thread[] = [
     unread: true,
     preview: "Technician arriving ~7 min",
     time: "11:08",
-    hint: "This is an open maintenance service request. The AC in the guest's room (204) was blowing warm air. A maintenance ticket is logged and a technician is on the way, ETA ~7 minutes.",
+    hint: "This is an open maintenance service request. The AC in the guest's room (204) was blowing warm air. Lumi split it out from the guest's towels conversation into its own dedicated thread, logged a maintenance ticket, and a technician is on the way, ETA ~7 minutes.",
     seed: [
-      { role: "user", text: "the ac in my room isn't cooling, just blowing warm air", time: "10:42" },
       {
         role: "assistant",
-        text: "Sorry about that. I've logged a maintenance request for room 204 — a technician will take care of it today. I'll keep you posted here.",
+        text: "I've opened a dedicated request for the AC in room 204 — a technician is on the way. I'll keep you posted right here.",
         time: "10:43",
       },
       {

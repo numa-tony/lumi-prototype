@@ -136,40 +136,6 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       useApp.getState().pushStoryLumiMsg(step.text, step.widget);
       break;
 
-    // ── WA scripted conversation ──────────────────────────────────────────
-
-    case "waUserMsg": {
-      if (animated) {
-        const text = step.text;
-        const msPerChar = Math.min(42, 800 / text.length);
-        try {
-          for (let i = 1; i <= text.length; i++) {
-            if (token.cancelled) throw new DOMException("cancelled", "AbortError");
-            useApp.getState().setStoryWaDraft(text.slice(0, i));
-            await sleep(msPerChar, token);
-          }
-          await sleep(180, token);
-        } catch {
-          // cancelled mid-typewriter: fall through to push the full message instantly
-        }
-      }
-      useApp.getState().setStoryWaDraft("");
-      useApp.getState().pushStoryWaUserMsg(step.text);
-      break;
-    }
-
-    case "waLumiTyping":
-      s.setStoryWaLumiTyping(true);
-      if (animated) {
-        try { await sleep(step.ms ?? 1200, token); } catch { /* cancelled — ok */ }
-      }
-      break;
-
-    case "waLumiMsg":
-      useApp.getState().setStoryWaLumiTyping(false);
-      useApp.getState().pushStoryWaLumiMsg(step.text, step.widget);
-      break;
-
     // ── Scripted voice mode ───────────────────────────────────────────────
 
     case "voiceOpen":
@@ -245,15 +211,6 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       useApp.getState().setInStay(step.value);
       break;
 
-    case "setWaEnabled":
-      useApp.getState().setWaEnabled(step.value);
-      break;
-
-    case "resetWa":
-      useApp.getState().resetWa();
-      useApp.getState().clearStoryWa();
-      break;
-
     case "clearThreads":
       useApp.getState().clearThreads();
       break;
@@ -281,17 +238,14 @@ export async function snapToBeat(n: number): Promise<void> {
   stopSpeaking();
   const s = useApp.getState();
   s.clearStoryChat();
-  s.clearStoryWa();
   s.closeStoryVoice();
   s.setFrontDoor(null);
   s.setFade(false);
   s.setRoomBreakout(false);
   s.setInStay(false);
-  s.setWaEnabled(false);
   s.go("explore");
   s.clearThreads();
   s.setSmartRoom(INITIAL_SMART_ROOM);
-  s.resetWa();
 
   const fakeToken: CancelToken = { cancelled: false };
   for (let i = 0; i <= n && i < STORY.length; i++) {
@@ -326,7 +280,7 @@ export async function playBeat(n: number): Promise<void> {
 
     // Small gap between reactions (skip before typing dots — they appear immediately)
     const kind = beat.steps[i].kind;
-    if (i > 0 && kind !== "lumiTyping" && kind !== "waLumiTyping") {
+    if (i > 0 && kind !== "lumiTyping") {
       try { await sleep(REACTION_GAP, token); } catch { return; }
     }
     if (token.cancelled) return;

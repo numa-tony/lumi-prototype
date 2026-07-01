@@ -2,33 +2,6 @@
 
 import type { UIMessage } from "ai";
 
-// ---------------------------------------------------------------------------
-// WhatsApp demo channel
-// ---------------------------------------------------------------------------
-
-// Synthetic section header injected into the WA linear stream when a new Lumi
-// thread is born. Lives separately so it never pollutes the UIMessage[] fed to
-// useChat / convertToModelMessages.
-export interface WaTopicMarker {
-  id: string;
-  threadId: string;
-  topic: string;
-  emoji: string;
-  afterMessageId: string; // insert AFTER this UIMessage.id
-  createdAt: number;
-}
-
-export interface WaState {
-  enabled: boolean;
-  messages: UIMessage[];      // full WA transcript — AI turns + injected ops/outbound
-  markers: WaTopicMarker[];   // topic section headers (keyed to message ids)
-  activeThreadId: string | null; // Lumi thread the current WA topic feeds
-  pendingGuestText: string | null; // queue for scenario-button injections
-  resetCount: number;         // incremented on resetWa() to key-remount the component
-  createdAt: number;
-  updatedAt: number;
-}
-
 export type ScreenId =
   | "explore"
   | "trips"

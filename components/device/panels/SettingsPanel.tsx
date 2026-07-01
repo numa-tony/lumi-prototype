@@ -2,7 +2,6 @@
 
 import { useApp } from "@/lib/store";
 import { INITIAL_SMART_ROOM } from "@/lib/smartRoom";
-import { WaScenarioPanel } from "./WaScenarioPanel";
 import { TvShaderSection } from "./TvShaderSection";
 
 export function SettingsPanel() {
@@ -12,9 +11,6 @@ export function SettingsPanel() {
   const inStay = useApp((s) => s.inStay);
   const setInStay = useApp((s) => s.setInStay);
   const setSmartRoom = useApp((s) => s.setSmartRoom);
-  const waEnabled = useApp((s) => s.wa.enabled);
-  const setWaEnabled = useApp((s) => s.setWaEnabled);
-  const resetWa = useApp((s) => s.resetWa);
   const demoActive = useApp((s) => s.demo.active);
   const startStory = useApp((s) => s.startStory);
   const exitStory = useApp((s) => s.exitStory);
@@ -83,62 +79,6 @@ export function SettingsPanel() {
             <p className="text-[12px] text-[#888]">Lights off, blinds closed, TV off</p>
           </div>
         </button>
-      )}
-
-      {/* WhatsApp demo mode toggle */}
-      <button
-        role="switch"
-        aria-checked={waEnabled}
-        onClick={() => setWaEnabled(!waEnabled)}
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3.5 transition-colors hover:bg-[#252525] active:scale-[0.99]"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xl leading-none">💬</span>
-          <div className="text-left">
-            <p className="text-[14px] font-semibold text-[#f0f0f0]">WhatsApp demo mode</p>
-            <p className="text-[12px] text-[#888]">Shows a second phone — Sarah&apos;s WhatsApp</p>
-          </div>
-        </div>
-        <Toggle on={waEnabled} />
-      </button>
-
-      {/* Sarah's day scenario panel — only when WA is enabled */}
-      {waEnabled && (
-        <div className="rounded-xl border border-[#2a2a2a] bg-[#171717] p-4">
-          <WaScenarioPanel />
-          <div className="mt-4 border-t border-[#2a2a2a] pt-3">
-            <button
-              onClick={resetWa}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] text-[#555] hover:text-[#888] active:opacity-70"
-            >
-              <span>↺</span>
-              <span>Reset WhatsApp conversation</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Channel asymmetry legend */}
-      {waEnabled && (
-        <div className="rounded-xl border border-[#2a2a2a] bg-[#171717] px-4 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#555]">
-            Channel model
-          </p>
-          <div className="flex flex-col gap-1.5 text-[12px]">
-            <div className="flex items-center gap-2">
-              <span className="text-[#25d366]">WhatsApp → Lumi</span>
-              <span className="text-[#444]">pulls in, creates threads</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#555] line-through">Lumi → WhatsApp</span>
-              <span className="text-[#444]">app stays silent</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#4a7fa3]">Lumi-initiated</span>
-              <span className="text-[#444]">fires to both surfaces</span>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* TV Shader inspector */}

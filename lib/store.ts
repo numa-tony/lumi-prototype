@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
-import type { ChatContext, PersistedThread, ScreenId, ThreadFilter, WaState, WaTopicMarker } from "./types";
+import type { ChatContext, PersistedThread, ScreenId } from "./types";
 import { demoSeedThreads, demoSeedThread } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
 
@@ -54,7 +54,6 @@ export interface DemoState {
   frontDoor: boolean | null; // null = hidden, false = visible+closed, true = visible+open
   fade: boolean;
   storyChat: StoryChatState;
-  storyWa: StoryChatState;
   storyVoice: StoryVoiceState;
 }
 
@@ -67,7 +66,6 @@ interface AppState {
   inStay: boolean;
   smartRoom: SmartRoomDevices;
   threads: PersistedThread[];
-  wa: WaState;
   tvShader: TvShaderParams;
   demo: DemoState;
 
@@ -101,13 +99,6 @@ interface AppState {
   pushStoryLumiMsg: (text?: string, widget?: import("./types").WidgetData) => void;
   clearStoryChat: () => void;
 
-  // WA story chat — presentational (separate from live WaConversation)
-  setStoryWaDraft: (text: string) => void;
-  pushStoryWaUserMsg: (text: string) => void;
-  setStoryWaLumiTyping: (v: boolean) => void;
-  pushStoryWaLumiMsg: (text?: string, widget?: import("./types").WidgetData) => void;
-  clearStoryWa: () => void;
-
   // Story voice mode — presentational (scripted, no mic / no live AI)
   openStoryVoice: () => void;
   closeStoryVoice: () => void;
@@ -123,23 +114,6 @@ interface AppState {
   loadDemoData: () => void;
   clearThreads: () => void;
   loadThread: (id: string) => void;
-
-  // WhatsApp demo channel
-  setWaEnabled: (v: boolean) => void;
-  saveWaMessages: (messages: UIMessage[]) => void;
-  addWaMarker: (marker: Omit<WaTopicMarker, "id" | "createdAt">) => void;
-  setWaActiveThread: (threadId: string | null) => void;
-  setWaPendingText: (text: string | null) => void;
-  beginWaThread: (firstUserText: string) => string;
-  pushLumiOutbound: (p: {
-    topic: string; emoji: string; filter: ThreadFilter;
-    appMessages: UIMessage[]; waMessages: UIMessage[];
-  }) => void;
-  resolveWaThread: (p: {
-    topicMatch: string; waText: string; appStatusMessage: UIMessage;
-  }) => void;
-  appendWaMessages: (messages: UIMessage[]) => void;
-  resetWa: () => void;
 }
 
 function truncateTopic(text: string, max = 40): string {
@@ -167,18 +141,7 @@ export const useApp = create<AppState>()(
         frontDoor: null,
         fade: false,
         storyChat: { messages: [], draft: "", lumiTyping: false },
-        storyWa:   { messages: [], draft: "", lumiTyping: false },
         storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
-      },
-      wa: {
-        enabled: false,
-        messages: [],
-        markers: [],
-        activeThreadId: null,
-        pendingGuestText: null,
-        resetCount: 0,
-        createdAt: 0,
-        updatedAt: 0,
       },
 
       go: (screen) => set({ screen }),
@@ -204,7 +167,6 @@ export const useApp = create<AppState>()(
           frontDoor: false,
           fade: false,
           storyChat: { messages: [], draft: "", lumiTyping: false },
-          storyWa:   { messages: [], draft: "", lumiTyping: false },
           storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
         },
       })),
@@ -214,13 +176,21 @@ export const useApp = create<AppState>()(
           active: false,
           beatIndex: 0,
           roomBreakout: false,
-          frontDoor: false,
+          frontDoor: null,
           fade: false,
           storyChat: { messages: [], draft: "", lumiTyping: false },
-          storyWa:   { messages: [], draft: "", lumiTyping: false },
           storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
         },
+        // Reset the world the story mutated so "Back to main" lands on a clean app,
+        // not the dark climax room (lights off, Netflix on, evening sky).
         chat: null,
+        voiceOpen: false,
+        inStay: false,
+        smartRoom: INITIAL_SMART_ROOM,
+        screen: "explore",
+        // Drop the demo threads the story seeded into the inbox (keep any live
+        // threads the user created themselves).
+        threads: s.threads.filter((t) => t.source !== "demo"),
       })),
       nextBeat: () => set((s) => ({ demo: { ...s.demo, beatIndex: s.demo.beatIndex + 1 } })),
       prevBeat: () => set((s) => ({
@@ -294,48 +264,6 @@ export const useApp = create<AppState>()(
         set((s) => ({
           demo: { ...s.demo, storyChat: { messages: [], draft: "", lumiTyping: false } },
           chat: null,
-        })),
-
-      setStoryWaDraft: (text) =>
-        set((s) => ({ demo: { ...s.demo, storyWa: { ...s.demo.storyWa, draft: text } } })),
-      pushStoryWaUserMsg: (text) => {
-        const msg: UIMessage = {
-          id: `storywa_u_${nanoid(6)}`,
-          role: "user",
-          parts: [{ type: "text", text }],
-        };
-        set((s) => ({
-          demo: {
-            ...s.demo,
-            storyWa: { ...s.demo.storyWa, draft: "", messages: [...s.demo.storyWa.messages, msg] },
-          },
-        }));
-      },
-      setStoryWaLumiTyping: (v) =>
-        set((s) => ({ demo: { ...s.demo, storyWa: { ...s.demo.storyWa, lumiTyping: v } } })),
-      pushStoryWaLumiMsg: (text, widget) => {
-        const parts: UIMessage["parts"] = [];
-        if (text) parts.push({ type: "text", text });
-        if (widget) {
-          parts.push({
-            type: `tool-${widget.type}`,
-            toolCallId: `storywa_w_${nanoid(6)}`,
-            state: "output-available",
-            input: {},
-            output: widget.data,
-          } as unknown as UIMessage["parts"][number]);
-        }
-        const msg: UIMessage = { id: `storywa_l_${nanoid(6)}`, role: "assistant", parts };
-        set((s) => ({
-          demo: {
-            ...s.demo,
-            storyWa: { ...s.demo.storyWa, lumiTyping: false, messages: [...s.demo.storyWa.messages, msg] },
-          },
-        }));
-      },
-      clearStoryWa: () =>
-        set((s) => ({
-          demo: { ...s.demo, storyWa: { messages: [], draft: "", lumiTyping: false } },
         })),
 
       openStoryVoice: () =>
@@ -422,7 +350,7 @@ export const useApp = create<AppState>()(
             // ignore — privacy mode etc.
           }
         }
-        set((s) => ({
+        set({
           screen: "explore",
           tripId: null,
           chat: null,
@@ -430,127 +358,8 @@ export const useApp = create<AppState>()(
           bookingOpen: false,
           smartRoom: INITIAL_SMART_ROOM,
           threads: [],
-          wa: {
-            ...s.wa,
-            messages: [],
-            markers: [],
-            activeThreadId: null,
-            pendingGuestText: null,
-            resetCount: s.wa.resetCount + 1,
-            updatedAt: Date.now(),
-          },
-        }));
+        });
       },
-
-      setWaEnabled: (v) => set((s) => ({ wa: { ...s.wa, enabled: v } })),
-      saveWaMessages: (messages) =>
-        set((s) => ({ wa: { ...s.wa, messages, updatedAt: Date.now() } })),
-      addWaMarker: (marker) =>
-        set((s) => ({
-          wa: {
-            ...s.wa,
-            markers: [...s.wa.markers, { ...marker, id: `wamarker_${nanoid(6)}`, createdAt: Date.now() }],
-          },
-        })),
-      setWaActiveThread: (threadId) =>
-        set((s) => ({ wa: { ...s.wa, activeThreadId: threadId } })),
-      setWaPendingText: (text) =>
-        set((s) => ({ wa: { ...s.wa, pendingGuestText: text } })),
-
-      beginWaThread: (firstUserText) => {
-        const id = `th_${nanoid(8)}`;
-        const now = Date.now();
-        const next: PersistedThread = {
-          id,
-          topic: truncateTopic(firstUserText),
-          emoji: "💬",
-          filter: "support",
-          state: "active",
-          messages: [],
-          createdAt: now,
-          updatedAt: now,
-          source: "live",
-          unread: true,
-        };
-        set((s) => ({
-          threads: [next, ...s.threads],
-          wa: { ...s.wa, activeThreadId: id, updatedAt: now },
-        }));
-        return id;
-      },
-
-      pushLumiOutbound: ({ topic, emoji, filter, appMessages, waMessages }) => {
-        const id = `th_${nanoid(8)}`;
-        const now = Date.now();
-        const thread: PersistedThread = {
-          id, topic, emoji, filter, state: "open",
-          messages: appMessages,
-          createdAt: now, updatedAt: now,
-          source: "live", unread: true,
-        };
-        const lastMsgId =
-          get().wa.messages[get().wa.messages.length - 1]?.id ?? "__start__";
-        const marker: WaTopicMarker = {
-          id: `wamarker_${nanoid(6)}`,
-          threadId: id, topic, emoji,
-          afterMessageId: lastMsgId,
-          createdAt: now,
-        };
-        set((s) => ({
-          threads: [thread, ...s.threads],
-          wa: {
-            ...s.wa,
-            messages: [...s.wa.messages, ...waMessages],
-            markers: [...s.wa.markers, marker],
-            activeThreadId: id,
-            updatedAt: now,
-          },
-        }));
-      },
-
-      resolveWaThread: ({ topicMatch, waText, appStatusMessage }) => {
-        const thread = get().threads.find(
-          (t) => t.topic.toLowerCase().includes(topicMatch.toLowerCase()) && t.source === "live",
-        );
-        const now = Date.now();
-        const waMsg: UIMessage = {
-          id: `wa_${nanoid(8)}`,
-          role: "assistant",
-          parts: [{ type: "text", text: waText }],
-        };
-        set((s) => ({
-          threads: thread
-            ? s.threads.map((t) =>
-                t.id === thread.id
-                  ? { ...t, state: "resolved", messages: [...t.messages, appStatusMessage], updatedAt: now, preview: undefined, time: undefined }
-                  : t,
-              )
-            : s.threads,
-          wa: {
-            ...s.wa,
-            messages: [...s.wa.messages, waMsg],
-            updatedAt: now,
-          },
-        }));
-      },
-
-      appendWaMessages: (messages) =>
-        set((s) => ({
-          wa: { ...s.wa, messages: [...s.wa.messages, ...messages], updatedAt: Date.now() },
-        })),
-
-      resetWa: () =>
-        set((s) => ({
-          wa: {
-            ...s.wa,
-            messages: [],
-            markers: [],
-            activeThreadId: null,
-            pendingGuestText: null,
-            resetCount: s.wa.resetCount + 1,
-            updatedAt: Date.now(),
-          },
-        })),
 
       loadDemoData: () => {
         const demo = demoSeedThreads();
@@ -575,7 +384,7 @@ export const useApp = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       // Only threads survive across reloads. screen/chat/tripId stay ephemeral
       // so refreshing always lands you on a clean Explore with no open sheet.
-      partialize: (s) => ({ threads: s.threads, wa: s.wa, inStay: s.inStay, tvShader: s.tvShader }),
+      partialize: (s) => ({ threads: s.threads, inStay: s.inStay, tvShader: s.tvShader }),
     },
   ),
 );

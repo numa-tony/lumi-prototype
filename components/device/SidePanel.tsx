@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useApp } from "@/lib/store";
 import { SettingsPanel } from "./panels/SettingsPanel";
-import { TodosPanel } from "./panels/TodosPanel";
 
-type ModalView = "settings" | "todos" | null;
+type ModalView = "settings" | null;
 type NavAction = ModalView | "story";
 
 function StoryDemoIcon() {
@@ -31,26 +30,6 @@ function SettingsIcon() {
   );
 }
 
-function TodosIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <path d="M2 4l2 2 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 4.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M2 8.5l2 2 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PRDIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <rect x="2.5" y="1" width="10" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M5 5h5M5 7.5h5M5 10h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 const NAV: {
   id: string;
   label: string;
@@ -59,8 +38,6 @@ const NAV: {
 }[] = [
   { id: "story", label: "Sarah's Day", Icon: StoryDemoIcon, action: "story" },
   { id: "settings", label: "Settings", Icon: SettingsIcon, action: "settings" },
-  { id: "todos", label: "To-dos", Icon: TodosIcon, action: "todos" },
-  { id: "prd", label: "PRD", Icon: PRDIcon, action: null },
 ];
 
 export function SidePanel() {
@@ -70,7 +47,7 @@ export function SidePanel() {
 
   const handleNav = (action: NavAction) => {
     if (action === "story") { startStory(); return; }
-    if (action === "settings" || action === "todos") setModal(action);
+    if (action === "settings") setModal(action);
   };
 
   return (
@@ -96,9 +73,7 @@ export function SidePanel() {
               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${
                 id === "story"
                   ? "text-[#ff671f] hover:bg-[#ff671f]/10 hover:text-[#ff8040]"
-                  : action
-                    ? "text-[#999] hover:bg-white/5 hover:text-white"
-                    : "cursor-default text-[#999]"
+                  : "text-[#999] hover:bg-white/5 hover:text-white"
               }`}
             >
               <Icon />
@@ -146,11 +121,7 @@ export function SidePanel() {
                 </svg>
               </button>
 
-              {modal === "settings" ? (
-                <SettingsPanel />
-              ) : (
-                <TodosPanel />
-              )}
+              <SettingsPanel />
             </motion.div>
           </>
         )}

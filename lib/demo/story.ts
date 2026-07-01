@@ -15,10 +15,6 @@ export type Step =
   | { kind: "openThread"; id: string }                 // open a seeded thread in storyChat
   | { kind: "lumiTyping"; ms?: number }                // typing dots for ms (default 1200)
   | { kind: "lumiMsg"; text?: string; widget?: WidgetData }   // append Lumi bubble/widget
-  // WA phone scripted conversation
-  | { kind: "waUserMsg"; text: string }                // typewriter → send on WA phone
-  | { kind: "waLumiTyping"; ms?: number }              // WA typing dots for ms
-  | { kind: "waLumiMsg"; text?: string; widget?: WidgetData } // append Lumi bubble on WA
   // Scripted voice mode (mimics VoiceSheet — no mic / no live AI)
   | { kind: "voiceOpen" }                              // slide the voice sheet up
   | { kind: "voiceClose" }
@@ -30,8 +26,6 @@ export type Step =
   | { kind: "frontDoor"; open: boolean | null }         // null=hidden, false=visible+closed, true=open
   | { kind: "fadeToBlack"; ms?: number }               // backdrop overlay fade (default 600)
   | { kind: "setInStay"; value: boolean }
-  | { kind: "setWaEnabled"; value: boolean }
-  | { kind: "resetWa" }
   | { kind: "clearThreads" }
   | { kind: "loadThread"; id: string }
   | { kind: "go"; screen: ScreenId }
@@ -91,7 +85,6 @@ export const STORY: PressBeat[] = [
     titleCard: true,
     steps: [
       { kind: "clearThreads" },
-      { kind: "setWaEnabled", value: false },
       { kind: "setInStay", value: false },
       { kind: "breakout", value: false },
       { kind: "frontDoor", open: null },
@@ -206,85 +199,81 @@ export const STORY: PressBeat[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // SEGMENT 3 — Towels: WhatsApp cross-channel reveal
+  // SEGMENT 3 — Towels: a quick in-app ask
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Press 8 — she goes to the bathroom; WA phone appears; app shows Messages with stay thread
+  // Press 8 — she goes to the bathroom, needs towels; opens a fresh Lumi chat
   {
-    id: "towels-setup",
+    id: "towels-open",
     segmentIndex: 3,
     background: WARM_ROOM,
-    narration: "She goes to the bathroom. She needs more towels. Already in WhatsApp texting a friend, she goes to the Lumi thread in WhatsApp.",
+    narration: "She goes to the bathroom. She needs more towels — she just asks Lumi.",
     steps: [
       { kind: "closeChat" },
-      { kind: "loadThread", id: "stay" },   // in-app arrival thread (door, lights, blinds)
-      { kind: "go", screen: "messages" },
-      { kind: "setWaEnabled", value: true },
-      { kind: "resetWa" },
+      { kind: "openChat" },
     ],
   },
 
-  // Press 9 — she asks where to get towels on WA → Lumi gives self-service location → new thread bridges to inbox
+  // Press 9 — she asks where to get towels → Lumi gives the self-service location
   {
-    id: "towels-wa-message",
+    id: "towels-message",
     segmentIndex: 3,
     background: WARM_ROOM,
-    narration: "She goes to the bathroom. She needs more towels. Already in WhatsApp texting a friend, she goes to the Lumi thread in WhatsApp.",
+    narration: "She goes to the bathroom. She needs more towels — she just asks Lumi.",
     sarah: "where are the towels?",
     sarahEmotion: "neutral",
     steps: [
-      { kind: "waUserMsg", text: "where can i get extra towels?" },
-      { kind: "waLumiTyping", ms: 900 },
-      { kind: "waLumiMsg", text: "Extra towels are in the Essentials closet on the first floor — just past the lift 🛁" },
-      { kind: "wait", ms: 500 },
-      { kind: "loadThread", id: "towels" },
+      { kind: "userMsg", text: "where can i get extra towels?" },
+      { kind: "lumiTyping", ms: 900 },
+      { kind: "lumiMsg", text: "Extra towels are in the Essentials closet on the first floor — just past the lift 🛁" },
     ],
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // SEGMENT 4 — AC: frustration + status widget
+  // SEGMENT 4 — AC: Lumi splits a new issue into its own request, then the inbox
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Press 10 — narration shifts to AC frustration
+  // Press 10 — still in the towels chat, she raises the AC → Lumi recognises it's
+  // a separate issue and offers to open a dedicated request for it.
   {
-    id: "ac-setup",
-    segmentIndex: 4,
-    background: WARM_ROOM,
-    narration: "Summer heat. She turns the AC on. Warm air.",
-    steps: [],
-  },
-
-  // Press 11 — she reports it on WhatsApp → ticket + status widget; thread bridges
-  {
-    id: "ac-message",
+    id: "ac-raise",
     segmentIndex: 4,
     background: WARM_ROOM,
     narration: "Summer heat. She turns the AC on. Warm air.",
     sarah: "the AC isn't working",
     sarahEmotion: "annoyed",
     steps: [
-      { kind: "waUserMsg", text: "the AC in my room isn't cooling, just blowing warm air" },
-      { kind: "waLumiTyping", ms: 1200 },
-      { kind: "waLumiMsg", text: "Sorry about that! I've logged a maintenance ticket for room 204 — a technician is on the way." },
-      { kind: "wait", ms: 400 },
-      { kind: "waLumiMsg", widget: {
-        type: "statusWidget",
-        data: {
-          title: "Technician on the way",
-          state: "in_progress",
-          detail: "Maintenance · Room 204",
-          eta: "Arriving in ~7 min",
-          stages: [
-            { label: "Submitted", done: true },
-            { label: "Acknowledged", done: true },
-            { label: "Assigned", done: true },
-            { label: "In progress", done: false },
-            { label: "Resolved", done: false },
-          ],
-        },
-      }},
-      { kind: "wait", ms: 300 },
+      { kind: "userMsg", text: "the AC in my room isn't cooling, just blowing warm air" },
+      { kind: "lumiTyping", ms: 1200 },
+      { kind: "lumiMsg", text: "That's a separate issue from the towels — I'll open a dedicated request so it's easy to track. Setting that up now 🛠️" },
+    ],
+  },
+
+  // Press 11 — Lumi opens the AC as its own thread, with a live status widget
+  {
+    id: "ac-thread",
+    segmentIndex: 4,
+    background: WARM_ROOM,
+    narration: "Lumi spins up a dedicated request — with live status she can follow.",
+    sarah: "checks the new request",
+    sarahEmotion: "annoyed",
+    steps: [
+      { kind: "openThread", id: "ac" },
+    ],
+  },
+
+  // Press 12 — zoom out: every request is its own thread, all in one inbox
+  {
+    id: "inbox-reveal",
+    segmentIndex: 4,
+    background: WARM_ROOM,
+    narration: "Every request in its own thread — all saved in one place.",
+    steps: [
+      { kind: "closeChat" },
+      { kind: "loadThread", id: "stay" },     // arrival: door, lights, blinds
+      { kind: "loadThread", id: "towels" },
       { kind: "loadThread", id: "ac" },
+      { kind: "go", screen: "messages" },
     ],
   },
 
@@ -292,27 +281,14 @@ export const STORY: PressBeat[] = [
   // SEGMENT 5 — Ramen: quick-reply → map widget
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Press 12 — she taps the AC thread in the app inbox → sees status widget in full
-  {
-    id: "ac-open-thread",
-    segmentIndex: 4,
-    background: WARM_ROOM,
-    narration: "Summer heat. She turns the AC on. Warm air.",
-    sarah: "checks status in the app",
-    sarahEmotion: "annoyed",
-    steps: [
-      { kind: "openThread", id: "ac" },
-    ],
-  },
-
-  // Press 13 — WA phone hides; she's hungry and doesn't know what she wants
+  // Press 13 — she's hungry and doesn't know what she wants
   {
     id: "ramen-setup",
     segmentIndex: 5,
     background: WARM_ROOM,
     narration: "She's hungry. She doesn't know what she wants.",
     steps: [
-      { kind: "setWaEnabled", value: false },
+      { kind: "closeChat" },
       { kind: "go", screen: "explore" },
     ],
   },
@@ -526,7 +502,6 @@ export const STORY: PressBeat[] = [
       { kind: "voiceClose" },
       { kind: "breakout", value: false },
       { kind: "closeChat" },
-      { kind: "setWaEnabled", value: false },
       { kind: "go", screen: "explore" },
     ],
   },

@@ -1,7 +1,15 @@
 # Lumi Architecture & UX Vision — Reference
 
-Distilled from the 46-page "Doc — Lumi Architecture & UX Vision" (CAI T2 2026 grilling session).
-Read this before making design or architecture decisions on the prototype.
+> **Canonical source of truth:** the Notion doc **"Doc — Lumi Architecture & UX Vision"**
+> → https://app.notion.com/p/numastays/Doc-Lumi-Architecture-UX-Vision-357a39b9f20480769deaca9797dabc1b
+>
+> This file is a **local mirror** of that doc, kept so agents/offline work have the vision
+> without live Notion access. When the two disagree, **Notion wins** — refresh this mirror
+> from Notion (via the Notion MCP) rather than editing the vision here by hand.
+>
+> _Sync status:_ ⚠️ Not yet live-synced — the current text below is the earlier distillation
+> of the 46-page doc (CAI T2 2026 grilling session). Pending Notion MCP access to the
+> numastays workspace (see docs note), after which this will be replaced with the live content.
 
 ---
 

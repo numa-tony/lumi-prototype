@@ -15,19 +15,13 @@ export async function POST(req: Request) {
     await req.json();
 
   const { model, id: modelId } = await getModel();
-  const isWhatsApp = hint?.toLowerCase().includes("whatsapp") ?? false;
-
-  // Strip controlDevice from WhatsApp requests — room controls are app-only
-  const activeTools = isWhatsApp
-    ? Object.fromEntries(Object.entries(tools).filter(([k]) => k !== "controlDevice"))
-    : tools;
 
   try {
     const result = streamText({
       model,
       system: buildSystemPrompt(hint),
       messages: await convertToModelMessages(messages),
-      tools: activeTools,
+      tools,
       stopWhen: stepCountIs(5),
       onError: ({ error }) => {
         const msg = error instanceof Error ? error.message : String(error);

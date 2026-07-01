@@ -119,7 +119,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
         {/* The End card — final segment */}
         {beat.thesisCard && (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-8 text-center"
+            className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center gap-8 px-8 text-center"
             style={{ background: beat.background }}
           >
             <p

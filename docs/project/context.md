@@ -80,5 +80,8 @@ Use `/lumi-screen <name>` skill or Figma MCP directly to fetch any node.
 
 ## Read on demand
 
-- `docs/project/vision.md` — full Lumi architecture & product decisions (read before design/arch work)
+- **Vision — source of truth:** Notion doc "Doc — Lumi Architecture & UX Vision"
+  (https://app.notion.com/p/numastays/Doc-Lumi-Architecture-UX-Vision-357a39b9f20480769deaca9797dabc1b).
+  Read via the Notion MCP before design/arch work. `docs/project/vision.md` is a local mirror
+  of it — refresh from Notion when they diverge; Notion wins.
 - `docs/project/decisions.md` — prototype tech choices (read before changing established patterns)
