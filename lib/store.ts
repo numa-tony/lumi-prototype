@@ -7,6 +7,7 @@ import { demoSeedThreads, demoSeedThread } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
 import type { PhoneSurface } from "./demo/types";
 import { createAcRequest, type RequestState } from "./demo/request";
+import { getStory } from "./demo/stories";
 
 // ── TV Shader params ───────────────────────────────────────────────────────────
 export interface TvShaderParams {
@@ -203,7 +204,15 @@ export const useApp = create<AppState>()(
       setTvShader: (update) => set((s) => ({ tvShader: { ...s.tvShader, ...update } })),
 
       startStory: (storyId = "sarah") => set(() => ({
-        demo: { ...INITIAL_DEMO, active: true, storyId, frontDoor: false },
+        // Open on the story's own surface, so the first painted frame is
+        // already right — no flash of the app before beat 0 runs.
+        demo: {
+          ...INITIAL_DEMO,
+          active: true,
+          storyId,
+          frontDoor: false,
+          surface: getStory(storyId).initialSurface,
+        },
       })),
       exitStory: () => set((s) => ({
         demo: { ...INITIAL_DEMO, storyId: s.demo.storyId },

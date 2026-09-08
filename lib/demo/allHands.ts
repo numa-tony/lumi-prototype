@@ -82,6 +82,9 @@ export const ALLHANDS: PressBeat[] = [
     background: STAGE,
     titleCard: true,
     steps: [
+      // WhatsApp first, so the reset below happens behind it and the story
+      // never opens on a flash of the app.
+      { kind: "surface", value: "whatsapp" },
       { kind: "clearThreads" },
       { kind: "clearRequest" },
       { kind: "setInStay", value: true },
@@ -91,7 +94,6 @@ export const ALLHANDS: PressBeat[] = [
       { kind: "closeChat" },
       { kind: "starters", items: STARTERS_ROOM },
       { kind: "go", screen: "explore" },
-      { kind: "surface", value: "whatsapp" },
     ],
   },
 

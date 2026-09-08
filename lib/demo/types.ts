@@ -99,6 +99,9 @@ export interface Story {
   endSubtitle?: string;
   duration?: string;    // shown on the title card (full chrome only)
   chrome: StoryChrome;
+  // The phone surface the story opens on, applied the moment it starts so the
+  // first frame is already the right one.
+  initialSurface: PhoneSurface;
   // Whether the world scenes behind the phone (the room, the front door) are
   // mounted for this story. All-Hands runs on a black stage for now; its beats
   // still drive `smartRoom` through `scene` steps, so switching this on is all

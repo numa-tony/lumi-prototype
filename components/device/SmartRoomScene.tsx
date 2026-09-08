@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
-import { useStoryScenes } from "@/lib/demo/stories";
+import { useStoryScenes } from "@/lib/demo/scenes";
 
 // Warmth → ambient glow color
 const WARMTH_COLOR: Record<string, string> = {

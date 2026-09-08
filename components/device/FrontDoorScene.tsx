@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
-import { useStoryScenes } from "@/lib/demo/stories";
+import { useStoryScenes } from "@/lib/demo/scenes";
 
 // null  = scene not rendered (non-arrival beats)
 // false = scene visible, door closed (arrival-setup)

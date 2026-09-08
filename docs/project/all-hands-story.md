@@ -24,7 +24,7 @@ contradicts anything else.
 
 | Tap | Beat | On the phone |
 |----:|------|--------------|
-| 0 | — | The phone, centred, showing an empty WhatsApp thread with **Numa ✓ · online**. No title text — you open the story, not the stage |
+| 0 | — | Opens straight on WhatsApp: the phone, centred, empty thread with **Numa ✓ · online**. No title text — you open the story, not the stage |
 | 1 | 01 | Sarah types the AC message on WhatsApp (9:39 PM) |
 | 2 | 01→02 | The bot apologises, opens a request, passes it on (9:40 PM). **Then, three seconds later and with no press from you**, the extra line lands: *follow this live in the Numa app* + `numa.app/r/204-ac`. The pause in between is the beat |
 | 3 | 02 | She taps the link → straight onto the chat with the **pinned status card**. Countdown starts. (The Inbox sits underneath, so nothing flashes past on the way) |
@@ -82,6 +82,10 @@ The beats already drive the room through `scene` steps exactly as Sarah's Day
 does: lights on at tap 16, off at 17, blinds open and morning sky at 18. So
 switching `scenes` to `true` lights the room up behind the phone with no changes
 to the script.
+
+Each story declares the surface it opens on (`initialSurface`), applied the
+moment it starts — so the All-Hands story's first painted frame is already
+WhatsApp, with no flash of the app behind it.
 
 ### iOS surfaces
 
