@@ -150,11 +150,12 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Pinned live request — stays put while she asks the next thing, with a
-          rule under it separating the status from the conversation (Figma). */}
+          rule under it separating the status from the conversation (Figma).
+          The rule sits in 40px of clear space on both sides. */}
       {request && requestProgress && (
-        <div className="shrink-0 px-4 pb-1 pt-2">
+        <div className="shrink-0 px-4 pt-2">
           <RequestPinnedCard request={request} progress={requestProgress} />
-          <div className="mt-4 h-px bg-line-light" />
+          <div className="mt-[40px] h-px bg-line-light" />
         </div>
       )}
 
@@ -165,8 +166,12 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
         </div>
       )}
 
-      {/* Message list */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 no-scrollbar app-scroll">
+      {/* Message list — 40px of clear space under the rule when one is shown */}
+      <div
+        className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4 no-scrollbar app-scroll ${
+          request && requestProgress ? "pt-[40px]" : "pt-4"
+        }`}
+      >
         {messages.map((message: UIMessage) => (
           <div key={message.id} className="space-y-3">
             {message.parts.map((part, idx) => {
