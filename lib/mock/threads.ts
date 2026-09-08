@@ -9,6 +9,26 @@ import { BERLIN_POIS, PROPERTIES, IMG } from "./properties";
 const barcelona = PROPERTIES.find((p) => p.id === "barcelona-palmera")!;
 
 export const THREADS: Thread[] = [
+  // The one thing in Sarah's inbox during the All-Hands walkthrough — she has
+  // only asked us one thing, so there is only one thread.
+  {
+    id: "allhands-ac",
+    topic: "Lumi",
+    emoji: "🔧",
+    state: "in_progress",
+    filter: "support",
+    unread: false,
+    preview: "Technician on the way — arriving in ~30 min",
+    time: "9:41 PM",
+    hint: "The guest's AC request, opened over WhatsApp and now followed in the app.",
+    seed: [
+      {
+        role: "assistant",
+        text: "I've opened a request for the AC in room 204 and passed it to the team. A technician is on the way — you can follow it right here.",
+        time: "9:41 PM",
+      },
+    ],
+  },
   {
     id: "ac",
     topic: "AC",
@@ -291,11 +311,13 @@ function threadToPersisted(t: Thread, now: number): PersistedThread {
   };
 }
 
-// Snapshot of the demo inbox, ready to drop into the zustand store.
+// Snapshot of the demo inbox, ready to drop into the zustand store. Threads
+// prefixed "allhands-" belong to the All-Hands walkthrough and are revealed by
+// that story alone, so they stay out of the general demo inbox.
 export function demoSeedThreads(): PersistedThread[] {
   const now = Date.now();
   seedMessageCounter = 0;
-  return THREADS.map((t) => threadToPersisted(t, now));
+  return THREADS.filter((t) => !t.id.startsWith("allhands-")).map((t) => threadToPersisted(t, now));
 }
 
 // Single thread by id — used by story mode to reveal threads one at a time.

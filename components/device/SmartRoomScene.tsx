@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
+import { useStoryScenes } from "@/lib/demo/stories";
 
 // Warmth → ambient glow color
 const WARMTH_COLOR: Record<string, string> = {
@@ -54,6 +55,7 @@ export function SmartRoomScene() {
   const inStay = useApp((s) => s.inStay);
   const smartRoom = useApp((s) => s.smartRoom);
   const roomBreakout = useApp((s) => s.demo.roomBreakout);
+  const scenesEnabled = useStoryScenes();
   const { lights, tv, blinds, door, ac, windowSky } = smartRoom;
 
   const warmthColor = WARMTH_COLOR[lights.warmth] ?? WARMTH_COLOR.warm;
@@ -65,7 +67,7 @@ export function SmartRoomScene() {
   // Story Mode drives visibility explicitly via `roomBreakout` so the scene can
   // stay mounted (dark) when the climax turns the lights off. Live mode has no
   // breakout, so it still shows only when in-stay AND lights are on.
-  const sceneVisible = roomBreakout || (inStay && lights.on);
+  const sceneVisible = scenesEnabled && (roomBreakout || (inStay && lights.on));
 
   return (
     <AnimatePresence>

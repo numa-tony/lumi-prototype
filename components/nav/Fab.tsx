@@ -30,24 +30,24 @@ export function Fab() {
           }}
         >
           <div className="fab-dots" />
-          {/* Ask AI */}
+          {/* Ask Lumi */}
           <button
             onClick={() => openChat(ctx)}
             className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={IMG_LUMI_ORB} alt="" className="h-9 w-9 shrink-0 object-cover" />
-            Ask AI
+            Ask Lumi
           </button>
 
-          {/* Doors — only shown in stay mode */}
+          {/* Open door — only shown in stay mode */}
           {inStay && (
             <>
               <span className="h-[56px] w-px shrink-0 bg-[#eee]" />
               <button className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG_LUMI_CONE} alt="" className="h-9 w-9 shrink-0 object-contain" />
-                Doors
+                Open door
               </button>
             </>
           )}

@@ -6,6 +6,7 @@ export type ScreenId =
   | "explore"
   | "trips"
   | "tripDetail"
+  | "yourRoom"
   | "roomControls"
   | "tvRemote"
   | "messages"

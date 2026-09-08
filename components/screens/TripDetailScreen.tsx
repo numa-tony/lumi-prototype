@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useApp } from "@/lib/store";
-import { UPCOMING_TRIP } from "@/lib/mock/guest";
+import { useStay } from "@/lib/demo/stay";
 
 const IMG_ROOM_LEFT =
   "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80&auto=format&fit=crop";
@@ -119,6 +119,7 @@ const HELPFUL_TIPS = [
 // ---------------------------------------------------------------------------
 export function TripDetailScreen() {
   const go = useApp((s) => s.go);
+  const stay = useStay();
   const [activeChip, setActiveChip] = useState<TipsChip>("Arrival");
 
   return (
@@ -143,14 +144,14 @@ export function TripDetailScreen() {
             className="text-[36px] font-semibold leading-[1.1] tracking-[-0.4px]"
             style={{ color: AMSTERDAM }}
           >
-            {UPCOMING_TRIP.property}
+            {stay.property}
           </h1>
           <button className="mt-2 flex items-center gap-1.5 active:opacity-70">
             <span
               className="text-[16px] font-semibold leading-6 tracking-[-0.2px]"
               style={{ color: AMSTERDAM }}
             >
-              Ridderspoorweg 175, Amsterdam
+              {stay.location}
             </span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={AMSTERDAM} strokeWidth="2" aria-hidden>
               <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -186,8 +187,8 @@ export function TripDetailScreen() {
               <p className="text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
                 Check-in
               </p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">Mon, Apr 14</p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">2:00 PM CET</p>
+              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkInDate}</p>
+              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkInTime}</p>
             </div>
 
             {/* Vertical dashed divider */}
@@ -200,8 +201,8 @@ export function TripDetailScreen() {
               <p className="text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
                 Check-out
               </p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">Tue, Apr 15</p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">11:00 AM CET</p>
+              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkOutDate}</p>
+              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkOutTime}</p>
             </div>
           </div>
 
@@ -210,12 +211,28 @@ export function TripDetailScreen() {
 
           {/* CTA section */}
           <div className="flex flex-col gap-3 px-6 pb-6 pt-4">
-            <button className="flex h-11 w-full items-center justify-center rounded-[10px] bg-[#191919] text-[16px] font-semibold tracking-[-0.2px] text-white active:bg-[#333]">
-              Check-in now
-            </button>
-            <p className="text-center text-[14px] font-light leading-5 tracking-[-0.2px] text-[#6d706f]">
-              Online check-in required before stay.
-            </p>
+            {stay.needsCheckIn ? (
+              <>
+                <button className="flex h-11 w-full items-center justify-center rounded-[10px] bg-[#191919] text-[16px] font-semibold tracking-[-0.2px] text-white active:bg-[#333]">
+                  Check-in now
+                </button>
+                <p className="text-center text-[14px] font-light leading-5 tracking-[-0.2px] text-[#6d706f]">
+                  Online check-in required before stay.
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  Room: <span className="font-semibold text-[#191919]">{stay.room}</span>
+                </p>
+                <p className="flex items-center gap-1.5 text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  Code: <span className="font-semibold text-[#191919]">{stay.doorCode}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f7a4a" strokeWidth="2.6" aria-hidden>
+                    <path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -224,7 +241,10 @@ export function TripDetailScreen() {
 
           {/* Essential list — Your room + Manage your booking */}
           <div className="flex flex-col px-6">
-            <button className="flex w-full items-center gap-4 py-2 text-left active:opacity-70">
+            <button
+              onClick={() => go("yourRoom")}
+              className="flex w-full items-center gap-4 py-2 text-left active:opacity-70"
+            >
               <div className="shrink-0">
                 <IconHotel />
               </div>

@@ -2,13 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
-import { STORY } from "@/lib/demo/story";
+import { beatsForStory } from "@/lib/demo/stories";
 import { snapToBeat, playBeat, fastForwardCurrent } from "@/lib/demo/storyRunner";
 import { StoryStage } from "./StoryStage";
 
 export function StoryDirector() {
   const demoActive = useApp((s) => s.demo.active);
+  const storyId = useApp((s) => s.demo.storyId);
   const beatIndex = useApp((s) => s.demo.beatIndex);
+  const beatCount = beatsForStory(storyId).length;
   const exitStory = useApp((s) => s.exitStory);
   const nextBeat = useApp((s) => s.nextBeat);
   const prevBeat = useApp((s) => s.prevBeat);
@@ -46,7 +48,7 @@ export function StoryDirector() {
       if (!demoActive) return;
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
-        if (beatIndex < STORY.length - 1) {
+        if (beatIndex < beatCount - 1) {
           if (playingRef.current) {
             // Already playing — fast-forward the current beat, then advance
             fastForwardCurrent(beatIndex);
@@ -63,7 +65,7 @@ export function StoryDirector() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [demoActive, beatIndex, nextBeat, prevBeat, exitStory]);
+  }, [demoActive, beatIndex, beatCount, nextBeat, prevBeat, exitStory]);
 
   // Kick off beat 0 when story starts
   useEffect(() => {

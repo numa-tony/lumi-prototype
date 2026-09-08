@@ -3,9 +3,14 @@
 // imperative async functions without re-render coupling.
 
 import { useApp } from "@/lib/store";
-import { STORY } from "./story";
-import type { Step } from "./story";
+import { beatsForStory } from "./stories";
+import type { PressBeat, Step } from "./types";
 import { INITIAL_SMART_ROOM } from "@/lib/smartRoom";
+
+// The beats of whichever story is currently running (see lib/demo/stories.ts).
+function beats(): PressBeat[] {
+  return beatsForStory(useApp.getState().demo.storyId);
+}
 
 interface CancelToken { cancelled: boolean }
 
@@ -120,8 +125,24 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       useApp.getState().pushStoryUserMsg(step.text);
       break;
 
+    case "hideChat":
+      s.hideStoryChat();
+      break;
+
+    case "showChat":
+      s.showStoryChat();
+      break;
+
     case "openThread":
       useApp.getState().openStoryThread(step.id);
+      break;
+
+    case "divider":
+      useApp.getState().pushStoryDivider(step.label);
+      break;
+
+    case "starters":
+      useApp.getState().setStoryStarters(step.items);
       break;
 
     case "lumiTyping":
@@ -183,6 +204,58 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       useApp.getState().setStoryVoiceResponse(step.text);
       break;
 
+    // ── Phone surfaces outside the app ────────────────────────────────────
+
+    case "surface":
+      useApp.getState().setStorySurface(step.value);
+      break;
+
+    case "island":
+      useApp.getState().setIslandExpanded(step.expanded);
+      break;
+
+    case "waUserMsg": {
+      if (animated) {
+        const text = step.text;
+        const msPerChar = Math.min(38, 900 / text.length);
+        try {
+          for (let i = 1; i <= text.length; i++) {
+            if (token.cancelled) throw new DOMException("cancelled", "AbortError");
+            useApp.getState().setWaDraft(text.slice(0, i));
+            await sleep(msPerChar, token);
+          }
+          await sleep(200, token);
+        } catch {
+          // cancelled mid-typewriter: fall through and push the full message
+        }
+      }
+      useApp.getState().setWaDraft("");
+      useApp.getState().pushWaUserMsg(step.text, step.time);
+      break;
+    }
+
+    case "waTyping":
+      s.setWaTyping(true);
+      if (animated) {
+        try { await sleep(step.ms ?? 1200, token); } catch { /* cancelled — ok */ }
+      }
+      break;
+
+    case "waLumiMsg":
+      useApp.getState().setWaTyping(false);
+      useApp.getState().pushWaLumiMsg(step.text, step.link, step.time);
+      break;
+
+    // ── Live service request ──────────────────────────────────────────────
+
+    case "startRequest":
+      useApp.getState().startRequest();
+      break;
+
+    case "clearRequest":
+      useApp.getState().clearRequest();
+      break;
+
     // ── World / room ──────────────────────────────────────────────────────
 
     case "scene":
@@ -211,6 +284,10 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       useApp.getState().setInStay(step.value);
       break;
 
+    case "stayVisible":
+      useApp.getState().setStayVisible(step.value);
+      break;
+
     case "clearThreads":
       useApp.getState().clearThreads();
       break;
@@ -228,12 +305,25 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
         try { await sleep(step.ms, token); } catch { /* cancelled */ }
       }
       break;
+
+    default: {
+      // Exhaustiveness guard — adding a Step kind without handling it here is a
+      // compile error rather than a step that silently does nothing on stage.
+      const never: never = step;
+      throw new Error(`Unhandled story step: ${JSON.stringify(never)}`);
+    }
   }
 }
+
+// ── Active playback state ────────────────────────────────────────────────────
+let activeToken: CancelToken = { cancelled: false };
 
 // Snap the store to the exact state that beat N produces — no animation,
 // runs through beats 0..N applying every step instantly.
 export async function snapToBeat(n: number): Promise<void> {
+  // Cancel any beat still playing, so its remaining steps can't land on top of
+  // the state we're about to snap to — pressing ← mid-beat has to be safe.
+  activeToken.cancelled = true;
   // Full reset first
   stopSpeaking();
   const s = useApp.getState();
@@ -246,17 +336,22 @@ export async function snapToBeat(n: number): Promise<void> {
   s.go("explore");
   s.clearThreads();
   s.setSmartRoom(INITIAL_SMART_ROOM);
+  s.setStorySurface("app");
+  s.setIslandExpanded(false);
+  s.clearWaChat();
+  s.clearRequest();
+  s.setStoryStarters([]);
+  s.setStayVisible(true);
 
+  const story = beats();
   const fakeToken: CancelToken = { cancelled: false };
-  for (let i = 0; i <= n && i < STORY.length; i++) {
-    for (const step of STORY[i].steps) {
+  for (let i = 0; i <= n && i < story.length; i++) {
+    for (const step of story[i].steps) {
       await applyStep(step, fakeToken, false);
     }
   }
 }
 
-// ── Active playback state ────────────────────────────────────────────────────
-let activeToken: CancelToken = { cancelled: false };
 // Index of the step currently being applied (or about to be applied)
 // in the running playBeat. Used by fastForwardCurrent to skip already-applied steps.
 let currentStepIndex = 0;
@@ -268,7 +363,7 @@ export async function playBeat(n: number): Promise<void> {
   activeToken = token;
   currentStepIndex = 0;
 
-  const beat = STORY[n];
+  const beat = beats()[n];
   if (!beat) return;
 
   const REACTION_GAP = 160; // ms between consecutive reactions
@@ -299,7 +394,7 @@ export function fastForwardCurrent(n: number): void {
   const fromStep = currentStepIndex;
   activeToken.cancelled = true;
   const fakeToken: CancelToken = { cancelled: false };
-  const beat = STORY[n];
+  const beat = beats()[n];
   if (!beat) return;
   for (let i = fromStep; i < beat.steps.length; i++) {
     applyStep(beat.steps[i], fakeToken, false);

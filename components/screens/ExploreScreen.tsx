@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useApp } from "@/lib/store";
-import { UPCOMING_TRIP } from "@/lib/mock/guest";
+import { useStay } from "@/lib/demo/stay";
+import { TripBadge } from "./TripBadge";
 
 // ---------------------------------------------------------------------------
 // All images use stable Unsplash URLs (replaced Jun 8 2026 after Figma MCP
@@ -59,6 +60,7 @@ const USP_CARDS = [
 // ---------------------------------------------------------------------------
 export function ExploreScreen() {
   const openTrip = useApp((s) => s.openTrip);
+  const stay = useStay();
   const openBooking = useApp((s) => s.openBooking);
   const [activeChip, setActiveChip] = useState("Amsterdam");
 
@@ -98,6 +100,9 @@ export function ExploreScreen() {
       <div className="flex flex-col gap-6">
 
         {/* ── Upcoming trips ──────────────────────────────────────────────── */}
+        {/* Hidden when there's nothing booked — on the train home, Explore is
+            back to a blank slate. */}
+        {stay.visible && (
         <section className="flex flex-col gap-1">
           {/* Section title: Headline/Small — 24px, 600, leading-8 (32px), tracking-[-0.2px] */}
           <div className="px-6 py-2">
@@ -115,34 +120,26 @@ export function ExploreScreen() {
               {/* Image: 88×88, radius-m (8px) */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={UPCOMING_TRIP.image}
+                src={stay.image}
                 alt=""
                 className="h-[88px] w-[88px] shrink-0 rounded-lg object-cover"
               />
 
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 {/* Badge: bg-bg-warning (#fff0e9), text-text-warning (#b24612) */}
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#fff0e9] px-2.5 py-1">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b24612" strokeWidth="2.2" aria-hidden>
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-[12px] font-semibold leading-4 tracking-[-0.2px] text-[#b24612]">
-                    Check-in required
-                  </span>
-                </span>
+                <TripBadge needsCheckIn={stay.needsCheckIn} />
 
                 {/* Core info: Body/Small/Regular — 14px, 300 (light), leading-5 (20px), tracking-[-0.2px] */}
                 <div className="flex flex-col text-[14px] font-light leading-5 tracking-[-0.2px]">
-                  <span className="text-[#191919]">{UPCOMING_TRIP.property}</span>
-                  <span className="text-[#6d706f]">{UPCOMING_TRIP.dates}</span>
-                  <span className="text-[#6d706f]">ID {UPCOMING_TRIP.reservationId}</span>
+                  <span className="text-[#191919]">{stay.property}</span>
+                  <span className="text-[#6d706f]">{stay.dates}</span>
+                  <span className="text-[#6d706f]">ID {stay.reservationId}</span>
                 </div>
 
                 {/* Check-in now: 14px, 600, underline */}
                 <div className="flex items-center gap-1 pb-2 pt-1">
                   <span className="text-[14px] font-semibold leading-[1.3] tracking-[-0.2px] underline decoration-solid text-black">
-                    Check-in now
+                    {stay.needsCheckIn ? "Check-in now" : "Access now"}
                   </span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2" aria-hidden>
                     <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -152,6 +149,7 @@ export function ExploreScreen() {
             </button>
           </div>
         </section>
+        )}
 
         {/* ── Locations ───────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-4">

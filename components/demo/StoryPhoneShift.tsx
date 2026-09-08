@@ -1,14 +1,15 @@
 "use client";
 
 import { useApp } from "@/lib/store";
-import { STORY } from "@/lib/demo/story";
+import { beatsForStory } from "@/lib/demo/stories";
 
 export function StoryPhoneShift({ children }: { children: React.ReactNode }) {
   const active = useApp((s) => s.demo.active);
+  const storyId = useApp((s) => s.demo.storyId);
   const beatIndex = useApp((s) => s.demo.beatIndex);
   // On the title card the phone shifts left so the big title text (rendered at
   // ~58% from the left) has room. Every other beat keeps the phone centered.
-  const shifted = active && STORY[beatIndex]?.titleCard;
+  const shifted = active && beatsForStory(storyId)[beatIndex]?.titleCard;
 
   return (
     <div

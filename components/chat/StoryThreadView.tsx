@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { UIMessage } from "ai";
 import { useApp } from "@/lib/store";
 import { Widget, toolPartToWidgetType } from "./widgets/WidgetRenderer";
 import { StatusWidget } from "./widgets/Widgets";
+import { useRequestProgress } from "@/lib/demo/request";
+import { RequestPinnedCard } from "@/components/demo/surfaces/RequestActivity";
 import type { StatusWidgetData } from "@/lib/types";
 
 const IMG_LUMI_LARGE = "/lumi-torus.png";
@@ -18,13 +21,52 @@ function Row({ role, children }: { role: "user" | "assistant"; children: React.R
   );
 }
 
+// Sarah gets a bubble; Lumi speaks as plain text on the page. Per the Figma
+// response screens — it reads as the app talking, not as a second person.
 function TextBubble({ role, text }: { role: "user" | "assistant"; text: string }) {
+  if (role === "assistant") {
+    return (
+      <p className="whitespace-pre-line px-1 text-[16px] font-light leading-[22px] text-ink">
+        {text}
+      </p>
+    );
+  }
   return (
-    <Row role={role}>
-      <div className={`max-w-[82%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-[15px] leading-snug ${role === "user" ? "bg-surface-muted text-ink" : "border border-line bg-surface text-ink"}`}>
+    <Row role="user">
+      <div className="max-w-[82%] whitespace-pre-line rounded-[20px] bg-surface-muted px-4 py-2.5 text-[16px] font-light leading-[22px] text-ink">
         {text}
       </div>
     </Row>
+  );
+}
+
+function DateDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <span className="h-px flex-1 bg-line-light" />
+      <span className="text-[12px] font-light text-ink-faint">{label}</span>
+      <span className="h-px flex-1 bg-line-light" />
+    </div>
+  );
+}
+
+// The "Ask Lumi" composer, read-only — the draft types itself in.
+function Composer({ draft, placeholder }: { draft: string; placeholder: string }) {
+  return (
+    <div className="shrink-0 px-4 pb-6 pt-2">
+      <div className="flex items-center gap-2 rounded-full bg-surface-muted py-2.5 pl-5 pr-2.5">
+        <span className="min-h-[24px] flex-1 text-[16px] font-light leading-6 text-ink">
+          {draft || <span className="text-ink-soft opacity-50">{placeholder}</span>}
+          {draft && <span className="animate-pulse text-ink">|</span>}
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eceae7]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-ink" aria-hidden>
+            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z" />
+            <path d="M18 11a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.9V22h2v-3.1A8 8 0 0 0 20 11h-2Z" />
+          </svg>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -34,6 +76,9 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
   const messages = useApp((s) => s.demo.storyChat.messages);
   const draft = useApp((s) => s.demo.storyChat.draft);
   const lumiTyping = useApp((s) => s.demo.storyChat.lumiTyping);
+  const starters = useApp((s) => s.demo.starters);
+  const request = useApp((s) => s.demo.request);
+  const requestProgress = useRequestProgress(request);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -52,32 +97,36 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
     }
   }
 
-  const isEmpty = messages.length === 0 && !draft && !lumiTyping;
+  // The start screen holds while she types her first message — the draft lands
+  // in the "Ask Lumi" field, and only sending turns this into a conversation.
+  const isEmpty = messages.length === 0 && !lumiTyping;
 
-  if (isEmpty) {
+  // ── Idle "Ask Lumi" start screen ───────────────────────────────────────────
+  if (isEmpty && !request) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {/* Idle state — Numa wordmark + Lumi orb */}
-        <div className="flex flex-1 flex-col items-center pt-6">
-          <p className="text-[28px] font-semibold tracking-[-0.5px] text-ink">Numa</p>
-          <div className="flex flex-1 items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={IMG_LUMI_LARGE} alt="Lumi" className="w-[68%] max-w-[300px] object-contain" />
-          </div>
+      <div
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        style={{ background: "linear-gradient(180deg, #ffffff 0%, #fff4f6 55%, #ffe9ee 100%)" }}
+      >
+        <div className="flex flex-1 flex-col items-center justify-center px-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={IMG_LUMI_LARGE} alt="Lumi" className="w-[62%] max-w-[260px] object-contain" />
+          <p className="mt-2 text-center text-[26px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink">
+            I&rsquo;m Lumi, your travel assistant
+          </p>
         </div>
-        {/* Fake input card — read-only during story, draft goes here */}
-        <div className="mx-4 mb-6 rounded-[24px] bg-surface p-4 shadow-[0px_10px_40px_rgba(0,0,0,0.1)]">
-          <div className="mb-4 min-h-[24px] w-full text-[16px] font-light leading-snug text-ink-soft">
-            {draft || <span className="opacity-40">Ask anything</span>}
+
+        {starters.length > 0 && (
+          <div className="shrink-0 space-y-4 px-8 pb-2">
+            {starters.map((s) => (
+              <p key={s} className="text-[15px] font-light leading-5 text-ink">
+                {s}
+              </p>
+            ))}
           </div>
-          <div className="flex items-center justify-end">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink opacity-30">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" aria-hidden>
-                <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        )}
+
+        <Composer draft={draft} placeholder="Ask Lumi" />
       </div>
     );
   }
@@ -99,23 +148,34 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
           </button>
         )}
       </div>
-      <div className="h-px shrink-0 bg-line" />
 
-      {/* Pinned status widget */}
-      {pinnedStatus && (
+      {/* Pinned live request — stays put while she asks the next thing */}
+      {request && requestProgress && (
+        <div className="shrink-0 px-4 pb-1 pt-2">
+          <RequestPinnedCard request={request} progress={requestProgress} />
+        </div>
+      )}
+
+      {/* Pinned status widget (seeded threads) */}
+      {!request && pinnedStatus && (
         <div className="shrink-0 border-b border-line px-3.5 py-3">
           <StatusWidget data={pinnedStatus} />
         </div>
       )}
 
       {/* Message list */}
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3.5 py-4 no-scrollbar app-scroll">
-        {messages.map((message) => (
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 no-scrollbar app-scroll">
+        {messages.map((message: UIMessage) => (
           <div key={message.id} className="space-y-3">
             {message.parts.map((part, idx) => {
               if (part.type === "text") {
                 if (!part.text) return null;
                 return <TextBubble key={idx} role={message.role as "user" | "assistant"} text={part.text} />;
+              }
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if ((part as any).type === "story-divider") {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return <DateDivider key={idx} label={(part as any).text} />;
               }
               if (part.type === "tool-setThreadTopic") return null;
               if (part.type === "tool-controlDevice") return null;
@@ -127,7 +187,7 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
                   if (wtype === "statusWidget" && pinnedStatus) return null;
                   return (
                     <Row key={idx} role="assistant">
-                      <div className="w-[92%]">
+                      <div className="w-full">
                         <Widget type={wtype} data={p.output} onRespond={() => {}} />
                       </div>
                     </Row>
@@ -152,20 +212,7 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Fake composer — shows typewriter draft, read-only */}
-      <div className="shrink-0 border-t border-line bg-surface px-3 py-2">
-        <div className="flex items-center gap-2 rounded-2xl bg-surface-muted px-4 py-2.5">
-          <span className="min-h-[20px] flex-1 text-[15px] font-light text-ink">
-            {draft || <span className="text-ink-soft opacity-40">Message</span>}
-            {draft && <span className="animate-pulse text-ink">|</span>}
-          </span>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-ink opacity-30">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" aria-hidden>
-              <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
-      </div>
+      <Composer draft={draft} placeholder="Ask Lumi" />
     </div>
   );
 }

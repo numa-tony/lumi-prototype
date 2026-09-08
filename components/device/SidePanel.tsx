@@ -6,7 +6,7 @@ import { useApp } from "@/lib/store";
 import { SettingsPanel } from "./panels/SettingsPanel";
 
 type ModalView = "settings" | null;
-type NavAction = ModalView | "story";
+type NavAction = ModalView | { story: string };
 
 function StoryDemoIcon() {
   return (
@@ -36,7 +36,8 @@ const NAV: {
   Icon: () => React.ReactElement;
   action: NavAction;
 }[] = [
-  { id: "story", label: "Sarah's Day", Icon: StoryDemoIcon, action: "story" },
+  { id: "story", label: "Sarah's Day", Icon: StoryDemoIcon, action: { story: "sarah" } },
+  { id: "allhands", label: "All-Hands", Icon: StoryDemoIcon, action: { story: "allhands" } },
   { id: "settings", label: "Settings", Icon: SettingsIcon, action: "settings" },
 ];
 
@@ -46,7 +47,7 @@ export function SidePanel() {
   const startStory = useApp((s) => s.startStory);
 
   const handleNav = (action: NavAction) => {
-    if (action === "story") { startStory(); return; }
+    if (typeof action === "object" && action !== null) { startStory(action.story); return; }
     if (action === "settings") setModal(action);
   };
 
@@ -71,7 +72,7 @@ export function SidePanel() {
               key={id}
               onClick={() => handleNav(action)}
               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${
-                id === "story"
+                id === "story" || id === "allhands"
                   ? "text-[#ff671f] hover:bg-[#ff671f]/10 hover:text-[#ff8040]"
                   : "text-[#999] hover:bg-white/5 hover:text-white"
               }`}

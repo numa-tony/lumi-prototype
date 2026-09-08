@@ -17,36 +17,56 @@ const card = "overflow-hidden rounded-2xl border border-line bg-surface";
 
 /* eslint-disable @next/next/no-img-element */
 
+// A ticket, not a form: check-in and check-out either side of a rule, then a
+// perforated edge and the property name along the stub (per Figma).
 export function ReservationCard({ data }: { data: ReservationCardData }) {
+  // Callers pass either "204" or "Room 204" — render one "Room 204" either way.
+  const room = data.room?.replace(/^room\s+/i, "");
   return (
-    <div className={card}>
-      {data.image && <img src={data.image} alt="" className="h-36 w-full object-cover" />}
-      <div className="p-4">
-        <p className="text-[16px] font-semibold text-ink">{data.property}</p>
-        <p className="text-[13px] text-ink-soft">{data.location}</p>
-        <div className="mt-3 flex rounded-2xl bg-surface-muted">
-          <div className="flex-1 px-4 py-3">
-            <p className="text-[11px] text-ink-faint">Check-in</p>
-            <p className="text-[14px] font-semibold text-ink">{data.checkIn}</p>
-          </div>
-          <div className="my-2 w-px bg-line" />
-          <div className="flex-1 px-4 py-3">
-            <p className="text-[11px] text-ink-faint">Check-out</p>
-            <p className="text-[14px] font-semibold text-ink">{data.checkOut}</p>
-          </div>
+    <div className="relative overflow-hidden rounded-[16px] bg-surface shadow-[0_6px_28px_-10px_rgba(0,0,0,0.22)]">
+      {data.image && <img src={data.image} alt="" className="h-32 w-full object-cover" />}
+      <div className="flex px-5 pb-5 pt-5">
+        <div className="flex-1">
+          <p className="text-[15px] font-semibold tracking-[-0.2px] text-ink">Check-in</p>
+          <p className="mt-1.5 whitespace-pre-line text-[15px] font-light leading-[22px] text-[#6d706f] [text-wrap:nowrap]">
+            {data.checkIn}
+          </p>
         </div>
-        {(data.room || data.status) && (
-          <div className="mt-3 flex items-center justify-between text-[13px]">
-            {data.room && <span className="text-ink-soft">Room {data.room}{data.doorCode ? ` · Code ${data.doorCode}` : ""}</span>}
-            {data.status && <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[12px] font-semibold text-go">{data.status}</span>}
-          </div>
-        )}
-        {data.action && (
-          <button className="mt-3 w-full rounded-2xl bg-ink py-3.5 text-[15px] font-semibold text-surface active:opacity-80">
-            {data.action}
-          </button>
+        <div className="mx-3 w-px shrink-0 bg-line-light" />
+        <div className="flex-1 text-right">
+          <p className="text-[15px] font-semibold tracking-[-0.2px] text-ink">Check-out</p>
+          <p className="mt-1.5 whitespace-pre-line text-[15px] font-light leading-[22px] text-[#6d706f] [text-wrap:nowrap]">
+            {data.checkOut}
+          </p>
+        </div>
+      </div>
+
+      {/* perforated edge */}
+      <div className="relative h-px">
+        <div className="absolute inset-x-5 top-0 border-t border-dashed border-line" />
+        <span className="absolute -left-2 -top-2 h-4 w-4 rounded-full bg-surface-muted" />
+        <span className="absolute -right-2 -top-2 h-4 w-4 rounded-full bg-surface-muted" />
+      </div>
+
+      <div className="px-6 pb-5 pt-4 text-center">
+        <p className="text-[15px] font-light text-ink">{data.property}</p>
+        {(room || data.status) && (
+          <p className="mt-1 text-[13px] font-light text-[#6d706f]">
+            {room ? `Room ${room}` : ""}
+            {room && data.doorCode ? ` · Code ${data.doorCode}` : ""}
+            {room && data.status ? " · " : ""}
+            {data.status ?? ""}
+          </p>
         )}
       </div>
+
+      {data.action && (
+        <div className="px-5 pb-5">
+          <button className="w-full rounded-2xl bg-ink py-3.5 text-[15px] font-semibold text-surface active:opacity-80">
+            {data.action}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -127,16 +147,14 @@ export function ListWidget({ data }: { data: ListWidgetData }) {
 export function QuickReply({ data, onRespond }: { data: QuickReplyData; onRespond?: (t: string) => void }) {
   const options = [...data.options, "Something else"];
   return (
-    <div className="space-y-2">
-      {data.prompt && <p className="text-[14px] text-ink">{data.prompt}</p>}
-      <div className="flex flex-col gap-2">
+    <div className="space-y-2.5">
+      {data.prompt && <p className="text-[16px] font-light text-ink">{data.prompt}</p>}
+      <div className="flex flex-col gap-3">
         {options.map((o) => (
           <button
             key={o}
             onClick={() => onRespond?.(o)}
-            className={`rounded-2xl border px-4 py-3 text-left text-[14px] font-semibold active:scale-[0.99] ${
-              o === "Something else" ? "border-line text-ink-soft" : "border-ink/15 text-ink"
-            }`}
+            className="rounded-[10px] border border-[#e3e1df] bg-surface px-4 py-4 text-left text-[16px] font-semibold tracking-[-0.2px] text-ink active:scale-[0.99]"
           >
             {o}
           </button>
@@ -146,38 +164,74 @@ export function QuickReply({ data, onRespond }: { data: QuickReplyData; onRespon
   );
 }
 
+function Star({ className = "" }: { className?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="m12 17.3-6.2 3.7 1.7-7L2 9.2l7.1-.6L12 2l2.9 6.6 7.1.6-5.5 4.8 1.7 7L12 17.3Z" />
+    </svg>
+  );
+}
+
+// The difference between telling and doing: a real map, the walk drawn on it,
+// and the places ready to tap — not a paragraph of directions.
 export function MapWidget({ data }: { data: MapWidgetData }) {
   return (
-    <div className={card}>
-      {/* faked map surface */}
-      <div className="relative h-40 w-full overflow-hidden bg-[#e8efe6]">
-        <div className="absolute inset-0 opacity-70" style={{
-          backgroundImage:
-            "linear-gradient(#dfe8db 1px,transparent 1px),linear-gradient(90deg,#dfe8db 1px,transparent 1px)",
-          backgroundSize: "26px 26px",
-        }} />
-        <div className="absolute left-[18%] top-[40%] h-2.5 w-[55%] -rotate-12 rounded bg-[#cfe0c8]" />
-        <div className="absolute left-[30%] top-[62%] h-2 w-[60%] rotate-6 rounded bg-[#cfe0c8]" />
-        {data.pois.slice(0, 4).map((p, i) => (
-          <span
-            key={i}
-            className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-numa text-[11px] font-semibold text-surface shadow"
-            style={{ left: `${18 + i * 20}%`, top: `${30 + (i % 2) * 28}%` }}
-          >
-            {i + 1}
-          </span>
-        ))}
-      </div>
-      <div className="flex gap-3 overflow-x-auto p-3 no-scrollbar">
+    <div className="relative overflow-hidden rounded-[16px] bg-[#e9eee6]">
+      <img src="/allhands/map-berlin.png" alt="" className="h-[300px] w-full object-cover" />
+
+      {/* expand affordance */}
+      <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2" aria-hidden>
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+
+      {/* the property, and the walk to the first spot */}
+      <span className="absolute right-[16%] top-[30%] flex h-11 w-11 items-center justify-center rounded-full bg-[#191919] text-[17px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+        N
+      </span>
+      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 361 300" fill="none" aria-hidden>
+        <path
+          d="M108 128 C 160 152, 210 140, 258 100"
+          stroke="#191919"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray="1 7"
+        />
+      </svg>
+      {data.pois[0]?.rating && (
+        <span className="absolute left-[18%] top-[36%] flex -translate-y-full items-center gap-1 rounded-lg bg-[#191919] px-2.5 py-1.5 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+          <Star className="text-white" />
+          {data.pois[0].rating}
+        </span>
+      )}
+
+      {/* place cards, overlaid on the map */}
+      <div className="absolute inset-x-0 bottom-0 flex gap-3 overflow-x-auto px-3 pb-3 no-scrollbar">
         {data.pois.map((p, i) => (
-          <div key={i} className="w-44 shrink-0 overflow-hidden rounded-2xl border border-line">
-            {p.image && <img src={p.image} alt="" className="h-20 w-full object-cover" />}
-            <div className="p-2.5">
-              <p className="truncate text-[13px] font-semibold text-ink">{p.name}</p>
-              <p className="text-[11px] text-ink-soft">
-                {p.rating ? `★ ${p.rating} · ` : ""}{p.type}
+          <div
+            key={i}
+            className="flex w-[300px] shrink-0 items-center gap-3 rounded-[14px] bg-surface p-3 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.28)]"
+          >
+            {p.image ? (
+              <img src={p.image} alt="" className="h-[68px] w-[68px] shrink-0 rounded-[10px] object-cover" />
+            ) : (
+              <span className="flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-[10px] bg-surface-muted text-[26px]">
+                🍜
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[17px] font-semibold tracking-[-0.2px] text-ink">{p.name}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-[13px] font-light text-[#6d706f]">
+                {p.rating != null && (
+                  <>
+                    <Star className="text-ink" />
+                    <span className="text-ink">{p.rating}</span>
+                  </>
+                )}
+                <span>{p.type}</span>
+                {p.walk && <span>· {p.walk}</span>}
               </p>
-              {p.walk && <p className="text-[11px] text-ink-faint">{p.walk}</p>}
             </div>
           </div>
         ))}
@@ -203,16 +257,22 @@ export function PropertyCarousel({ data }: { data: PropertyCarouselData }) {
   return (
     <div>
       {data.title && <p className="mb-2 text-[13px] font-semibold text-ink">{data.title}</p>}
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar">
+      <div className="-mx-4 flex gap-6 overflow-x-auto px-4 pb-1 no-scrollbar">
         {data.items.map((p, i) => (
-          <div key={i} className="w-56 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface">
-            <img src={p.image} alt="" className="h-28 w-full object-cover" />
-            <div className="p-3">
-              <p className="truncate text-[14px] font-semibold text-ink">{p.name}</p>
-              <p className="truncate text-[12px] text-ink-soft">{p.location}</p>
-              {p.priceFrom && <p className="mt-1 text-[13px] font-semibold text-ink">{p.priceFrom}</p>}
-              <button className="mt-2 w-full rounded-full bg-ink py-2 text-[12px] font-semibold text-surface">View</button>
+          <div key={i} className="w-[200px] shrink-0">
+            <div className="relative">
+              <img src={p.image} alt="" className="h-[200px] w-full rounded-[12px] object-cover" />
+              <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2.2" aria-hidden>
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+              </span>
             </div>
+            <p className="mt-3.5 text-[17px] font-semibold leading-[23px] tracking-[-0.2px] text-ink">
+              {p.name}
+            </p>
+            <p className="mt-1 text-[15px] font-light leading-[21px] text-[#6d706f]">{p.location}</p>
+            {p.priceFrom && <p className="mt-1 text-[15px] font-semibold text-ink">{p.priceFrom}</p>}
           </div>
         ))}
       </div>

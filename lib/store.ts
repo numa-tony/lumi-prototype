@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 import type { ChatContext, PersistedThread, ScreenId } from "./types";
 import { demoSeedThreads, demoSeedThread } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
+import type { PhoneSurface } from "./demo/types";
+import { createAcRequest, type RequestState } from "./demo/request";
 
 // ── TV Shader params ───────────────────────────────────────────────────────────
 export interface TvShaderParams {
@@ -49,13 +51,47 @@ export interface StoryVoiceState {
 
 export interface DemoState {
   active: boolean;
+  // Which script is running — a key into STORIES (lib/demo/stories.ts).
+  // "sarah" = Sarah's Day, "allhands" = the All-Hands walkthrough.
+  storyId: string;
   beatIndex: number;
   roomBreakout: boolean;
   frontDoor: boolean | null; // null = hidden, false = visible+closed, true = visible+open
   fade: boolean;
   storyChat: StoryChatState;
   storyVoice: StoryVoiceState;
+  // What the phone frame is showing. "app" = the Numa app; the rest are
+  // full-frame surfaces (WhatsApp, iOS home screen, iOS lock screen).
+  surface: PhoneSurface;
+  islandExpanded: boolean;
+  waChat: StoryChatState;
+  request: RequestState | null;
+  // Starters listed on the idle "Ask Lumi" screen — set per beat so Lumi always
+  // offers something worth asking from where she's standing.
+  starters: string[];
+  // Whether the story's stay shows on Explore / My Trips (false on the train home).
+  stayVisible: boolean;
 }
+
+const EMPTY_STORY_CHAT: StoryChatState = { messages: [], draft: "", lumiTyping: false };
+const EMPTY_STORY_VOICE: StoryVoiceState = { open: false, mode: "idle", transcript: "", response: "" };
+
+const INITIAL_DEMO: DemoState = {
+  active: false,
+  storyId: "sarah",
+  beatIndex: 0,
+  roomBreakout: false,
+  frontDoor: null,
+  fade: false,
+  storyChat: EMPTY_STORY_CHAT,
+  storyVoice: EMPTY_STORY_VOICE,
+  surface: "app",
+  islandExpanded: false,
+  waChat: EMPTY_STORY_CHAT,
+  request: null,
+  starters: [],
+  stayVisible: true,
+};
 
 interface AppState {
   screen: ScreenId;
@@ -82,7 +118,7 @@ interface AppState {
   setTvShader: (update: Partial<TvShaderParams>) => void;
 
   // Story / demo mode
-  startStory: () => void;
+  startStory: (storyId?: string) => void;
   exitStory: () => void;
   nextBeat: () => void;
   prevBeat: () => void;
@@ -105,6 +141,22 @@ interface AppState {
   setStoryVoiceMode: (m: StoryVoiceState["mode"]) => void;
   setStoryVoiceTranscript: (t: string) => void;
   setStoryVoiceResponse: (t: string) => void;
+
+  // Story surfaces + the live request (All-Hands walkthrough)
+  hideStoryChat: () => void;   // close the sheet, keep the thread
+  showStoryChat: () => void;   // re-open the sheet on the kept thread
+  pushStoryDivider: (label: string) => void;
+  setStoryStarters: (items: string[]) => void;
+  setStorySurface: (surface: PhoneSurface) => void;
+  setIslandExpanded: (v: boolean) => void;
+  setWaDraft: (text: string) => void;
+  pushWaUserMsg: (text: string, time?: string) => void;
+  setWaTyping: (v: boolean) => void;
+  pushWaLumiMsg: (text: string, link?: string, time?: string) => void;
+  clearWaChat: () => void;
+  startRequest: () => void;
+  clearRequest: () => void;
+  setStayVisible: (v: boolean) => void;
 
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
@@ -134,15 +186,7 @@ export const useApp = create<AppState>()(
       smartRoom: INITIAL_SMART_ROOM,
       tvShader: DEFAULT_TV_SHADER,
       threads: [],
-      demo: {
-        active: false,
-        beatIndex: 0,
-        roomBreakout: false,
-        frontDoor: null,
-        fade: false,
-        storyChat: { messages: [], draft: "", lumiTyping: false },
-        storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
-      },
+      demo: INITIAL_DEMO,
 
       go: (screen) => set({ screen }),
       openTrip: (tripId) => set({ screen: "tripDetail", tripId }),
@@ -158,29 +202,11 @@ export const useApp = create<AppState>()(
       setInStay: (v) => set({ inStay: v }),
       setTvShader: (update) => set((s) => ({ tvShader: { ...s.tvShader, ...update } })),
 
-      startStory: () => set((s) => ({
-        demo: {
-          ...s.demo,
-          active: true,
-          beatIndex: 0,
-          roomBreakout: false,
-          frontDoor: false,
-          fade: false,
-          storyChat: { messages: [], draft: "", lumiTyping: false },
-          storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
-        },
+      startStory: (storyId = "sarah") => set(() => ({
+        demo: { ...INITIAL_DEMO, active: true, storyId, frontDoor: false },
       })),
       exitStory: () => set((s) => ({
-        demo: {
-          ...s.demo,
-          active: false,
-          beatIndex: 0,
-          roomBreakout: false,
-          frontDoor: null,
-          fade: false,
-          storyChat: { messages: [], draft: "", lumiTyping: false },
-          storyVoice: { open: false, mode: "idle", transcript: "", response: "" },
-        },
+        demo: { ...INITIAL_DEMO, storyId: s.demo.storyId },
         // Reset the world the story mutated so "Back to main" lands on a clean app,
         // not the dark climax room (lights off, Netflix on, evening sky).
         chat: null,
@@ -280,6 +306,70 @@ export const useApp = create<AppState>()(
         set((s) => ({ demo: { ...s.demo, storyVoice: { ...s.demo.storyVoice, transcript } } })),
       setStoryVoiceResponse: (response) =>
         set((s) => ({ demo: { ...s.demo, storyVoice: { ...s.demo.storyVoice, response } } })),
+
+      // ── Story surfaces + live request ──────────────────────────────────────
+
+      // Close the sheet but keep the thread, so re-opening later (from the
+      // Live Activity, or the inbox) lands back in the same conversation.
+      hideStoryChat: () => set({ chat: null }),
+      showStoryChat: () => set({ chat: { kind: "stay", title: "Lumi" } }),
+
+      pushStoryDivider: (label) => {
+        const msg: UIMessage = {
+          id: `story_d_${nanoid(6)}`,
+          role: "assistant",
+          parts: [{ type: "story-divider", text: label } as unknown as UIMessage["parts"][number]],
+        };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            storyChat: { ...s.demo.storyChat, messages: [...s.demo.storyChat.messages, msg] },
+          },
+        }));
+      },
+
+      setStoryStarters: (items) => set((s) => ({ demo: { ...s.demo, starters: items } })),
+      setStorySurface: (surface) =>
+        set((s) => ({
+          // Leaving the home/lock screens always collapses the island again.
+          demo: { ...s.demo, surface, islandExpanded: surface === "home" ? s.demo.islandExpanded : false },
+        })),
+      setIslandExpanded: (v) => set((s) => ({ demo: { ...s.demo, islandExpanded: v } })),
+
+      setWaDraft: (text) =>
+        set((s) => ({ demo: { ...s.demo, waChat: { ...s.demo.waChat, draft: text } } })),
+      pushWaUserMsg: (text, time) => {
+        const msg: UIMessage = {
+          id: `wa_u_${nanoid(6)}`,
+          role: "user",
+          parts: [{ type: "text", text }, ...(time ? [{ type: "story-time", text: time } as unknown as UIMessage["parts"][number]] : [])],
+        };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            waChat: { ...s.demo.waChat, draft: "", messages: [...s.demo.waChat.messages, msg] },
+          },
+        }));
+      },
+      setWaTyping: (v) =>
+        set((s) => ({ demo: { ...s.demo, waChat: { ...s.demo.waChat, lumiTyping: v } } })),
+      pushWaLumiMsg: (text, link, time) => {
+        const parts: UIMessage["parts"] = [{ type: "text", text }];
+        if (link) parts.push({ type: "story-link", text: link } as unknown as UIMessage["parts"][number]);
+        if (time) parts.push({ type: "story-time", text: time } as unknown as UIMessage["parts"][number]);
+        const msg: UIMessage = { id: `wa_l_${nanoid(6)}`, role: "assistant", parts };
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            waChat: { ...s.demo.waChat, lumiTyping: false, messages: [...s.demo.waChat.messages, msg] },
+          },
+        }));
+      },
+      clearWaChat: () => set((s) => ({ demo: { ...s.demo, waChat: EMPTY_STORY_CHAT } })),
+
+      startRequest: () => set((s) => ({ demo: { ...s.demo, request: createAcRequest() } })),
+      clearRequest: () => set((s) => ({ demo: { ...s.demo, request: null } })),
+      setStayVisible: (v) => set((s) => ({ demo: { ...s.demo, stayVisible: v } })),
 
       setSmartRoom: (update) =>
         set((s) => ({
@@ -388,6 +478,12 @@ export const useApp = create<AppState>()(
     },
   ),
 );
+
+// Dev-only handle on the store, so the running app can be inspected and driven
+// from the browser console (and by automated checks) without wiring debug UI.
+if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+  (window as unknown as { __lumi?: typeof useApp }).__lumi = useApp;
+}
 
 // Contextual Lumi entry points per screen — the FAB conversation adapts to where
 // the guest is, per the UX vision doc.

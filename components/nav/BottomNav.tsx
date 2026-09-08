@@ -38,8 +38,8 @@ type Tab = { id: ScreenId; label: string };
 const TABS: Tab[] = [
   { id: "explore", label: "Explore" },
   { id: "trips", label: "My Trips" },
-  { id: "messages", label: "Messages" },
-  { id: "profile", label: "Profile" },
+  { id: "messages", label: "Inbox" },
+  { id: "profile", label: "My Profile" },
 ];
 
 function TabIcon({ tabId, active }: { tabId: string; active: boolean }) {
@@ -56,7 +56,7 @@ export function BottomNav() {
   const go = useApp((s) => s.go);
   const hasUnread = useApp((s) => s.threads.some((t) => t.unread));
 
-  const activeTab: ScreenId = screen === "tripDetail" ? "trips" : screen;
+  const activeTab: ScreenId = screen === "tripDetail" || screen === "yourRoom" || screen === "roomControls" ? "trips" : screen;
 
   return (
     <nav className="relative z-30 shrink-0 border-t border-line bg-surface/95 backdrop-blur">

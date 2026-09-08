@@ -1,4 +1,16 @@
-# Progress — Updated 2026-07-01
+# Progress — Updated 2026-09-08
+
+> **2026-09-08 — Second story: the All-Hands walkthrough.** Story Mode now hosts
+> **two** scripts. `lib/demo/story.ts` (Sarah's Day) is **frozen** — its beats are
+> untouched — and the engine was generalised into a registry (`lib/demo/stories.ts`)
+> keyed by `demo.storyId`. The new **"It started with an air conditioner."** script
+> (`lib/demo/allHands.ts`, 30 taps) follows the all-hands run-of-show: WhatsApp →
+> "follow this in the app" (pinned status, inbox, Dynamic Island, lock screen) →
+> the six-screen walk to Your room and the lights → ramen map → €20 late checkout →
+> the train home and three London properties. Presenter reference:
+> `docs/project/all-hands-story.md`. Stage is black for this round; `STORIES.allhands.scenes`
+> is the single flag that brings the room/door scenes back (the beats already drive
+> `smartRoom`).
 
 > **2026-07-01 — WhatsApp removed (vision pivot).** The live Notion vision doc now scopes
 > channels as **independent for MVP** — WhatsApp stays in WhatsApp, no cross-channel mirroring
@@ -14,6 +26,15 @@
 > used by `lib/ai/model.ts` for rate-limit cooldown persistence (a separate feature).
 
 ## Done
+
+- **Story Mode — All-Hands walkthrough (`?story=allhands`)** — second scripted story, 30 taps, bare chrome (no captions/rail/counter — the presenter is the narration); fully offline (no AI, no TTS, no mic)
+- **Story engine — multi-story** — `STORIES` registry + `demo.storyId`; new Step kinds (`surface`, `island`, `waUserMsg/waTyping/waLumiMsg`, `startRequest/clearRequest`, `hideChat/showChat`, `divider`, `starters`, `stayVisible`); exhaustiveness guard on `applyStep`; `snapToBeat` now cancels a beat still playing (pressing ← mid-beat is safe)
+- **Phone surfaces outside the app** — WhatsApp thread, iOS home screen with a compact ⇄ expanded **Dynamic Island**, iOS lock screen with a **Live Activity**; mounted in `PhoneFrame`, CSS-driven so they never fail to appear on stage
+- **Live request model** — one `RequestState` + countdown (`lib/demo/request.ts`) behind three renderings (pinned card, island, lock activity) so the minutes never disagree
+- **Your room screen** — new `yourRoom` screen (hero, room facts, amenities), reachable from Trip Detail
+- **Per-story stay** — `useStay()` gives Explore / My Trips / Trip Detail / Your room the running story's stay (Berlin Friedrichshain, Jul 9–12); hides the trip card entirely on the train home
+- **Shared Figma upgrades** — Inbox (title + filter chips), Ask Lumi start screen (torus + "I'm Lumi, your travel assistant" + starters), plain-text Lumi replies, FAB "Ask Lumi | Open door", ticket-style reservation card, full-width quick-reply buttons, real map widget, 200px property carousel
+- **Dev handle** — `window.__lumi` (development only) exposes the store for console-driving the demo
 
 - **App shell & device frame** — iPhone frame wrapper, `AppShell` with animated screen transitions
 - **Bottom navigation** — 4 tabs with Figma DS SVG icons; `text-text` (active) / `text-text-secondary` (inactive); `tripDetail` maps to trips tab
@@ -54,10 +75,11 @@
 
 ## Next (ordered)
 
-1. **Refresh `docs/project/vision.md`** — stale mirror still describes the deprecated cross-channel bridging model; sync from the live Notion doc (Notion wins)
-2. **MessagesScreen (inbox)** — Figma-faithful design (already reads store threads)
-3. **ExploreScreen image URLs** — Figma MCP asset URLs expired ~Jun 8; replace with permanent CDN URLs
-4. **ThreadView rich widgets** — quick-reply chips, reservation card, in-thread status widget
+1. **Rehearse the All-Hands walkthrough** — run it end to end at presentation size and tune Lumi/Sarah copy in `lib/demo/allHands.ts`
+2. **Backgrounds for the All-Hands story** — flip `STORIES.allhands.scenes` to `true` and design what sits behind the phone per beat (the `scene` steps are already in the script)
+3. **Refresh `docs/project/vision.md`** — stale mirror still describes the deprecated cross-channel bridging model; sync from the live Notion doc (Notion wins)
+4. **ExploreScreen image URLs** — Figma MCP asset URLs expired ~Jun 8; replace with permanent CDN URLs
+5. **ThreadView (live) parity** — carry the Figma chat styling from `StoryThreadView` into the live `ThreadView`
 
 ## Deferred (not in prototype scope)
 

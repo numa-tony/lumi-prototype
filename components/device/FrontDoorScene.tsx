@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
+import { useStoryScenes } from "@/lib/demo/stories";
 
 // null  = scene not rendered (non-arrival beats)
 // false = scene visible, door closed (arrival-setup)
@@ -9,7 +10,8 @@ import { useApp } from "@/lib/store";
 export function FrontDoorScene() {
   const frontDoor = useApp((s) => s.demo.frontDoor);
   const demoActive = useApp((s) => s.demo.active);
-  const visible = demoActive && frontDoor !== null;
+  const scenesEnabled = useStoryScenes();
+  const visible = demoActive && scenesEnabled && frontDoor !== null;
 
   return (
     <AnimatePresence>

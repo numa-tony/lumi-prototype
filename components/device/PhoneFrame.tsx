@@ -1,4 +1,5 @@
 import { StatusBar } from "./StatusBar";
+import { PhoneSurface } from "@/components/demo/surfaces/PhoneSurface";
 
 // The device shell — a floating iPhone. The outer centering is handled by the page layout.
 export function PhoneFrame({ children }: { children: React.ReactNode }) {
@@ -9,6 +10,8 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
         <StatusBar />
         <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
         <div className="pointer-events-none absolute bottom-2 left-1/2 z-40 h-[5px] w-[135px] -translate-x-1/2 rounded-full bg-ink/80" />
+        {/* Story Mode surfaces outside the app — WhatsApp, iOS home, iOS lock */}
+        <PhoneSurface />
       </div>
     </div>
   );

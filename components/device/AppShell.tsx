@@ -13,6 +13,7 @@ import { BookingSheet } from "@/components/booking/BookingSheet";
 import { ExploreScreen } from "@/components/screens/ExploreScreen";
 import { MyTripsScreen } from "@/components/screens/MyTripsScreen";
 import { TripDetailScreen } from "@/components/screens/TripDetailScreen";
+import { YourRoomScreen } from "@/components/screens/YourRoomScreen";
 import { MessagesScreen } from "@/components/screens/MessagesScreen";
 import { ProfileScreen } from "@/components/screens/ProfileScreen";
 import { RoomControlsScreen } from "@/components/screens/RoomControlsScreen";
@@ -22,6 +23,7 @@ const SCREENS: Record<ScreenId, React.ComponentType> = {
   explore: ExploreScreen,
   trips: MyTripsScreen,
   tripDetail: TripDetailScreen,
+  yourRoom: YourRoomScreen,
   roomControls: RoomControlsScreen,
   tvRemote: TvRemoteScreen,
   messages: MessagesScreen,
