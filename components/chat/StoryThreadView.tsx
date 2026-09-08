@@ -65,17 +65,33 @@ function Composer({ draft, placeholder }: { draft: string; placeholder: string }
           boxShadow: "0px 10px 40px 0px rgba(0,0,0,0.1)",
         }}
       >
+        {/* The line wraps rather than clipping, so a long message stays readable
+            as it types — the pill grows the way an iOS field does. */}
         <span className="min-w-0 flex-1 text-[16px] font-light leading-[20px] tracking-[-0.2px]">
           {draft ? (
-            <span className="text-text">{draft}</span>
+            <>
+              <span className="text-text">{draft}</span>
+              {/* Figma draws the caret as a 2px round-capped rule in blue-300 */}
+              <span className="ml-px inline-block h-[20px] w-[2px] animate-pulse rounded-full bg-[var(--color-blue-300)] align-middle" />
+            </>
           ) : (
             <span className="text-text-secondary">{placeholder}</span>
           )}
-          {draft && <span className="animate-pulse text-text">|</span>}
         </span>
-        <span className="ml-3 flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-secondary)] p-[5px]">
+
+        {/* Idle: mic on background/base/secondary. Typing: send on
+            background/action/default — the field offers to send once there is
+            something to send. */}
+        <span
+          className="ml-3 flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full"
+          style={{ background: draft ? "var(--color-bg-action)" : "var(--color-bg-secondary)" }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/allhands/mic.svg" alt="" className="block h-[20px] w-[20px]" />
+          <img
+            src={draft ? "/allhands/send-arrow.svg" : "/allhands/mic.svg"}
+            alt=""
+            className={draft ? "block h-[24px] w-[24px]" : "block h-[20px] w-[20px]"}
+          />
         </span>
       </div>
     </div>
