@@ -51,19 +51,31 @@ function DateDivider({ label }: { label: string }) {
 }
 
 // The "Ask Lumi" composer, read-only — the draft types itself in.
+// Figma: Input (7224:10876). A translucent white pill on a 2px backdrop blur,
+// Elevation/1 shadow, spacing/l left · spacing/s right and vertical, Label/
+// Medium/Regular placeholder in content/base/secondary, and a 32px mic button
+// on background/base/secondary.
 function Composer({ draft, placeholder }: { draft: string; placeholder: string }) {
   return (
-    <div className="shrink-0 px-4 pb-6 pt-2">
-      <div className="flex items-center gap-2 rounded-full bg-surface-muted py-2.5 pl-5 pr-2.5">
-        <span className="min-h-[24px] flex-1 text-[16px] font-light leading-6 text-ink">
-          {draft || <span className="text-ink-soft opacity-50">{placeholder}</span>}
-          {draft && <span className="animate-pulse text-ink">|</span>}
+    <div className="shrink-0 px-[24px] pb-[48px] pt-2 backdrop-blur-[2px]">
+      <div
+        className="flex w-full items-center justify-between rounded-full py-[12px] pl-[20px] pr-[12px]"
+        style={{
+          background: "rgba(255,255,255,0.9)",
+          boxShadow: "0px 10px 40px 0px rgba(0,0,0,0.1)",
+        }}
+      >
+        <span className="min-w-0 flex-1 text-[16px] font-light leading-[20px] tracking-[-0.2px]">
+          {draft ? (
+            <span className="text-text">{draft}</span>
+          ) : (
+            <span className="text-text-secondary">{placeholder}</span>
+          )}
+          {draft && <span className="animate-pulse text-text">|</span>}
         </span>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eceae7]">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-ink" aria-hidden>
-            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z" />
-            <path d="M18 11a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.9V22h2v-3.1A8 8 0 0 0 20 11h-2Z" />
-          </svg>
+        <span className="ml-3 flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-secondary)] p-[5px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/allhands/mic.svg" alt="" className="block h-[20px] w-[20px]" />
         </span>
       </div>
     </div>
