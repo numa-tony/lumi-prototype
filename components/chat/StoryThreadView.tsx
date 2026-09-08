@@ -149,10 +149,12 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
         )}
       </div>
 
-      {/* Pinned live request — stays put while she asks the next thing */}
+      {/* Pinned live request — stays put while she asks the next thing, with a
+          rule under it separating the status from the conversation (Figma). */}
       {request && requestProgress && (
         <div className="shrink-0 px-4 pb-1 pt-2">
           <RequestPinnedCard request={request} progress={requestProgress} />
+          <div className="mt-4 h-px bg-line-light" />
         </div>
       )}
 

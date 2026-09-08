@@ -4,7 +4,7 @@
 > **two** scripts. `lib/demo/story.ts` (Sarah's Day) is **frozen** — its beats are
 > untouched — and the engine was generalised into a registry (`lib/demo/stories.ts`)
 > keyed by `demo.storyId`. The new **"It started with an air conditioner."** script
-> (`lib/demo/allHands.ts`, 30 taps) follows the all-hands run-of-show: WhatsApp →
+> (`lib/demo/allHands.ts`, 29 taps) follows the all-hands run-of-show: WhatsApp →
 > "follow this in the app" (pinned status, inbox, Dynamic Island, lock screen) →
 > the six-screen walk to Your room and the lights → ramen map → €20 late checkout →
 > the train home and three London properties. Presenter reference:
@@ -27,9 +27,9 @@
 
 ## Done
 
-- **Story Mode — All-Hands walkthrough (`?story=allhands`)** — second scripted story, 30 taps, bare chrome (no captions/rail/counter — the presenter is the narration); fully offline (no AI, no TTS, no mic)
+- **Story Mode — All-Hands walkthrough (`?story=allhands`)** — second scripted story, 29 taps, bare chrome (no captions/rail/counter — the presenter is the narration); fully offline (no AI, no TTS, no mic)
 - **Story engine — multi-story** — `STORIES` registry + `demo.storyId`; new Step kinds (`surface`, `island`, `waUserMsg/waTyping/waLumiMsg`, `startRequest/clearRequest`, `hideChat/showChat`, `divider`, `starters`, `stayVisible`); exhaustiveness guard on `applyStep`; `snapToBeat` now cancels a beat still playing (pressing ← mid-beat is safe)
-- **Phone surfaces outside the app** — WhatsApp thread, iOS home screen with a compact ⇄ expanded **Dynamic Island**, iOS lock screen with a **Live Activity**; mounted in `PhoneFrame`, CSS-driven so they never fail to appear on stage
+- **Phone surfaces outside the app** — WhatsApp thread, plus the real iOS home screen and lock wallpaper exported from Figma, with a compact ⇄ expanded **Dynamic Island** and a lock-screen **Live Activity** drawn over them (Figma proportions, Figma technician asset); mounted in `PhoneFrame`, CSS-driven so they never fail to appear on stage
 - **Live request model** — one `RequestState` + countdown (`lib/demo/request.ts`) behind three renderings (pinned card, island, lock activity) so the minutes never disagree
 - **Your room screen** — new `yourRoom` screen (hero, room facts, amenities), reachable from Trip Detail
 - **Per-story stay** — `useStay()` gives Explore / My Trips / Trip Detail / Your room the running story's stay (Berlin Friedrichshain, Jul 9–12); hides the trip card entirely on the train home

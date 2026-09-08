@@ -71,8 +71,8 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
           </div>
         )}
 
-        {/* Title card */}
-        {beat.titleCard && (
+        {/* Title card — bare chrome opens on the phone alone, no headline */}
+        {beat.titleCard && !bare && (
           <>
             <div
               className="absolute top-1/2 flex -translate-y-[55%] flex-col gap-6 text-left"

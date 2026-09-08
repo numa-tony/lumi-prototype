@@ -10,8 +10,8 @@ import { TripBadge } from "./TripBadge";
 // asset URLs expired). NOTE: never use full-frame Figma exports as images —
 // they bake in UI elements (status bar, search bar).
 // ---------------------------------------------------------------------------
-const IMG_HERO =
-  "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=800&q=80&auto=format&fit=crop";
+// The hero is the Numa brand still from the Figma Explore frame.
+const IMG_HERO = "/allhands/explore-hero.png";
 const IMG_PROP_1 =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80&auto=format&fit=crop";
 const IMG_PROP_2 =

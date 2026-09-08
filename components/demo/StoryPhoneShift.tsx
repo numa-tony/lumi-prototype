@@ -1,7 +1,7 @@
 "use client";
 
 import { useApp } from "@/lib/store";
-import { beatsForStory } from "@/lib/demo/stories";
+import { getStory } from "@/lib/demo/stories";
 
 export function StoryPhoneShift({ children }: { children: React.ReactNode }) {
   const active = useApp((s) => s.demo.active);
@@ -9,7 +9,10 @@ export function StoryPhoneShift({ children }: { children: React.ReactNode }) {
   const beatIndex = useApp((s) => s.demo.beatIndex);
   // On the title card the phone shifts left so the big title text (rendered at
   // ~58% from the left) has room. Every other beat keeps the phone centered.
-  const shifted = active && beatsForStory(storyId)[beatIndex]?.titleCard;
+  // Only the full-chrome story shifts the phone aside for its title text;
+  // a bare story has no title, so the phone stays centred throughout.
+  const story = getStory(storyId);
+  const shifted = active && story.chrome === "full" && story.beats[beatIndex]?.titleCard;
 
   return (
     <div

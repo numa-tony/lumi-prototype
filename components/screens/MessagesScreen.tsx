@@ -138,12 +138,12 @@ export function MessagesScreen() {
       <div className="px-5 pt-14">
         <h1 className="text-[30px] font-semibold tracking-tight text-ink">Inbox</h1>
         {!isEmpty && (
-          <div className="mt-4 flex gap-1.5">
+          <div className="no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5">
             {CHIPS.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setChip(c.id)}
-                className={`flex h-9 shrink-0 items-center rounded-full px-3 text-[15px] font-semibold leading-5 tracking-[-0.2px] ${
+                className={`flex h-9 shrink-0 items-center rounded-full px-3.5 text-[15px] font-semibold leading-5 tracking-[-0.2px] ${
                   chip === c.id ? "bg-[#191919] text-white" : "border border-[#dedddb] text-[#191919]"
                 }`}
               >

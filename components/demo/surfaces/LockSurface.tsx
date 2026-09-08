@@ -13,17 +13,12 @@ export function LockSurface() {
 
   return (
     <div className="absolute inset-0 z-[45] overflow-hidden">
-      {/* wallpaper — pink/coral into teal, the Figma lock screen's palette */}
-      <div
-        className="absolute inset-0"
-        style={{ background: "linear-gradient(155deg, #ffd9cf 0%, #ffb9a8 22%, #f2c46a 38%, #7fb9b2 58%, #1f7f96 78%, #0d3f5c 100%)" }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(75% 55% at 88% 34%, rgba(90,110,120,0.55) 0%, rgba(90,110,120,0) 62%), radial-gradient(70% 50% at 8% 72%, rgba(255,240,235,0.55) 0%, rgba(255,240,235,0) 60%)",
-        }}
+      {/* The real lock-screen wallpaper, exported from the Figma frame */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/allhands/ios-lock-wallpaper.png"
+        alt=""
+        className="absolute inset-0 h-full w-full object-fill"
       />
 
       {/* notch */}
@@ -64,7 +59,7 @@ export function LockSurface() {
       </div>
 
       {/* Live Activity + shortcuts */}
-      <div className="absolute inset-x-0 bottom-0 px-4 pb-6">
+      <div className="absolute inset-x-0 bottom-0 px-[4%] pb-6">
         {request && progress && <LockActivity request={request} progress={progress} />}
         <div className="mt-5 flex items-center justify-between px-6">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/25 backdrop-blur">

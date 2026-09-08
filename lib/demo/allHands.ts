@@ -73,7 +73,8 @@ const STARTERS_TRAIN = [
 export const ALLHANDS: PressBeat[] = [
 
   // ══════════════════════════════════════════════════════════════════════════
-  // T0 — Title. Phone sits beside the headline showing an empty WhatsApp thread.
+  // T0 — Opening frame: the phone centred, showing an empty WhatsApp thread
+  // with Numa. No title text — the presenter opens the story, not the stage.
   // ══════════════════════════════════════════════════════════════════════════
   {
     id: "title",
@@ -113,7 +114,9 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T2 — The bot answers, escalates… and then nothing. The silence is the beat.
+  // T2 — The bot answers and escalates. Then, three seconds later and without
+  // the presenter touching anything, the one extra line lands: the message
+  // stops being a message. The pause in between is the whole beat.
   {
     id: "wa-escalate",
     segmentIndex: 1,
@@ -125,19 +128,7 @@ export const ALLHANDS: PressBeat[] = [
         text: "Hi Sarah — sorry about that, not the welcome you want after a long day. I've opened a request for the AC in room 204 and passed it to the team. Someone will be in touch.",
         time: "9:40 PM",
       },
-    ],
-  },
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // BEAT 02 — "You can follow this in the app"
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // T3 — One extra line. The message stops being a message.
-  {
-    id: "wa-follow-link",
-    segmentIndex: 2,
-    background: STAGE,
-    steps: [
+      { kind: "wait", ms: 3000 },
       { kind: "waTyping", ms: 900 },
       {
         kind: "waLumiMsg",
@@ -148,22 +139,29 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T4 — She taps the link. The app opens straight onto the request, pinned.
+  // ══════════════════════════════════════════════════════════════════════════
+  // BEAT 02 — "You can follow this in the app"
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // T3 — She taps the link and lands straight on the request. The chat is
+  // opened before the app is revealed, so the jump goes WhatsApp → the pinned
+  // status with nothing in between.
   {
     id: "app-pinned-status",
     segmentIndex: 2,
     background: STAGE,
     steps: [
       { kind: "startRequest" },
-      { kind: "go", screen: "explore" },
-      { kind: "surface", value: "app" },
-      { kind: "wait", ms: 260 },
-      { kind: "openChat" },
+      // The inbox sits underneath, so closing the sheet later reveals it
+      // directly rather than passing back through Explore.
+      { kind: "go", screen: "messages" },
       { kind: "loadThread", id: "allhands-ac" },
+      { kind: "openChat" },
+      { kind: "surface", value: "app" },
     ],
   },
 
-  // T5 — Because it's a conversation, she just asks the next thing.
+  // T4 — Because it's a conversation, she just asks the next thing.
   {
     id: "app-next-question",
     segmentIndex: 2,
@@ -178,7 +176,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T6 — She taps back and finds an inbox. One thing in it, because she's only
+  // T5 — She taps back and finds an inbox. One thing in it, because she's only
   // asked us one thing.
   {
     id: "inbox",
@@ -186,11 +184,10 @@ export const ALLHANDS: PressBeat[] = [
     background: STAGE,
     steps: [
       { kind: "hideChat" },
-      { kind: "go", screen: "messages" },
     ],
   },
 
-  // T7 — Home screen. Our logo, and the countdown, at the top of her phone.
+  // T6 — Home screen. Our logo, and the countdown, at the top of her phone.
   {
     id: "home-island",
     segmentIndex: 2,
@@ -201,7 +198,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T8 — She taps it, and the whole thing opens up.
+  // T7 — She taps it, and the whole thing opens up.
   {
     id: "home-island-expanded",
     segmentIndex: 2,
@@ -211,7 +208,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T9 — Or if the phone is just sitting there: the same status, on the lock screen.
+  // T8 — Or if the phone is just sitting there: the same status, on the lock screen.
   {
     id: "lock-activity",
     segmentIndex: 2,
@@ -225,7 +222,7 @@ export const ALLHANDS: PressBeat[] = [
   // BEAT 03 — She realises she can just ask
   // ══════════════════════════════════════════════════════════════════════════
 
-  // T10 — Taps the widget → back into the chat, status still pinned.
+  // T9 — Taps the widget → back into the chat, status still pinned.
   {
     id: "back-to-chat",
     segmentIndex: 3,
@@ -237,22 +234,22 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T11 — Back to the inbox.
+  // T10 — Back to the inbox.
   { id: "walk-inbox", segmentIndex: 3, background: STAGE, steps: [{ kind: "hideChat" }, { kind: "go", screen: "messages" }] },
 
-  // T12 — Out to Explore. And she notices the button, floating at the bottom.
+  // T11 — Out to Explore. And she notices the button, floating at the bottom.
   { id: "walk-explore", segmentIndex: 3, background: STAGE, steps: [{ kind: "go", screen: "explore" }] },
 
-  // T13 — My Trips. Wherever she goes, it goes.
+  // T12 — My Trips. Wherever she goes, it goes.
   { id: "walk-trips", segmentIndex: 3, background: STAGE, steps: [{ kind: "go", screen: "trips" }] },
 
-  // T14 — Her stay in Berlin Friedrichshain.
+  // T13 — Her stay in Berlin Friedrichshain.
   { id: "walk-trip-detail", segmentIndex: 3, background: STAGE, steps: [{ kind: "go", screen: "tripDetail" }] },
 
-  // T15 — Your room.
+  // T14 — Your room.
   { id: "walk-your-room", segmentIndex: 3, background: STAGE, steps: [{ kind: "go", screen: "yourRoom" }] },
 
-  // T16 — She taps Ask Lumi. Because Lumi knows what she was just looking at,
+  // T15 — She taps Ask Lumi. Because Lumi knows what she was just looking at,
   // it offers her things worth asking from right here.
   {
     id: "ask-lumi-open",
@@ -267,7 +264,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T17 — "Hang on. Let me try something." She taps the third one.
+  // T16 — "Hang on. Let me try something." She taps the third one.
   {
     id: "lights-on",
     segmentIndex: 3,
@@ -280,7 +277,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T18 — No hunting for a switch in the dark.
+  // T17 — No hunting for a switch in the dark.
   {
     id: "lights-off",
     segmentIndex: 3,
@@ -293,7 +290,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T19 — Next morning, from bed: open the blinds. And Berlin shows up.
+  // T18 — Next morning, from bed: open the blinds. And Berlin shows up.
   {
     id: "blinds-morning",
     segmentIndex: 3,
@@ -313,7 +310,7 @@ export const ALLHANDS: PressBeat[] = [
   // BEAT 04 — Lunch, and twenty euros
   // ══════════════════════════════════════════════════════════════════════════
 
-  // T20 — Lunchtime. She wants to eat somewhere good and has no idea where.
+  // T19 — Lunchtime. She wants to eat somewhere good and has no idea where.
   {
     id: "lunch-open",
     segmentIndex: 4,
@@ -327,7 +324,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T21 — Lumi doesn't hand her a paragraph. It asks her a better question.
+  // T20 — Lumi doesn't hand her a paragraph. It asks her a better question.
   {
     id: "lunch-ask",
     segmentIndex: 4,
@@ -346,7 +343,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T22 — The difference between telling and doing. A map, ready to walk to.
+  // T21 — The difference between telling and doing. A map, ready to walk to.
   {
     id: "lunch-map",
     segmentIndex: 4,
@@ -370,7 +367,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T23 — Sunday morning. The last question of the stay.
+  // T22 — Sunday morning. The last question of the stay.
   {
     id: "checkout-open",
     segmentIndex: 4,
@@ -384,7 +381,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T24 — Lumi shows her the whole thing — and then offers her the extra hours.
+  // T23 — Lumi shows her the whole thing — and then offers her the extra hours.
   {
     id: "checkout-ask",
     segmentIndex: 4,
@@ -417,7 +414,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T25 — Twenty euros we have never asked for, at the exact second she'd say yes.
+  // T24 — Twenty euros we have never asked for, at the exact second she'd say yes.
   {
     id: "checkout-accept",
     segmentIndex: 4,
@@ -433,7 +430,7 @@ export const ALLHANDS: PressBeat[] = [
   // BEAT 05 — The train home
   // ══════════════════════════════════════════════════════════════════════════
 
-  // T26 — Sunday afternoon, on the train. The stay's over, nothing booked next.
+  // T25 — Sunday afternoon, on the train. The stay's over, nothing booked next.
   {
     id: "train-open",
     segmentIndex: 5,
@@ -450,7 +447,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T27 — She asks which Numa. Lumi asks the only question that matters.
+  // T26 — She asks which Numa. Lumi asks the only question that matters.
   {
     id: "train-vibe",
     segmentIndex: 5,
@@ -471,7 +468,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T28 — Three of our London properties slide in, with a line about why these
+  // T27 — Three of our London properties slide in, with a line about why these
   // three, for her. Booking her way back, on the train home from us.
   {
     id: "train-london",
@@ -510,7 +507,7 @@ export const ALLHANDS: PressBeat[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // T29 — End card
+  // T28 — End card
   // ══════════════════════════════════════════════════════════════════════════
   {
     id: "end",

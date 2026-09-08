@@ -7,20 +7,20 @@
 import type { RequestProgress, RequestState } from "@/lib/demo/request";
 
 const NUMA_PINK = "#ffc9d2";
-const NUMA_ORANGE = "#ff671f";
 
-// A small isometric technician, drawn rather than shipped as an asset.
-function TechnicianGlyph({ size = 36 }: { size?: number }) {
+// The technician, exported from the Figma Live Activity so the widget carries
+// the same 3D asset as the design rather than a stand-in.
+const IMG_TECHNICIAN = "/allhands/technician.png";
+
+function Technician({ width }: { width: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
-      <rect x="4" y="21" width="18" height="14" rx="2" fill="#e8e4df" />
-      <path d="M4 21l9-5 9 5-9 5-9-5Z" fill="#f6f3ef" />
-      <path d="M22 21v14l8-4V17l-8 4Z" fill="#d6d1cb" />
-      <circle cx="27" cy="11" r="4" fill="#f2c9a8" />
-      <path d="M23 11a4 4 0 0 1 8 0h-8Z" fill={NUMA_ORANGE} />
-      <path d="M22.5 16h9l1.5 12h-12l1.5-12Z" fill="#4f7ec8" />
-      <rect x="30" y="18" width="6" height="2.4" rx="1.2" fill="#f2c9a8" transform="rotate(20 30 18)" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={IMG_TECHNICIAN}
+      alt=""
+      className="shrink-0 object-contain"
+      style={{ width, height: (width / 46) * 54 }}
+    />
   );
 }
 
@@ -93,22 +93,27 @@ export function DynamicIsland({
   const showActivity = Boolean(request && progress);
   const isExpanded = expanded && showActivity;
 
-  // Deliberately a CSS transition, not a motion component: the island has to
-  // morph reliably on stage, and content must be legible the instant it's
-  // there rather than waiting on an animation to resolve.
+  // Sizes come off the Figma frames (compact 173×38, expanded 367×146 on a
+  // 402-wide artboard) scaled to this 390-wide phone.
+  // A CSS transition rather than a motion component: the island has to morph
+  // reliably on stage, and its content must be legible the instant it's there.
   return (
     <div
-      className="absolute left-1/2 top-[11px] z-50 overflow-hidden bg-black"
+      className="absolute left-1/2 z-50 overflow-hidden bg-black"
       style={{
-        width: isExpanded ? 318 : showActivity ? 152 : 120,
-        height: isExpanded ? 92 : 36,
-        borderRadius: isExpanded ? 24 : 18,
+        // Proportions of the Figma artboard (402×874) so the island tracks the
+        // phone whatever size the frame renders at.
+        width: isExpanded ? "91.3%" : showActivity ? "43%" : "29.9%",
+        height: isExpanded ? "16.7%" : "4.35%",
+        top: "1.49%",
+        borderRadius: isExpanded ? 39 : 18,
         transform: "translateX(-50%)",
-        transition: "width 380ms cubic-bezier(0.32,0.72,0,1), height 380ms cubic-bezier(0.32,0.72,0,1), border-radius 380ms cubic-bezier(0.32,0.72,0,1)",
+        transition:
+          "width 420ms cubic-bezier(0.32,0.72,0,1), height 420ms cubic-bezier(0.32,0.72,0,1), border-radius 420ms cubic-bezier(0.32,0.72,0,1)",
       }}
     >
       {showActivity && !isExpanded && (
-        <div className="flex h-9 items-center justify-between px-3.5">
+        <div className="flex h-full items-center justify-between px-4">
           <span className="text-[13px] font-semibold tracking-[-0.2px]" style={{ color: NUMA_PINK }}>
             Numa
           </span>
@@ -119,27 +124,29 @@ export function DynamicIsland({
       )}
 
       {isExpanded && (
-        <div className="flex h-full flex-col justify-center px-3.5 py-3">
-          <div className="flex items-center gap-3">
-            <TechnicianGlyph size={34} />
+        <div className="flex h-full flex-col justify-center px-[21px]">
+          <div className="flex items-center gap-4">
+            <Technician width={42} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold leading-tight text-white">
+              <p className="truncate text-[15px] font-semibold leading-[18px] text-white">
                 {request!.title}
               </p>
-              <p className="truncate text-[13px] font-light text-white/55">{progress!.longText}</p>
+              <p className="mt-[3px] truncate text-[14px] font-light leading-[18px] text-white/55">
+                {progress!.longText}
+              </p>
             </div>
           </div>
-          <div className="mt-2.5 flex items-center gap-2">
-            <span className="shrink-0 text-[10px] font-light tabular-nums text-white/60">
+          <div className="mt-[14px] flex items-center gap-3">
+            <span className="shrink-0 text-[12px] font-light tabular-nums text-white/70">
               {request!.receivedLabel}
             </span>
-            <span className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/20">
+            <span className="relative h-[6.5px] flex-1 overflow-hidden rounded-full bg-white/25">
               <span
                 className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear"
                 style={{ width: `${Math.max(4, progress!.progress * 100)}%`, background: NUMA_PINK }}
               />
             </span>
-            <span className="shrink-0 text-[10px] font-light tabular-nums text-white/60">
+            <span className="shrink-0 text-[12px] font-light tabular-nums text-white/70">
               {request!.etaLabel}
             </span>
           </div>
@@ -160,27 +167,35 @@ export function LockActivity({
 }) {
   return (
     <div
-      className="overflow-hidden rounded-[22px] px-4 py-3.5"
-      style={{ background: "rgba(28,30,34,0.72)", backdropFilter: "blur(22px)", WebkitBackdropFilter: "blur(22px)" }}
+      className="overflow-hidden rounded-[24px] px-[19px] py-[22px]"
+      style={{
+        background: "rgba(28,30,34,0.7)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+      }}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-[17px] font-semibold leading-tight" style={{ color: NUMA_PINK }}>
+          <p className="text-[22px] font-semibold leading-[28px] tracking-[-0.3px]" style={{ color: NUMA_PINK }}>
             Numa
           </p>
-          <p className="mt-1 truncate text-[14px] font-semibold text-white">{request.title}</p>
-          <p className="truncate text-[13px] font-light text-white/55">{progress.longText}</p>
+          <p className="mt-[10px] truncate text-[15px] font-semibold leading-[16px] text-white">
+            {request.title}
+          </p>
+          <p className="mt-[10px] truncate text-[15px] font-light leading-[16px] text-white/55">
+            {progress.longText}
+          </p>
         </div>
-        <TechnicianGlyph size={38} />
+        <Technician width={42} />
       </div>
-      <div className="relative mt-3 h-[5px]">
-        <div className="absolute inset-x-0 top-[1px] h-[3px] rounded-full bg-white/20" />
+      <div className="relative mt-[22px] h-[4px]">
+        <div className="absolute inset-x-0 top-0 h-[4px] rounded-full bg-white/25" />
         <div
-          className="absolute left-0 top-[1px] h-[3px] rounded-full transition-[width] duration-1000 ease-linear"
+          className="absolute left-0 top-0 h-[4px] rounded-full transition-[width] duration-1000 ease-linear"
           style={{ width: `${Math.max(4, progress.progress * 100)}%`, background: NUMA_PINK }}
         />
         <span
-          className="absolute right-0 top-0 h-[5px] w-[5px] rounded-full"
+          className="absolute -top-[3px] right-0 h-[10px] w-[10px] rounded-full"
           style={{ background: NUMA_PINK }}
         />
       </div>
