@@ -167,11 +167,11 @@ export function StoryThreadView() {
     // No header: the sheet's grabber is the only chrome, so the conversation
     // starts straight under it.
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Pinned live request — stays put while she asks the next thing, with a
-          rule under it separating the status from the conversation (Figma).
-          The rule sits in 40px of clear space on both sides. */}
+      {/* Pinned live request — stays put while she asks the next thing. 32px
+          below the sheet's handle, and a rule under it separating the status
+          from the conversation (Figma) sitting in 40px of space either side. */}
       {request && requestProgress && (
-        <div className="shrink-0 px-4 pt-4">
+        <div className="shrink-0 px-4 pt-[32px]">
           <RequestPinnedCard request={request} progress={requestProgress} />
           <div className="mt-[40px] h-px bg-line-light" />
         </div>
