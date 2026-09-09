@@ -104,7 +104,7 @@ function Composer({ draft, placeholder }: { draft: string; placeholder: string }
 
 // ── StoryThreadView ───────────────────────────────────────────────────────────
 
-export function StoryThreadView({ onClose }: { onClose?: () => void }) {
+export function StoryThreadView() {
   const messages = useApp((s) => s.demo.storyChat.messages);
   const draft = useApp((s) => s.demo.storyChat.draft);
   const lumiTyping = useApp((s) => s.demo.storyChat.lumiTyping);
@@ -164,28 +164,14 @@ export function StoryThreadView({ onClose }: { onClose?: () => void }) {
   }
 
   return (
+    // No header: the sheet's grabber is the only chrome, so the conversation
+    // starts straight under it.
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header */}
-      <div className="relative flex shrink-0 items-center justify-center px-4 py-2.5">
-        <span className="text-[17px] font-semibold tracking-tight text-ink">Lumi</span>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="absolute right-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink active:scale-95"
-            aria-label="Close"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        )}
-      </div>
-
       {/* Pinned live request — stays put while she asks the next thing, with a
           rule under it separating the status from the conversation (Figma).
           The rule sits in 40px of clear space on both sides. */}
       {request && requestProgress && (
-        <div className="shrink-0 px-4 pt-2">
+        <div className="shrink-0 px-4 pt-4">
           <RequestPinnedCard request={request} progress={requestProgress} />
           <div className="mt-[40px] h-px bg-line-light" />
         </div>

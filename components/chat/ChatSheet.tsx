@@ -44,7 +44,7 @@ export function ChatSheet() {
             </div>
 
             {demoActive
-              ? <StoryThreadView onClose={closeChat} />
+              ? <StoryThreadView />
               : <ThreadView key={chat.threadId ?? chat.kind} context={chat} thread={thread} onClose={closeChat} />
             }
           </motion.div>
