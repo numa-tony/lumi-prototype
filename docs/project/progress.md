@@ -35,6 +35,7 @@
 - **Per-story stay** — `useStay()` gives Explore / My Trips / Trip Detail / Your room the running story's stay (Berlin Friedrichshain, Jul 9–12); hides the trip card entirely on the train home
 - **Shared Figma upgrades** — Inbox (title + filter chips), Ask Lumi start screen (torus + "I'm Lumi, your travel assistant" + starters), plain-text Lumi replies, FAB "Ask Lumi | Open door", ticket-style reservation card, full-width quick-reply buttons, real map widget, 200px property carousel
 - **Dev handle** — `window.__lumi` (development only) exposes the store for console-driving the demo
+- **Agentation visual feedback** — click an element in the running app, leave a note, and it reaches the agent with selector + position attached (`components/dev/Annotations.tsx`, mounted in `app/layout.tsx`, dev-only). Needs `npx agentation-mcp server` alongside `npm run dev`; see AGENTS.md
 
 - **App shell & device frame** — iPhone frame wrapper, `AppShell` with animated screen transitions
 - **Bottom navigation** — 4 tabs with Figma DS SVG icons; `text-text` (active) / `text-text-secondary` (inactive); `tripDetail` maps to trips tab

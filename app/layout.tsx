@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Annotations } from "@/components/dev/Annotations";
 
 export const metadata: Metadata = {
   title: "Numa — Lumi Prototype",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <Annotations />
+      </body>
     </html>
   );
 }
