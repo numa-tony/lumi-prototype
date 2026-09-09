@@ -1,4 +1,19 @@
-# Progress — Updated 2026-09-08
+# Progress — Updated 2026-09-09
+
+> **2026-09-09 — All-Hands polish pass + Agentation.** Ran the walkthrough end to
+> end and worked through the feedback: opens straight on WhatsApp (no flash of the
+> app), the WhatsApp follow-up line lands on a 3s timer with no press, tapping the
+> link jumps straight to the pinned chat with the Inbox underneath, the Lumi chat
+> header is gone, the Ask Lumi input matches Figma (including the typing → send
+> state), the live status dot is the Figma component with an outward pulse, the
+> inbox row is the Figma list item, and the iOS home/lock surfaces are 3x exports
+> with the Numa icon baked in. The Dynamic Island now springs open. Also added
+> **Agentation** so feedback can be given by clicking the running app rather than
+> describing it — see AGENTS.md.
+>
+> Docs refreshed this session: `context.md` (was pre-Story-Mode), `decisions.md`
+> (the why behind the engine, CSS-over-Framer, asset export), and AGENTS.md gained
+> *Working notes* covering how to verify in the hidden preview pane.
 
 > **2026-09-08 — Second story: the All-Hands walkthrough.** Story Mode now hosts
 > **two** scripts. `lib/demo/story.ts` (Sarah's Day) is **frozen** — its beats are
@@ -26,6 +41,14 @@
 > used by `lib/ai/model.ts` for rate-limit cooldown persistence (a separate feature).
 
 ## Done
+
+- **All-Hands polish** — opens on WhatsApp via per-story `initialSurface`; WhatsApp follow-up auto-lands after 3s; direct jump into the pinned chat with the Inbox underneath (no Explore flash); no chat header; 32px under the sheet handle; 40px either side of the status rule
+- **Ask Lumi input to Figma** — floating white pill + Elevation/1 shadow, exported mic glyph, and the typing state (blue-300 caret, dark send button with the exported arrow). No backdrop blur — it smeared the sheet's bottom corners
+- **Live status dot** — Figma component (12px #e1f1e8 halo + 6px #1e7868 core) with an outward-pulsing ring so the request reads as a live feed
+- **Inbox row to Figma** — Numa "Nu" avatar on brand pink, spec typography, 2px filter chips
+- **iOS surfaces at 3x** — home screen (Numa icon now baked into the Figma frame), lock wallpaper and technician glyph re-exported via `download_figma_images` (`get_screenshot` can't exceed natural size)
+- **Dynamic Island spring** — opens with an overshoot weighted into height (~8%; width only ~1%, which is all the rounded corners allow) over 560ms; closes without a bounce
+- **Agentation** — dev-only annotation toolbar wired to the local sync server, so feedback arrives with selectors attached
 
 - **Story Mode — All-Hands walkthrough (`?story=allhands`)** — second scripted story, 29 taps, bare chrome (no captions/rail/counter — the presenter is the narration); fully offline (no AI, no TTS, no mic)
 - **Story engine — multi-story** — `STORIES` registry + `demo.storyId`; new Step kinds (`surface`, `island`, `waUserMsg/waTyping/waLumiMsg`, `startRequest/clearRequest`, `hideChat/showChat`, `divider`, `starters`, `stayVisible`); exhaustiveness guard on `applyStep`; `snapToBeat` now cancels a beat still playing (pressing ← mid-beat is safe)
@@ -76,7 +99,7 @@
 
 ## Next (ordered)
 
-1. **Rehearse the All-Hands walkthrough** — run it end to end at presentation size and tune Lumi/Sarah copy in `lib/demo/allHands.ts`
+1. **Rehearse the All-Hands walkthrough** — run it end to end at presentation size and tune Lumi/Sarah copy in `lib/demo/allHands.ts` (copy is drafted, not signed off)
 2. **Backgrounds for the All-Hands story** — flip `STORIES.allhands.scenes` to `true` and design what sits behind the phone per beat (the `scene` steps are already in the script)
 3. **Refresh `docs/project/vision.md`** — stale mirror still describes the deprecated cross-channel bridging model; sync from the live Notion doc (Notion wins)
 4. **ExploreScreen image URLs** — Figma MCP asset URLs expired ~Jun 8; replace with permanent CDN URLs
