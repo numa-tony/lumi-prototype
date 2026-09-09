@@ -57,7 +57,11 @@ function DateDivider({ label }: { label: string }) {
 // on background/base/secondary.
 function Composer({ draft, placeholder }: { draft: string; placeholder: string }) {
   return (
-    <div className="shrink-0 px-[24px] pb-[48px] pt-2 backdrop-blur-[2px]">
+    // No backdrop blur here, despite the design: the composer sits on the
+    // sheet's opaque white, so it has nothing to blur — and a backdrop-filter
+    // region samples the bezel outside the phone's rounded clip, smearing grey
+    // into the bottom corners.
+    <div className="shrink-0 px-[24px] pb-[48px] pt-2">
       <div
         className="flex w-full items-center justify-between rounded-full py-[12px] pl-[20px] pr-[12px]"
         style={{
