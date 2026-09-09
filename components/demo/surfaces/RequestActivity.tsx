@@ -109,6 +109,19 @@ export function DynamicIsland({
   // 402-wide artboard) scaled to this 390-wide phone.
   // A CSS transition rather than a motion component: the island has to morph
   // reliably on stage, and its content must be legible the instant it's there.
+  //
+  // Opening springs past the target and settles, the way the real island does.
+  // The overshoot is mostly vertical: expanded, the island is already 91% of
+  // the screen, so more than a couple of percent of width would clip on the
+  // display's rounded corners. Closing eases straight out — iOS doesn't bounce
+  // a Live Activity shut.
+  const ease = isExpanded
+    ? {
+        width: "cubic-bezier(0.32, 1.18, 0.5, 1)",   // ~1.5% past — stays clear of the corners
+        height: "cubic-bezier(0.34, 1.5, 0.5, 1)",   // ~7% past — room to actually bounce
+      }
+    : { width: "cubic-bezier(0.32, 0.72, 0, 1)", height: "cubic-bezier(0.32, 0.72, 0, 1)" };
+
   return (
     <div
       className="absolute left-1/2 z-50 overflow-hidden bg-black"
@@ -120,8 +133,12 @@ export function DynamicIsland({
         top: "1.49%",
         borderRadius: isExpanded ? 39 : 18,
         transform: "translateX(-50%)",
-        transition:
-          "width 420ms cubic-bezier(0.32,0.72,0,1), height 420ms cubic-bezier(0.32,0.72,0,1), border-radius 420ms cubic-bezier(0.32,0.72,0,1)",
+        transition: [
+          `width 560ms ${ease.width}`,
+          `height 560ms ${ease.height}`,
+          // The corner radius just eases — overshooting it reads as a wobble.
+          "border-radius 460ms cubic-bezier(0.32, 0.72, 0, 1)",
+        ].join(", "),
       }}
     >
       {showActivity && !isExpanded && (
