@@ -112,7 +112,11 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
           }
           await sleep(180, token);
         } catch {
-          // cancelled mid-typewriter: fall through to push the full message instantly
+          // Cancelled mid-typewriter — return WITHOUT pushing. Whoever cancelled
+          // (fast-forward, or a backward snap) owns what happens next; pushing
+          // here as well is how the same message used to land twice when the
+          // presenter advanced mid-type.
+          return;
         }
       }
       useApp.getState().setStoryDraft("");
@@ -226,7 +230,7 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
           }
           await sleep(200, token);
         } catch {
-          // cancelled mid-typewriter: fall through and push the full message
+          return;   // see userMsg — the canceller owns the push
         }
       }
       useApp.getState().setWaDraft("");
@@ -352,9 +356,11 @@ export async function snapToBeat(n: number): Promise<void> {
   }
 }
 
-// Index of the step currently being applied (or about to be applied)
-// in the running playBeat. Used by fastForwardCurrent to skip already-applied steps.
+// Playback position, owned by the runner alone. A keydown closure can hold a
+// stale beatIndex under rapid input, so fast-forward reads these rather than
+// being told which beat it is on.
 let currentStepIndex = 0;
+let activeBeatIndex = -1;
 
 // Play beat N with full animation. Cancels any running playback first.
 export async function playBeat(n: number): Promise<void> {
@@ -362,6 +368,7 @@ export async function playBeat(n: number): Promise<void> {
   const token: CancelToken = { cancelled: false };
   activeToken = token;
   currentStepIndex = 0;
+  activeBeatIndex = n;
 
   const beat = beats()[n];
   if (!beat) return;
@@ -388,14 +395,14 @@ export async function playBeat(n: number): Promise<void> {
   }
 }
 
-// Fast-forward: cancel running beat and apply remaining unapplied steps instantly.
-// Starts from currentStepIndex so already-completed steps aren't duplicated.
-export function fastForwardCurrent(n: number): void {
+// Fast-forward: cancel the running beat and apply its remaining steps instantly.
+// Reads the runner's own position, so it can't act on a beat that isn't playing.
+export function fastForwardCurrent(): void {
   const fromStep = currentStepIndex;
+  const beat = beats()[activeBeatIndex];
   activeToken.cancelled = true;
-  const fakeToken: CancelToken = { cancelled: false };
-  const beat = beats()[n];
   if (!beat) return;
+  const fakeToken: CancelToken = { cancelled: false };
   for (let i = fromStep; i < beat.steps.length; i++) {
     applyStep(beat.steps[i], fakeToken, false);
   }

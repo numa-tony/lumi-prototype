@@ -51,7 +51,7 @@ export function StoryDirector() {
         if (beatIndex < beatCount - 1) {
           if (playingRef.current) {
             // Already playing — fast-forward the current beat, then advance
-            fastForwardCurrent(beatIndex);
+            fastForwardCurrent();
             playingRef.current = false;
           }
           nextBeat();

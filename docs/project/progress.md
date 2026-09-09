@@ -13,7 +13,10 @@
 >
 > Docs refreshed this session: `context.md` (was pre-Story-Mode), `decisions.md`
 > (the why behind the engine, CSS-over-Framer, asset export), and AGENTS.md gained
-> *Working notes* covering how to verify in the hidden preview pane.
+> *Working notes* covering how to verify in the hidden preview pane. The three
+> story-mode docs were folded into one current `story-mode.md`; consolidating them
+> surfaced two unfixed P1s from the Jun-11 review (duplicate message and stale beat
+> index on rapid `→`), both now fixed. Findings still open are listed in that file.
 
 > **2026-09-08 — Second story: the All-Hands walkthrough.** Story Mode now hosts
 > **two** scripts. `lib/demo/story.ts` (Sarah's Day) is **frozen** — its beats are
@@ -42,6 +45,7 @@
 
 ## Done
 
+- **Rapid-input fixes in the story runner** — pressing `→` mid-typewriter used to push the message twice (verified: 2 before, 1 after); the cancelled typewriter now returns and lets the canceller own the push. Fast-forward reads the runner's own `activeBeatIndex` instead of a keydown closure that can go stale
 - **All-Hands polish** — opens on WhatsApp via per-story `initialSurface`; WhatsApp follow-up auto-lands after 3s; direct jump into the pinned chat with the Inbox underneath (no Explore flash); no chat header; 32px under the sheet handle; 40px either side of the status rule
 - **Ask Lumi input to Figma** — floating white pill + Elevation/1 shadow, exported mic glyph, and the typing state (blue-300 caret, dark send button with the exported arrow). No backdrop blur — it smeared the sheet's bottom corners
 - **Live status dot** — Figma component (12px #e1f1e8 halo + 6px #1e7868 core) with an outward-pulsing ring so the request reads as a live feed
