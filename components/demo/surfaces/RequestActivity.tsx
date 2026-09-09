@@ -24,6 +24,18 @@ function Technician({ width }: { width: number }) {
   );
 }
 
+// The live-status dot: a 12px halo around a 6px core (Figma 7224:10821), with
+// a ring pulsing out from under the halo so the request reads as a live feed.
+function LiveDot() {
+  return (
+    <span className="relative flex h-[12px] w-[12px] shrink-0 items-center justify-center">
+      <span className="live-dot-ring absolute inset-0 rounded-full bg-[var(--color-green-200)]" />
+      <span className="absolute inset-0 rounded-full bg-[var(--color-green-100)]" />
+      <span className="relative h-[6px] w-[6px] rounded-full bg-[var(--color-green-400)]" />
+    </span>
+  );
+}
+
 // ── 1. Pinned card at the top of the Lumi thread ─────────────────────────────
 
 export function RequestPinnedCard({
@@ -47,8 +59,8 @@ export function RequestPinnedCard({
             <p className="text-[16px] font-semibold leading-tight tracking-[-0.2px] text-ink">
               {request.title}
             </p>
-            <p className="mt-1 flex items-center gap-1.5 text-[14px] font-light text-[#6d706f]">
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#12a05c]" />
+            <p className="mt-1 flex items-center gap-1 text-[14px] font-light text-[#6d706f]">
+              <LiveDot />
               {progress.etaText}
             </p>
           </div>
