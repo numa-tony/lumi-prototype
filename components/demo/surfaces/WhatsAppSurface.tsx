@@ -102,7 +102,15 @@ export function WhatsAppSurface() {
           </svg>
           <span className="text-[17px]">12</span>
         </button>
-        <span className="h-9 w-9 shrink-0 rounded-full bg-[#ffc9d2]" />
+        {/* Numa's WhatsApp avatar — brand pink with the N, not a bare circle */}
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full"
+          style={{ background: "var(--color-lumi-pink)" }}
+        >
+          <span className="text-[21px] font-semibold leading-none tracking-[-0.5px] text-[#191919]">
+            N
+          </span>
+        </span>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1 text-[16px] font-semibold leading-tight text-[#111b21]">
             Numa
