@@ -73,35 +73,49 @@ function ThreadRow({ thread }: { thread: PersistedThread }) {
           hint: thread.hint,
         })
       }
-      className="flex w-full items-center gap-3 px-5 py-3.5 text-left active:bg-surface-muted"
+      className="flex h-[56px] w-full items-center justify-between rounded-lg py-2 pl-2 pr-4 text-left active:bg-surface-muted"
     >
-      <div className="relative">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-numa-soft text-[22px]">
-          {thread.emoji}
+      {/* Left addon — the Numa avatar, centred in a 64px column (Figma 7224:10605).
+          Every thread is with Numa, so the mark is the brand, not the topic. */}
+      <div className="relative flex h-full w-16 shrink-0 items-center justify-center">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={{ background: "var(--color-brand-pink)" }}
+        >
+          <span className="text-[14px] font-semibold leading-[1.3] tracking-[-0.2px] text-[#191919]">
+            Nu
+          </span>
         </span>
         {thread.unread && (
-          <span className="absolute -left-0.5 top-1 h-2.5 w-2.5 rounded-full bg-numa ring-2 ring-surface" />
+          <span className="absolute right-3 top-2 h-2.5 w-2.5 rounded-full bg-numa ring-2 ring-surface" />
         )}
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-[15px] font-semibold text-ink">{thread.topic}</p>
-          {thread.active && (
-            <span className="rounded-full bg-numa-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-numa">
-              Active
-            </span>
-          )}
-          {thread.state === "resolved" && (
-            <span className="text-[11px] font-medium text-go">Resolved</span>
+
+      <div className="flex min-w-0 flex-1 items-center gap-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-[16px] font-semibold leading-5 tracking-[-0.2px] text-ink">
+              {thread.topic}
+            </p>
+            {thread.active && (
+              <span className="shrink-0 rounded-full bg-numa-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-numa">
+                Active
+              </span>
+            )}
+            {thread.state === "resolved" && (
+              <span className="shrink-0 text-[11px] font-medium text-go">Resolved</span>
+            )}
+          </div>
+          {preview && (
+            <p className="truncate text-[14px] font-light leading-5 tracking-[-0.2px] text-[#6d706f]">
+              {preview}
+            </p>
           )}
         </div>
-        {preview && (
-          <p className="truncate text-[13px] text-ink-soft">{preview}</p>
-        )}
+        <span className="shrink-0 text-[12px] font-light leading-4 tracking-[-0.2px] text-[#6d706f]">
+          {time}
+        </span>
       </div>
-      <span className="shrink-0 self-start pt-0.5 text-[12px] text-ink-faint">
-        {time}
-      </span>
     </button>
   );
 }
@@ -144,7 +158,7 @@ export function MessagesScreen() {
                 key={c.id}
                 onClick={() => setChip(c.id)}
                 className={`flex h-9 shrink-0 items-center rounded-full px-3.5 text-[15px] font-semibold leading-5 tracking-[-0.2px] ${
-                  chip === c.id ? "bg-[#191919] text-white" : "border border-[#dedddb] text-[#191919]"
+                  chip === c.id ? "bg-[#191919] text-white" : "border-2 border-[#eceae7] text-[#191919]"
                 }`}
               >
                 {c.label}
