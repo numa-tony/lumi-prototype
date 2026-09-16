@@ -14,7 +14,7 @@ carried at the bottom of this file.*
 | Story | Entry | State |
 |---|---|---|
 | **Sarah's Day** | sidebar, or `?story` | The original arc: arrival → room → towels → AC → inbox → ramen → checkout → voice climax. **Frozen** |
-| **All-Hands** | sidebar, or `?story=allhands` | "It started with an air conditioner." 29 taps. Tap-by-tap in `all-hands-story.md` |
+| **All-Hands** | sidebar, or `?story=allhands` | "It started with an air conditioner." 32 taps, in front of a photographic stage. Tap-by-tap in `all-hands-story.md` |
 
 **Frozen** means the `STORY` array in `lib/demo/story.ts` is what the presenter
 rehearsed. Shared *visual* upgrades are expected to flow into it; its **beats**
@@ -43,18 +43,20 @@ lib/demo/
   request.ts      RequestState + the live countdown
   stay.ts         useStay() — per-story stay for the app screens
   scenes.ts       useStoryScenes() — whether the world scenes render
+  stagePhotos.ts  GENERATED — the stage photos and their measurements
 
 components/demo/
   StoryDirector.tsx  keyboard + playback; mounts the stage
   StoryStage.tsx     stage chrome — "full" (Sarah's Day) or "bare" (All-Hands)
   StoryDeepLink.tsx  ?story / ?story=<id>
-  StoryPhoneShift.tsx  shifts the phone aside for a title card
+  StoryPhoneShift.tsx  moves the phone: aside for a title card, off-stage for a scene
+  stage/PhotoStage.tsx the photographic stage (stories with `stage: "photos"`)
   surfaces/          WhatsApp · iOS home · iOS lock · Dynamic Island · Live Activity
 ```
 
 The store holds a `demo` slice (`lib/store.ts`): `storyId`, `beatIndex`,
 `surface`, `islandExpanded`, `storyChat`, `waChat`, `storyVoice`, `request`,
-`starters`, `stayVisible`, `roomBreakout`, `frontDoor`, `fade`.
+`starters`, `stayVisible`, `roomBreakout`, `frontDoor`, `fade`, `stage`.
 
 ### A beat
 
@@ -83,6 +85,61 @@ is a compile error rather than a step that silently does nothing on stage.
 
 A new story = a beats file + a `STORIES` entry. Nothing else needs to know.
 
+## The photographic stage
+
+Stories with `stage: "photos"` (All-Hands) play in front of photographs instead
+of the illustrated room. Two axes, set independently:
+
+- **Which photo** — `backdrop` steps. `via` is how it arrives: `cut`,
+  `dissolve` (crossfade + slow scale settle), `night` (dip to black, swap in the
+  dark, rise), `part` (opens outward from the curtain seam), `travel` (the old
+  place drifts away as the new one arrives).
+- **Who owns the stage** — `focus` steps. `scene`: the photo, sharp and slowly
+  drifting, with a time-and-place stamp; the phone is below the frame. `phone`:
+  the phone, with the photo sunk behind a scrim, blurred and scaled up 4 %.
+
+Plus two moments: `glance` lifts the scrim while the room itself changes (the
+blinds opening), and `pulse` fires a one-shot accent across the room (the cool breath when the AC is fixed).
+
+```ts
+{ kind: "focus", mode: "scene" },                             // phone leaves
+{ kind: "backdrop", photo: "blinds-closed", via: "night" },   // a night goes by
+{ kind: "focus", mode: "scene", stamp: { when: "Saturday, 8:14 AM", where: "Berlin" } },
+// …next beat:
+{ kind: "focus", mode: "phone" },                             // phone rises on top
+```
+
+How the runner treats them — each follows a rule that already exists elsewhere
+in the engine:
+
+- **`focus` waits for the move to land** (rise 950ms, sink 650ms), so typing
+  never starts under a phone that is still moving.
+- **`glance` returns on a timer rather than being awaited**, so the room change
+  after it plays *inside* the glance.
+- **A cancelled `night` writes nothing more** — the canceller lands the photo,
+  the same rule as a cancelled typewriter. Otherwise a stale dip-release could
+  end the next beat's dip.
+- **`pulse` only fires when animated**; a snap or fast-forward never replays it.
+- **`snapToBeat` sets `stage.instant`** for the replay: the end state renders with
+  every transition off, and anything that *mounts* during a snap captures that
+  and never plays its entrance later. So `←` really is instant.
+
+All of the motion is CSS (the `.stage` block in `app/globals.css`), and it uses
+transitions, not keyframes, for anything that can be interrupted. A press
+mid-rise retargets a transition from wherever it is, whereas a keyframe would
+jump. Keyframes are only for one-shot entrances. The durations are named there
+(`--stage-ease-*`) and mirrored by the runner's constants.
+
+**The scrim is solved per photo.** The five photos span a 4× range of brightness,
+so `scripts/stage-photos.mjs` measures each one and solves the scrim alpha that
+lands it on one target luminance, tinted with that photo's shadow colour. It
+also measures the anchors the accents use (the thermostat, the curtain seam, the
+lamps). Re-run it after changing a photo; nothing is tuned by hand.
+
+Photos are two slots, not all mounted: the entering photo is keyed by the
+backdrop's `seq`, so its entrance always plays from the start; the outgoing one
+keeps its DOM node underneath, so it never re-decodes.
+
 ## Things that are the way they are for a reason
 
 See `decisions.md` for the full set. The ones that bite most often:
@@ -99,6 +156,11 @@ See `decisions.md` for the full set. The ones that bite most often:
   steps land on top of the snap.
 - Geometry is **proportional to the Figma artboard** (402×874) because the
   phone's screen is 368×822.
+- **The chat's typing dots are the Lumi knot.** `StoryThreadView` derives a knot
+  mode (`start` / `loading` / `hidden`) from `lumiTyping` and the last message.
+  `useKnotPlacement` moves one knot between empty anchors, so it follows v7's
+  glide-then-fade. The knot itself is vendored (`npm run sync:knot`), so never
+  edit `components/lumi-knot/vendor/`.
 
 ## Verifying a change
 
@@ -113,7 +175,24 @@ __lumi.getState().setBeatIndex(n);    // step back → snaps instantly to beat n
 ```
 
 Then read `getBoundingClientRect()` / `getComputedStyle()` for spacing and
-colour claims. For rapid-input bugs, the throttled timers in a hidden pane are
+colour claims.
+
+**The photographic stage can't be judged in the preview pane at all** — its
+transitions freeze there. `node scripts/shoot-story.mjs` plays All-Hands
+headless at real timing and *asserts* what it can: the phone off-screen in
+scene focus and centred in phone focus, the same darkness behind the phone in
+every room, every photo decoded, `←` snapping with no transition running, and
+no jump when `→` lands mid-move. It also checks the Lumi knot, which the preview
+pane never draws (WebGL needs rAF):
+
+- It sits on its anchor, and it's really drawn.
+- It glides from a start screen and appears in place otherwise.
+- It's gone once Lumi answers.
+- There's only ever one knot canvas, and no WebGL context warnings.
+
+It writes a frame per beat, a contact sheet and
+a strip through each scene change to `.scratch/story/`. `--story sarah` checks
+that Sarah's Day is untouched; `--reduced` runs it with reduced motion. For rapid-input bugs, the throttled timers in a hidden pane are
 an advantage: the typewriter stays in flight for seconds, so pressing `→` twice
 reproduces the race every time.
 
@@ -136,5 +215,5 @@ Still open, roughly by value:
 | I | Esc/exit doesn't cancel in-flight timers → a write can land after teardown |
 | J | StrictMode double-mount fires `playBeat(0)` twice. Idempotent today, latent |
 | O | Paint cost at the Sarah's Day climax: 60 framer rain loops + `background` gradient cross-fades. Use transforms/opacity |
-| S | Magic timing literals; both world scenes share `z-[6]` |
+| S | Magic timing literals; both world scenes share `z-[6]`. *The photographic stage names its timings (`--stage-*`, mirrored in the runner); the world scenes still don't* |
 | X | `scene` steps never set `lastDevice`, so the one-shot device pulse never fires in Story Mode |

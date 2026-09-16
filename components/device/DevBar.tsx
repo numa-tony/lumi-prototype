@@ -22,7 +22,7 @@ export function DevBar() {
       </button>
       <button
         onClick={loadDemoData}
-        className="rounded-md bg-white/10 px-3 py-2 font-medium text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
+        className="rounded-md bg-white/10 px-3 py-2 font-semibold text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
       >
         Load demo threads
       </button>
@@ -32,7 +32,7 @@ export function DevBar() {
         role="switch"
         aria-checked={inStay}
         onClick={() => setInStay(!inStay)}
-        className="flex items-center justify-between gap-3 rounded-md bg-white/10 px-3 py-2 font-medium text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
+        className="flex items-center justify-between gap-3 rounded-md bg-white/10 px-3 py-2 font-semibold text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
       >
         <span>In stay mode</span>
         <span

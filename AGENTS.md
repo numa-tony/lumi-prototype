@@ -26,6 +26,12 @@ real thought, or you had to undo something to reach it, add it to
 **Story Mode is the deliverable most of the time.** Sarah's Day's beats are frozen;
 see `decisions.md` before touching `lib/demo/`.
 
+**Only two font weights exist.** TWK Lausanne ships here as 300 and 600 only.
+Tailwind's `font-medium` and `font-bold` don't fail loudly — CSS quietly falls
+back to a neighbouring face — so use `font-light` or `font-semibold` and nothing
+else. `app/globals.css` carries the full note, including where to get
+replacement files and how to verify them.
+
 **Verifying in the browser preview.** The preview pane often runs hidden
 (`document.hidden === true`), which stops rAF — so CSS animations, CSS
 transitions and Framer Motion all freeze mid-flight. Screenshots still render.
@@ -44,9 +50,41 @@ crawls. Drive the story from the store instead of the keyboard:
 `__lumi.getState().setBeatIndex(n)` — going *backwards* snaps instantly
 (`snapToBeat`), so jump past your target then step back to it.
 
+**Two traps that cost real time in the hidden pane:**
+
+- **`AnimatePresence mode="wait"` never completes.** `AppShell` waits for the
+  outgoing screen's exit animation, which is frozen — so `go('yourRoom')` sets
+  the store but the new screen never mounts, and you sit there thinking your
+  component is broken. `screen` is not persisted, so reloading won't help
+  either. To actually look at a screen, temporarily drop the `mode="wait"` in
+  `components/device/AppShell.tsx`, verify, then revert (check with
+  `git diff`).
+- **A frozen sheet measures as zero.** The chat sheet mid-spring reports a
+  bounding height of 0, so any pixel distance read off it is nonsense — and
+  forcing it open with inline styles distorts what you then measure. Prefer
+  `getComputedStyle()` for the value you actually care about (a padding, a
+  colour), or a difference that is transform-invariant, over a rect against the
+  frame. If a rect looks impossible, it is.
+
+Also: **don't `npm run build` while the dev server is running** — they share
+`.next` and the dev server starts throwing module-not-found until you reload.
+
+**`app/globals.css` edits don't hot-reload.** Turbopack (Next 16.2) picks up TSX
+changes but keeps serving the CSS it compiled at startup — even across a restart,
+because that compile is cached in `.next/dev`. The symptom is a CSS rule that
+simply isn't there, with no error anywhere. Check by grepping the served file:
+
+```bash
+curl -s localhost:3000/_next/static/chunks/$(curl -s localhost:3000/ | grep -oE 'app_globals_[^"]+\.css' | head -1) | grep -c 'your-rule'
+```
+
+Fix: stop the dev server, `rm -rf .next/dev`, start it again.
+
 Prefer measuring over eyeballing: read `getBoundingClientRect()` and
 `getComputedStyle()` to check a spacing or colour claim, and remember the phone
-screen is 368×822 CSS px inside the bezel.
+screen is 368×822 CSS px inside the bezel — **the Figma artboards are 393 wide**,
+so a ported measurement is right but anything width-dependent (line breaks
+especially) lands differently. See `decisions.md`.
 
 ## Visual feedback (Agentation)
 

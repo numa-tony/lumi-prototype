@@ -5,6 +5,7 @@ import { useApp } from "@/lib/store";
 import { getStory } from "@/lib/demo/stories";
 import type { SarahEmotion } from "@/lib/demo/types";
 import { snapToBeat, playBeat } from "@/lib/demo/storyRunner";
+import { PhotoStage } from "./stage/PhotoStage";
 
 const SARAH_EMOJI: Record<SarahEmotion, string> = {
   neutral:   "🙂",
@@ -25,6 +26,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
   // "bare" chrome (All-Hands): the presenter is the narration, so nothing on
   // stage competes with them — no rail, captions, bubbles, counter or hints.
   const bare = story.chrome === "bare";
+  const photoStage = story.stage === "photos";
   const isFirst = beatIndex === 0;
   const isLast = beatIndex === story.beats.length - 1;
   const emotion = beat.sarahEmotion ?? "neutral";
@@ -42,7 +44,11 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
       <div
         className="pointer-events-none fixed inset-0 z-[5] transition-all duration-700"
         style={{ background: beat.background }}
+        data-beat-id={beat.id}
       />
+
+      {/* ── Photographic stage (All-Hands) ───────────────────────────────── */}
+      {photoStage && <PhotoStage />}
 
       {/* ── Fade-to-black overlay ─────────────────────────────────────────── */}
       <motion.div
@@ -79,7 +85,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
               style={{ left: "58%", maxWidth: "min(560px, 40vw)" }}
             >
               <h1
-                className="font-bold leading-[1.08] text-white"
+                className="font-semibold leading-[1.08] text-white"
                 style={{ fontSize: bare ? "clamp(34px, 3.6vw, 58px)" : "clamp(36px, 4vw, 64px)" }}
               >
                 {story.title}
@@ -116,7 +122,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
                   </div>
                 </div>
                 <div className="rounded-xl px-5 py-3.5" style={{ background: "#f5f0b8" }}>
-                  <p className="text-[15px] font-bold leading-snug text-[#1a1400]">
+                  <p className="text-[15px] font-semibold leading-snug text-[#1a1400]">
                     Use your keyboard arrows<br />to watch the story!
                   </p>
                 </div>
@@ -125,22 +131,29 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
           </>
         )}
 
-        {/* End card */}
+        {/* End card. A photo story ends over its last photograph, darkened,
+            rather than on flat black — it closes on the train home. */}
         {beat.thesisCard && (
           <div
-            className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center gap-8 px-8 text-center"
-            style={{ background: beat.background }}
+            className={`pointer-events-auto absolute inset-0 flex flex-col items-center justify-center gap-8 px-8 text-center ${
+              photoStage ? "stage-end-in" : ""
+            }`}
+            style={{
+              background: photoStage
+                ? "linear-gradient(180deg, rgba(0,0,0,0.58), rgba(0,0,0,0.76))"
+                : beat.background,
+            }}
           >
             <div className="flex flex-col gap-3">
               <p
-                className="font-bold leading-[1.08] tracking-tight text-white"
+                className="font-semibold leading-[1.08] tracking-tight text-white"
                 style={{ fontSize: bare ? "clamp(34px, 4vw, 62px)" : "clamp(56px, 7vw, 96px)" }}
               >
                 {story.endTitle}
               </p>
               {story.endSubtitle && (
                 <p
-                  className="font-bold leading-[1.08] tracking-tight text-[#ff671f]"
+                  className="font-semibold leading-[1.08] tracking-tight text-[#ff671f]"
                   style={{ fontSize: "clamp(34px, 4vw, 62px)" }}
                 >
                   {story.endSubtitle}
@@ -208,7 +221,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
 
         {/* Beat counter — top right */}
         {showAside && (
-          <div className="absolute right-6 top-5 text-[11px] font-medium tabular-nums text-white/25">
+          <div className="absolute right-6 top-5 text-[11px] font-semibold tabular-nums text-white/25">
             {storyBeatNum} / {storyBeatTotal}
           </div>
         )}
@@ -228,7 +241,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
             )}
             {!isFirst && (
               <div className="flex items-center gap-3">
-                <span className="text-[14px] font-medium text-white/40">to go back</span>
+                <span className="text-[14px] font-semibold text-white/40">to go back</span>
                 <Keycap label="◀" big />
               </div>
             )}
@@ -238,7 +251,7 @@ export function StoryStage({ beatIndex }: { beatIndex: number }) {
         {/* Exit hint */}
         <button
           onClick={exitStory}
-          className="pointer-events-auto absolute left-3 top-4 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-white/25 transition-colors hover:text-white/50"
+          className="pointer-events-auto absolute left-3 top-4 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold text-white/25 transition-colors hover:text-white/50"
         >
           ✕ exit
         </button>

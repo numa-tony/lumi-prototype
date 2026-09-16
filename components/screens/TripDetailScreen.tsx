@@ -3,116 +3,80 @@
 import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { useStay } from "@/lib/demo/stay";
+import { ListItem, ListDivider } from "./ListItem";
 
-const IMG_ROOM_LEFT =
-  "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80&auto=format&fit=crop";
-const IMG_ROOM_RIGHT =
-  "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=400&q=80&auto=format&fit=crop";
-const IMG_EXTRAS =
-  "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=400&q=80&auto=format&fit=crop";
-const IMG_BENEFITS =
-  "https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=400&q=80&auto=format&fit=crop";
+// ---------------------------------------------------------------------------
+// Figma: "Trip Details" — 7256:13081 (Lumi Vision). Every asset below is the
+// exported Figma glyph or photo; the red ones are masked so they take the
+// city colour rather than the export's baked-in Berlin red.
+// ---------------------------------------------------------------------------
+const IMG_HERO_ROOM = "/trip/hero-room.jpg";
+const IMG_HERO_GUESTS = "/trip/hero-guests.jpg";
+const IMG_BANNER_EXTRAS = "/trip/banner-extras.jpg";
+const IMG_BANNER_BENEFITS = "/trip/banner-benefits.jpg";
 
-// Amsterdam brand color (Numa city palette)
-const AMSTERDAM = "#d31779";
+const ICON_BACK = "/trip/back-arrow.svg";
+const ICON_CHEVRON_RED = "/trip/chevron-red.svg";
+const ICON_DOOR = "/trip/icon-door-back.svg";
+const ICON_DIALPAD = "/trip/icon-dialpad.svg";
+const ICON_HOTEL = "/trip/icon-hotel.svg";
+const ICON_LIST = "/trip/icon-list.svg";
+
+// City accent (Figma variable city/<name>). Berlin is the frame's own colour.
+const CITY_COLOR: Record<string, string> = {
+  Berlin: "#ea2720",
+  Amsterdam: "#d31779",
+};
+
+// The card is a ticket: a 33px strip with an 8px semicircular bite taken out of
+// each edge, 17px down. Masking the strip (rather than drawing notches) keeps
+// the bites perfectly round at any card width, and the parent's drop-shadow
+// filter then wraps the notches too — exactly as the Figma "Subtract" does.
+const NOTCH_MASK = {
+  maskImage:
+    "radial-gradient(circle 8px at 0 17px, transparent 8px, #000 8px), radial-gradient(circle 8px at 100% 17px, transparent 8px, #000 8px)",
+  WebkitMaskImage:
+    "radial-gradient(circle 8px at 0 17px, transparent 8px, #000 8px), radial-gradient(circle 8px at 100% 17px, transparent 8px, #000 8px)",
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
+} as const;
+
+// Elevation/1 on the booking card, Elevation/2 on the promo banners.
+const CARD_SHADOW =
+  "drop-shadow(0px 4px 3px rgba(0,0,0,0.06)) drop-shadow(0px 4px 13.5px rgba(0,0,0,0.07))";
+const BANNER_SHADOW = "0px 10px 20px rgba(0,0,0,0.06)";
 
 const TIPS_CHIPS = ["Arrival", "Staying", "Departing"] as const;
 type TipsChip = (typeof TIPS_CHIPS)[number];
 
-// ---------------------------------------------------------------------------
-// Inline SVG icons — stroke style, 24px viewBox, matching DS conventions
-// ---------------------------------------------------------------------------
-function IconHotel() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <path d="M2 19V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10" strokeLinecap="round" />
-      <line x1="2" y1="19" x2="22" y2="19" strokeLinecap="round" />
-      <rect x="6.5" y="12" width="4" height="7" rx="1" />
-      <rect x="13.5" y="12" width="4" height="4" rx="1" />
-    </svg>
-  );
-}
-
-function IconList() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <line x1="9" y1="6" x2="20" y2="6" strokeLinecap="round" />
-      <line x1="9" y1="12" x2="20" y2="12" strokeLinecap="round" />
-      <line x1="9" y1="18" x2="20" y2="18" strokeLinecap="round" />
-      <circle cx="5" cy="6" r="1.5" fill="#191919" stroke="none" />
-      <circle cx="5" cy="12" r="1.5" fill="#191919" stroke="none" />
-      <circle cx="5" cy="18" r="1.5" fill="#191919" stroke="none" />
-    </svg>
-  );
-}
-
-function IconClock() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconLuggage() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <rect x="6" y="8" width="12" height="12" rx="2" />
-      <path d="M9 8V6a2 2 0 0 1 4 0v2" strokeLinecap="round" />
-      <line x1="12" y1="11" x2="12" y2="17" strokeLinecap="round" />
-      <line x1="9" y1="14" x2="15" y2="14" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconCar() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <path d="M5 11.5 7 6h10l2 5.5" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="2" y="11.5" width="20" height="6" rx="2" />
-      <circle cx="7" cy="17.5" r="2" />
-      <circle cx="17" cy="17.5" r="2" />
-    </svg>
-  );
-}
-
-function IconDoor() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <path d="M13 3h6a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8Z" />
-      <line x1="13" y1="3" x2="13" y2="21" />
-      <circle cx="10" cy="12" r="1.2" fill="#191919" stroke="none" />
-    </svg>
-  );
-}
-
-function IconRemote() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="1.5" aria-hidden>
-      <rect x="8" y="2" width="8" height="20" rx="3" />
-      <circle cx="12" cy="6.5" r="1.2" fill="#191919" stroke="none" />
-      <line x1="10" y1="11" x2="14" y2="11" strokeLinecap="round" />
-      <line x1="10" y1="14" x2="14" y2="14" strokeLinecap="round" />
-      <line x1="10" y1="17" x2="14" y2="17" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconChevronRight() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b2b2b2" strokeWidth="1.5" aria-hidden>
-      <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 const HELPFUL_TIPS = [
-  { Icon: IconClock,   label: "Your check-in time" },
-  { Icon: IconLuggage, label: "Storing your luggage" },
-  { Icon: IconCar,     label: "Paid parking info" },
-  { Icon: IconDoor,    label: "Finding your room" },
+  { icon: "/trip/icon-dry-cleaning.svg", label: "Getting fresh towels" },
+  { icon: "/trip/icon-ac.svg", label: "How to use the air conditioner" },
+  { icon: "/trip/icon-thermostat.svg", label: "How to use the heating" },
+  { icon: "/trip/icon-iron.svg", label: "Ironing station" },
+  { icon: "/trip/icon-add-home.svg", label: "How to extend your stay" },
 ];
+
+// A red Figma glyph recoloured to the running city's accent.
+function CityGlyph({ src, size, color }: { src: string; size: number; color: string }) {
+  return (
+    <span
+      aria-hidden
+      className="block shrink-0"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: color,
+        maskImage: `url(${src})`,
+        WebkitMaskImage: `url(${src})`,
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+      }}
+    />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -120,239 +84,197 @@ const HELPFUL_TIPS = [
 export function TripDetailScreen() {
   const go = useApp((s) => s.go);
   const stay = useStay();
-  const [activeChip, setActiveChip] = useState<TipsChip>("Arrival");
+  const [activeChip, setActiveChip] = useState<TipsChip>("Staying");
+
+  const city = CITY_COLOR[stay.city] ?? CITY_COLOR.Berlin;
 
   return (
     <div className="pb-32">
 
-      {/* ── Hero — pink bg, property name, decorative room photos ─────── */}
-      <div className="relative h-[464px] overflow-hidden" style={{ background: "#ffc9d2" }}>
-        {/* Back arrow */}
-        <button
-          onClick={() => go("trips")}
-          className="absolute left-5 top-14 flex h-8 w-8 items-center justify-center active:opacity-60"
-          aria-label="Back to trips"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={AMSTERDAM} strokeWidth="2.5" aria-hidden>
-            <path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+      {/* ── Hero — 570px of brand pink; everything in it is placed from the
+          hero's own edges so it tracks the frame on a narrower screen ────── */}
+      <div className="relative h-[570px] overflow-hidden bg-[#ffc9d2]">
 
-        {/* Property title + address */}
-        <div className="absolute left-0 right-0 top-[96px] px-6">
+        {/* Switch trip bar — y=50 (under the status bar), h=56, px-20 py-16 */}
+        <div className="absolute left-0 right-0 top-[50px] flex h-[56px] items-center px-5">
+          <button
+            onClick={() => go("trips")}
+            className="flex items-center active:opacity-60"
+            aria-label="Back to trips"
+          >
+            <CityGlyph src={ICON_BACK} size={20} color={city} />
+          </button>
+          {/* Figma's notification bell sits here at 0% opacity — omitted. */}
+        </div>
+
+        {/* Title + address — the block's baseline sits 335px off the hero bottom */}
+        <div className="absolute bottom-[335px] left-0 right-0 flex flex-col gap-1 px-6">
           <h1
-            className="text-[36px] font-semibold leading-[1.1] tracking-[-0.4px]"
-            style={{ color: AMSTERDAM }}
+            className="text-[36px] font-semibold leading-[44px] tracking-[-0.4px]"
+            style={{ color: city }}
           >
             {stay.property}
           </h1>
-          <button className="mt-2 flex items-center gap-1.5 active:opacity-70">
+          <button className="flex items-center gap-2 active:opacity-70">
             <span
-              className="text-[16px] font-semibold leading-6 tracking-[-0.2px]"
-              style={{ color: AMSTERDAM }}
+              className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.2px]"
+              style={{ color: city }}
             >
               {stay.location}
             </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={AMSTERDAM} strokeWidth="2" aria-hidden>
-              <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <CityGlyph src={ICON_CHEVRON_RED} size={24} color={city} />
           </button>
         </div>
 
-        {/* Decorative room photos — positioned in lower hero zone */}
+        {/* Room still — 192×191, overhanging the left edge by 27px */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={IMG_ROOM_LEFT}
+          src={IMG_HERO_ROOM}
           alt=""
-          className="absolute bottom-[52px] left-[-20px] h-[172px] w-[176px] object-cover"
+          className="absolute bottom-[104px] left-[-27px] h-[191px] w-[192px] object-cover"
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={IMG_ROOM_RIGHT}
-          alt=""
-          className="absolute bottom-[40px] right-0 h-[160px] w-[132px] object-cover"
-        />
+        {/* Guest still — 143×174, overhanging the right edge by 27px, mirrored.
+            Figma crops the fill off-centre (182.49% wide, offset -16.47%), so
+            the frame keeps the couple rather than the centre of the photo. */}
+        <div className="absolute bottom-[80px] right-[-27px] h-[174px] w-[143px] scale-x-[-1] overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={IMG_HERO_GUESTS}
+            alt=""
+            className="absolute left-[-16.47%] top-0 h-full w-[182.49%] max-w-none"
+          />
+        </div>
       </div>
 
-      {/* ── Booking card — overlaps hero, rounded top corners ─────────── */}
-      <div className="relative -mt-8 z-10">
-        <div
-          className="mx-6 overflow-hidden rounded-[24px] bg-white"
-          style={{ boxShadow: "0px 4px 3px rgba(0,0,0,0.06), 0px 4px 13.5px rgba(0,0,0,0.07)" }}
-        >
-          {/* Dates row */}
-          <div className="flex items-start justify-between px-6 pb-4 pt-6">
-            {/* Check-in */}
-            <div>
-              <p className="text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
-                Check-in
-              </p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkInDate}</p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkInTime}</p>
-            </div>
+      {/* ── Main content — starts 146px above the hero's bottom, which lands
+          the card's own top edge at y=432 (Figma: hero 570, card top 432) ── */}
+      <div className="relative z-10 -mt-[146px]">
 
-            {/* Vertical dashed divider */}
-            <div className="flex items-center self-stretch py-1">
-              <div className="h-full border-l border-dashed border-[#dedddb]" />
-            </div>
-
-            {/* Check-out */}
-            <div className="text-right">
-              <p className="text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
-                Check-out
-              </p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkOutDate}</p>
-              <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">{stay.checkOutTime}</p>
-            </div>
-          </div>
-
-          {/* Ticket perforated divider */}
-          <div className="mx-6 border-t border-dashed border-[#dedddb]" />
-
-          {/* CTA section */}
-          <div className="flex flex-col gap-3 px-6 pb-6 pt-4">
-            {stay.needsCheckIn ? (
-              <>
-                <button className="flex h-11 w-full items-center justify-center rounded-[10px] bg-[#191919] text-[16px] font-semibold tracking-[-0.2px] text-white active:bg-[#333]">
-                  Check-in now
-                </button>
-                <p className="text-center text-[14px] font-light leading-5 tracking-[-0.2px] text-[#6d706f]">
-                  Online check-in required before stay.
+        {/* Booking card — a ticket, notched at the fold */}
+        <div className="px-6 py-2">
+          <div style={{ filter: CARD_SHADOW }}>
+            {/* Dates — px-24, pt 24+8, pb 16 */}
+            <div className="flex items-start justify-between rounded-t-[24px] bg-white px-6 pb-4 pt-8">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <p className="text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
+                  Check-in
                 </p>
-              </>
-            ) : (
-              <div className="flex items-center justify-between">
                 <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
-                  Room: <span className="font-semibold text-[#191919]">{stay.room}</span>
+                  {stay.checkInDate}
                 </p>
-                <p className="flex items-center gap-1.5 text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
-                  Code: <span className="font-semibold text-[#191919]">{stay.doorCode}</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f7a4a" strokeWidth="2.6" aria-hidden>
-                    <path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  {stay.checkInTime}
                 </p>
               </div>
-            )}
+
+              {/* 59px hairline, outline/default/light */}
+              <div className="h-[59px] w-px shrink-0 bg-[#eceae7]" />
+
+              <div className="flex min-w-0 flex-1 flex-col items-end text-right">
+                <p className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
+                  Check-out
+                </p>
+                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  {stay.checkOutDate}
+                </p>
+                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
+                  {stay.checkOutTime}
+                </p>
+              </div>
+            </div>
+
+            {/* The fold — notched sides, dashed rule inset 8px and 17px down */}
+            <div className="relative h-[33px] bg-white" style={NOTCH_MASK}>
+              <div
+                className="absolute left-2 right-2 top-[17px] h-px"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(to right, #eceae7 0 6px, transparent 6px 9px)",
+                }}
+              />
+            </div>
+
+            {/* Room + code — px-24, pt 16, pb 8+24 */}
+            <div className="flex items-center justify-between rounded-b-[24px] bg-white px-6 pb-8 pt-4">
+              <span className="flex items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={ICON_DOOR} alt="" className="block size-[24px]" />
+                <span className="whitespace-pre text-[16px] font-semibold leading-6 tracking-[-0.2px] text-[#191919]">
+                  {`Room:  ${stay.room}`}
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={ICON_DIALPAD} alt="" className="block size-[24px]" />
+                <span className="whitespace-pre text-right text-[14px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
+                  {`Code:  ${stay.doorCode} ✓`}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* ── Content below card ──────────────────────────────────────── */}
-        <div className="mt-8 flex flex-col gap-8">
+        {/* ── Content — pt-32, gap-24 ─────────────────────────────────────── */}
+        <div className="flex flex-col gap-6 pt-8">
 
-          {/* Essential list — Your room + Manage your booking */}
-          <div className="flex flex-col px-6">
-            <button
-              onClick={() => go("yourRoom")}
-              className="flex w-full items-center gap-4 py-2 text-left active:opacity-70"
-            >
-              <div className="shrink-0">
-                <IconHotel />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
-                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
-                  Your room
-                </p>
-                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
-                  Photos, amenities, and more
-                </p>
-              </div>
-              <div className="shrink-0">
-                <IconChevronRight />
-              </div>
-            </button>
-
-            <div className="border-t border-[#eceae7]" />
-
-            <button
-              onClick={() => go("roomControls")}
-              className="flex w-full items-center gap-4 py-2 text-left active:opacity-70"
-            >
-              <div className="shrink-0">
-                <IconRemote />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
-                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
-                  Room controls
-                </p>
-                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
-                  Control TV, lights, and more
-                </p>
-              </div>
-              <div className="shrink-0">
-                <IconChevronRight />
-              </div>
-            </button>
-
-            <div className="border-t border-[#eceae7]" />
-
-            <button className="flex w-full items-center gap-4 py-2 text-left active:opacity-70">
-              <div className="shrink-0">
-                <IconList />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
-                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
-                  Manage your booking
-                </p>
-                <p className="text-[16px] font-light leading-6 tracking-[-0.2px] text-[#6d706f]">
-                  View invoice, cancel or edit
-                </p>
-              </div>
-              <div className="shrink-0">
-                <IconChevronRight />
-              </div>
-            </button>
-          </div>
-
-          {/* Promo banners */}
+          {/* Essential list */}
           <div className="flex flex-col gap-2 px-6">
-            {/* Get trip extras */}
-            <button
-              className="flex h-24 w-full items-center gap-4 rounded-[12px] border border-[#eceae7] bg-white pl-6 pr-3 py-3 text-left active:bg-[#f4f4f4]"
-              style={{ boxShadow: "0px 10px 20px rgba(0,0,0,0.06)" }}
-            >
-              <div className="flex flex-1 flex-col gap-1">
-                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
-                  Get trip extras
-                </p>
-                <p className="text-[14px] font-light leading-[1.3] tracking-[-0.2px] text-[#6d706f]">
-                  Breakfast, late check out, free gym access and more
-                </p>
-              </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={IMG_EXTRAS}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-lg object-cover"
-              />
-            </button>
-
-            {/* Enjoy member benefits */}
-            <button
-              className="flex h-24 w-full items-center gap-4 rounded-[12px] border border-[#eceae7] bg-white pl-6 pr-3 py-3 text-left active:bg-[#f4f4f4]"
-              style={{ boxShadow: "0px 10px 20px rgba(0,0,0,0.06)" }}
-            >
-              <div className="flex flex-1 flex-col gap-1">
-                <p className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919]">
-                  Enjoy member benefits
-                </p>
-                <p className="text-[14px] font-light leading-[1.3] tracking-[-0.2px] text-[#6d706f]">
-                  Late check-out, early check-in, snack – all for free
-                </p>
-              </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={IMG_BENEFITS}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-lg object-cover"
-              />
-            </button>
+            <ListItem
+              icon={ICON_HOTEL}
+              title="Your room"
+              subtitle="Photos, amenities, and more"
+              onClick={() => go("yourRoom")}
+            />
+            <ListDivider />
+            <ListItem
+              icon={ICON_LIST}
+              title="Manage your booking"
+              subtitle="View invoice, cancel or edit"
+            />
           </div>
 
-          {/* Helpful tips */}
-          <div className="flex flex-col gap-4">
-            {/* Section header */}
-            <div className="flex items-center justify-between pl-6 pr-3 py-2">
-              <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.4px] text-[#191919]">
+          {/* Promo banners — 96px rows, gap-8 */}
+          <div className="flex flex-col gap-2">
+            {[
+              {
+                title: "Get trip extras",
+                sub: "Breakfast, late check out, free gym access and more",
+                img: IMG_BANNER_EXTRAS,
+              },
+              {
+                title: "Enjoy member benefits",
+                sub: "Late check-out, early check-in, snack - all for free",
+                img: IMG_BANNER_BENEFITS,
+              },
+            ].map((b) => (
+              <div key={b.title} className="flex h-24 items-center px-6">
+                <button
+                  className="flex flex-1 items-center gap-4 rounded-[12px] border border-[#eceae7] bg-white py-3 pl-6 pr-3 text-left active:bg-[#f4f4f4]"
+                  style={{ boxShadow: BANNER_SHADOW }}
+                >
+                  <span className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                    <span className="text-[16px] font-semibold leading-5 tracking-[-0.2px] text-black">
+                      {b.title}
+                    </span>
+                    <span className="text-[14px] font-light leading-[1.3] tracking-[-0.2px] text-[#6d706f]">
+                      {b.sub}
+                    </span>
+                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={b.img}
+                    alt=""
+                    className="size-16 shrink-0 rounded-lg object-cover"
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Helpful tips — gap-16 */}
+          <div className="flex flex-col gap-4 bg-white">
+            <div className="flex items-center justify-between py-2 pl-6 pr-3">
+              <h2 className="whitespace-nowrap text-[28px] font-semibold leading-[1.1] tracking-[-0.4px] text-[#191919]">
                 Helpful tips
               </h2>
               <button className="flex items-center gap-0.5 text-[16px] font-semibold leading-5 tracking-[-0.2px] text-[#191919] active:opacity-60">
@@ -363,7 +285,6 @@ export function TripDetailScreen() {
               </button>
             </div>
 
-            {/* Filter chips — same pattern as Explore / My Trips */}
             <div className="flex gap-2 px-6">
               {TIPS_CHIPS.map((chip) => (
                 <button
@@ -380,24 +301,12 @@ export function TripDetailScreen() {
               ))}
             </div>
 
-            {/* Tip list items */}
-            <div className="flex flex-col px-6">
-              {HELPFUL_TIPS.map(({ Icon, label }, i) => (
-                <div key={label}>
-                  <button className="flex w-full items-center gap-4 py-2 text-left active:opacity-70">
-                    <div className="shrink-0">
-                      <Icon />
-                    </div>
-                    <p className="flex-1 text-[16px] font-light leading-5 tracking-[-0.2px] text-[#191919]">
-                      {label}
-                    </p>
-                    <div className="shrink-0">
-                      <IconChevronRight />
-                    </div>
-                  </button>
-                  {i < HELPFUL_TIPS.length - 1 && (
-                    <div className="border-t border-[#eceae7]" />
-                  )}
+            {/* List items — rows 40px tall, 7px either side of each divider */}
+            <div className="flex flex-col gap-[7px] px-6">
+              {HELPFUL_TIPS.map(({ icon, label }, i) => (
+                <div key={label} className="contents">
+                  <ListItem icon={icon} title={label} />
+                  {i < HELPFUL_TIPS.length - 1 && <ListDivider />}
                 </div>
               ))}
             </div>

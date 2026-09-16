@@ -103,7 +103,7 @@ function ThreadRow({ thread }: { thread: PersistedThread }) {
               </span>
             )}
             {thread.state === "resolved" && (
-              <span className="shrink-0 text-[11px] font-medium text-go">Resolved</span>
+              <span className="shrink-0 text-[11px] font-semibold text-go">Resolved</span>
             )}
           </div>
           {preview && (

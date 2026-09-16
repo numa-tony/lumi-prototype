@@ -8,8 +8,11 @@ import { StatusWidget } from "./widgets/Widgets";
 import { useRequestProgress } from "@/lib/demo/request";
 import { RequestPinnedCard } from "@/components/demo/surfaces/RequestActivity";
 import type { StatusWidgetData } from "@/lib/types";
+import { LumiKnot, LUMI_KNOT_SIZE } from "@/components/lumi-knot/LumiKnot";
+import { useKnotPlacement, type KnotMode } from "./useKnotPlacement";
 
-const IMG_LUMI_LARGE = "/lumi-torus.png";
+/** v7.html: FLOW.smallSize — the knot while Lumi is thinking. */
+const KNOT_SMALL = 36;
 
 // ── Shared row + bubble primitives ───────────────────────────────────────────
 
@@ -33,7 +36,7 @@ function TextBubble({ role, text }: { role: "user" | "assistant"; text: string }
   }
   return (
     <Row role="user">
-      <div className="max-w-[82%] whitespace-pre-line rounded-[20px] bg-surface-muted px-4 py-2.5 text-[16px] font-light leading-[22px] text-ink">
+      <div className="max-w-[82%] whitespace-pre-line rounded-[20px] bg-surface-muted px-4 py-3 text-[16px] font-light leading-6 text-ink">
         {text}
       </div>
     </Row>
@@ -61,7 +64,9 @@ function Composer({ draft, placeholder }: { draft: string; placeholder: string }
     // sheet's opaque white, so it has nothing to blur — and a backdrop-filter
     // region samples the bezel outside the phone's rounded clip, smearing grey
     // into the bottom corners.
-    <div className="shrink-0 px-[24px] pb-[48px] pt-2">
+    // 24px from the pill to the foot of the phone screen — the sheet is flush
+    // with the screen's bottom edge, so this padding is that whole gap.
+    <div className="shrink-0 px-[24px] pb-[24px] pt-2">
       <div
         className="flex w-full items-center justify-between rounded-full py-[12px] pl-[20px] pr-[12px]"
         style={{
@@ -108,6 +113,7 @@ export function StoryThreadView() {
   const messages = useApp((s) => s.demo.storyChat.messages);
   const draft = useApp((s) => s.demo.storyChat.draft);
   const lumiTyping = useApp((s) => s.demo.storyChat.lumiTyping);
+  const tappedReply = useApp((s) => s.demo.storyChat.tappedReply);
   const starters = useApp((s) => s.demo.starters);
   const request = useApp((s) => s.demo.request);
   const requestProgress = useRequestProgress(request);
@@ -132,112 +138,164 @@ export function StoryThreadView() {
   // The start screen holds while she types her first message — the draft lands
   // in the "Ask Lumi" field, and only sending turns this into a conversation.
   const isEmpty = messages.length === 0 && !lumiTyping;
+  const showStart = isEmpty && !request;
 
-  // ── Idle "Ask Lumi" start screen ───────────────────────────────────────────
-  if (isEmpty && !request) {
-    return (
-      <div
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #ffffff 0%, #fff4f6 55%, #ffe9ee 100%)" }}
-      >
-        <div className="flex flex-1 flex-col items-center justify-center px-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={IMG_LUMI_LARGE} alt="Lumi" className="w-[62%] max-w-[260px] object-contain" />
-          <p className="mt-2 text-center text-[26px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink">
-            I&rsquo;m Lumi, your travel assistant
-          </p>
-        </div>
-
-        {starters.length > 0 && (
-          <div className="shrink-0 space-y-4 px-8 pb-2">
-            {starters.map((s) => (
-              <p key={s} className="text-[15px] font-light leading-5 text-ink">
-                {s}
-              </p>
-            ))}
-          </div>
-        )}
-
-        <Composer draft={draft} placeholder="Ask Lumi" />
-      </div>
-    );
-  }
+  // The knot thinks from the moment her message lands until Lumi answers. Her
+  // turn counts only if it was sent just now (story_u_…): a seeded thread that
+  // happens to end on her message isn't waiting for anything.
+  const last = messages[messages.length - 1];
+  const awaitingLumi = last?.role === "user" && last.id.startsWith("story_u_");
+  const knotMode: KnotMode = showStart ? "start" : lumiTyping || awaitingLumi ? "loading" : "hidden";
+  const { rootRef, bigAnchorRef, smallAnchorRef, listRef, layerRef, wrapRef } = useKnotPlacement(knotMode);
 
   return (
-    // No header: the sheet's grabber is the only chrome, so the conversation
-    // starts straight under it.
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Pinned live request — stays put while she asks the next thing. 32px
-          below the sheet's handle, and a rule under it separating the status
-          from the conversation (Figma) sitting in 40px of space either side. */}
-      {request && requestProgress && (
-        <div className="shrink-0 px-4 pt-[32px]">
-          <RequestPinnedCard request={request} progress={requestProgress} />
-          <div className="mt-[40px] h-px bg-line-light" />
-        </div>
-      )}
-
-      {/* Pinned status widget (seeded threads) */}
-      {!request && pinnedStatus && (
-        <div className="shrink-0 border-b border-line px-3.5 py-3">
-          <StatusWidget data={pinnedStatus} />
-        </div>
-      )}
-
-      {/* Message list — 40px of clear space under the rule when one is shown */}
-      <div
-        className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4 no-scrollbar app-scroll ${
-          request && requestProgress ? "pt-[40px]" : "pt-4"
-        }`}
-      >
-        {messages.map((message: UIMessage) => (
-          <div key={message.id} className="space-y-3">
-            {message.parts.map((part, idx) => {
-              if (part.type === "text") {
-                if (!part.text) return null;
-                return <TextBubble key={idx} role={message.role as "user" | "assistant"} text={part.text} />;
-              }
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if ((part as any).type === "story-divider") {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                return <DateDivider key={idx} label={(part as any).text} />;
-              }
-              if (part.type === "tool-setThreadTopic") return null;
-              if (part.type === "tool-controlDevice") return null;
-              const wtype = toolPartToWidgetType(part.type);
-              if (wtype) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const p = part as any;
-                if (p.state === "output-available") {
-                  if (wtype === "statusWidget" && pinnedStatus) return null;
-                  return (
-                    <Row key={idx} role="assistant">
-                      <div className="w-full">
-                        <Widget type={wtype} data={p.output} onRespond={() => {}} />
-                      </div>
-                    </Row>
-                  );
-                }
-                return null;
-              }
-              return null;
-            })}
+    <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col">
+      {showStart ? (
+        // ── Idle "Ask Lumi" start screen ─────────────────────────────────────
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          style={{ background: "linear-gradient(180deg, #ffffff 0%, #fff4f6 55%, #ffe9ee 100%)" }}
+        >
+          <div className="flex flex-1 flex-col items-center justify-center px-8">
+            {/* Where the knot sits while idle — the knot itself is in the
+                overlay below, so the same one can travel into the thread. */}
+            <div
+              ref={bigAnchorRef}
+              data-knot-anchor="big"
+              className="shrink-0"
+              style={{ width: LUMI_KNOT_SIZE, height: LUMI_KNOT_SIZE }}
+            />
+            <p className="mt-2 text-center text-[26px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink">
+              I&rsquo;m Lumi, your travel assistant
+            </p>
           </div>
-        ))}
 
-        {/* Lumi typing dots */}
-        {lumiTyping && (
-          <Row role="assistant">
-            <div className="lumi-typing flex items-center gap-1 rounded-2xl border border-line bg-surface px-4 py-3">
-              <span /> <span /> <span />
+          {starters.length > 0 && (
+            <div className="shrink-0 space-y-4 px-8 pb-2">
+              {starters.map((s) => (
+                // Same press affordance as a quick-reply chip — the starters are
+                // tappable too, and T16 has her pick one.
+                <p
+                  key={s}
+                  className={`text-[15px] font-light leading-5 text-ink transition-opacity duration-150 ${
+                    tappedReply === s ? "opacity-45" : ""
+                  }`}
+                >
+                  {s}
+                </p>
+              ))}
             </div>
-          </Row>
-        )}
+          )}
 
-        <div ref={bottomRef} />
+          <Composer draft={draft} placeholder="Ask Lumi" />
+        </div>
+      ) : (
+        // No header: the sheet's grabber is the only chrome, so the conversation
+        // starts straight under it.
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Pinned live request — stays put while she asks the next thing. 32px
+              below the sheet's handle, and a rule under it separating the status
+              from the conversation (Figma) sitting in 40px of space either side. */}
+          {request && requestProgress && (
+            <div className="shrink-0 px-4 pt-[32px]">
+              <RequestPinnedCard request={request} progress={requestProgress} />
+              <div className="mt-[40px] h-px bg-line-light" />
+            </div>
+          )}
+
+          {/* Pinned status widget (seeded threads) */}
+          {!request && pinnedStatus && (
+            <div className="shrink-0 border-b border-line px-3.5 py-3">
+              <StatusWidget data={pinnedStatus} />
+            </div>
+          )}
+
+          {/* Message list — 40px of clear space under the rule when one is shown */}
+          <div
+            ref={listRef}
+            className={`min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-4 no-scrollbar app-scroll ${
+              request && requestProgress ? "pt-[40px]" : "pt-[52px]"
+            }`}
+          >
+            {messages.map((message: UIMessage, mi: number) => (
+              // 24px between messages, and 32px after one of hers — the design
+              // gives her turn a little more room before Lumi answers.
+              <div
+                key={message.id}
+                className={`space-y-6 ${
+                  mi > 0 && messages[mi - 1].role === "user" && message.role !== "user"
+                    ? "!mt-8"
+                    : ""
+                }`}
+              >
+                {message.parts.map((part, idx) => {
+                  if (part.type === "text") {
+                    if (!part.text) return null;
+                    return <TextBubble key={idx} role={message.role as "user" | "assistant"} text={part.text} />;
+                  }
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  if ((part as any).type === "story-divider") {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    return <DateDivider key={idx} label={(part as any).text} />;
+                  }
+                  if (part.type === "tool-setThreadTopic") return null;
+                  if (part.type === "tool-controlDevice") return null;
+                  const wtype = toolPartToWidgetType(part.type);
+                  if (wtype) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const p = part as any;
+                    if (p.state === "output-available") {
+                      if (wtype === "statusWidget" && pinnedStatus) return null;
+                      return (
+                        <Row key={idx} role="assistant">
+                          <div className="w-full">
+                            <Widget
+                              type={wtype}
+                              data={p.output}
+                              onRespond={() => {}}
+                              pressedReply={tappedReply}
+                            />
+                          </div>
+                        </Row>
+                      );
+                    }
+                    return null;
+                  }
+                  return null;
+                })}
+              </div>
+            ))}
+
+            {/* Where the knot thinks — the spot Lumi's answer lands in, 32px
+                after her turn like the answer itself. Replaces the typing dots. */}
+            {knotMode === "loading" && (
+              <div className={last?.role === "user" ? "!mt-8" : ""}>
+                <div
+                  ref={smallAnchorRef}
+                  data-knot-anchor="small"
+                  className="ml-[2px]"
+                  style={{ width: KNOT_SMALL, height: KNOT_SMALL }}
+                />
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </div>
+
+          <Composer draft={draft} placeholder="Ask Lumi" />
+        </div>
+      )}
+
+      {/* The one knot. Placed over the active anchor by useKnotPlacement. */}
+      <div ref={layerRef} aria-hidden className="pointer-events-none absolute inset-0 z-10">
+        <div
+          ref={wrapRef}
+          data-knot={knotMode}
+          className="absolute left-0 top-0 origin-top-left will-change-transform"
+        >
+          <LumiKnot state={knotMode === "loading" ? "thinking" : "idle"} />
+        </div>
       </div>
-
-      <Composer draft={draft} placeholder="Ask Lumi" />
     </div>
   );
 }

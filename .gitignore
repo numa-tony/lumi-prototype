@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 .gstack/
 .env*.local
+
+# Local capture output from scripts/shoot-lab.mjs
+.scratch/

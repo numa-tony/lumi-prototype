@@ -6,19 +6,29 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:lumi3d": "node scripts/sync-lumi3d.mjs",
+    "check:lumi3d": "node scripts/sync-lumi3d.mjs --check",
+    "sync:knot": "node scripts/sync-lumi-knot.mjs",
+    "check:knot": "node scripts/sync-lumi-knot.mjs --check",
+    "stage:photos": "node scripts/stage-photos.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/groq": "^3.0.39",
     "@ai-sdk/react": "^3.0.195",
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
+    "@react-three/postprocessing": "3.1.1",
     "@upstash/redis": "^1.38.0",
     "ai": "^6.0.193",
     "framer-motion": "^12.40.0",
     "nanoid": "^5.1.11",
     "next": "16.2.6",
+    "postprocessing": "6.39.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "three": "0.185.1",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
@@ -27,9 +37,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "0.185.4",
     "agentation": "^3.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "playwright": "1.63.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

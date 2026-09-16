@@ -23,8 +23,15 @@ export function PhoneSurface() {
   if (!show) return null;
 
   // `key` restarts the zoom whenever the surface changes.
+  //
+  // z-[55] puts these surfaces above the whole app, chat sheet included (z-50,
+  // in the same stacking context). They are what the phone is showing *instead
+  // of* the app, so the app — sheet and all — stays alive underneath: going
+  // home from a chat doesn't close it, and coming back lands straight in it.
+  // The island and the lock-screen activity live inside the surfaces, so they
+  // come along.
   return (
-    <div key={surface} className="surface-enter absolute inset-0 z-[45]">
+    <div key={surface} className="surface-enter absolute inset-0 z-[55]">
       {surface === "whatsapp" && <WhatsAppSurface />}
       {surface === "home" && <HomeSurface />}
       {surface === "lock" && <LockSurface />}

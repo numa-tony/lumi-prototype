@@ -1,4 +1,4 @@
-import type { PressBeat, Segment } from "./types";
+import type { PressBeat, Segment, StageStamp } from "./types";
 import { IMG } from "@/lib/mock/properties";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -8,13 +8,23 @@ import { IMG } from "@/lib/mock/properties";
 // entry below; the presenter is the narration, so the stage carries no captions.
 // Everything is canned: no live AI, no TTS, no mic, no network.
 //
-// The stage stays black for this first round — room/scene visuals come later.
-// Room changes still flow through `scene` steps (the store's smartRoom updates
-// exactly as it does in Sarah's Day), so dropping a background scene back in is
-// a matter of mounting it, not rescripting the story.
+// The stage is photographic (components/demo/stage, `stage: "photos"`): five
+// photographs of the Berlin room and the train home, and two focus modes. When
+// a new place or time arrives, the phone leaves the frame and the room owns the
+// stage, stamped with the time; the next press brings the phone back up on top,
+// with the room dimmed and blurred behind it. Room changes still flow through
+// `scene` steps — the Friday photo's lights follow `smartRoom.lights.on`.
+// Presenter reference: docs/project/all-hands-story.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STAGE = "#000000";
+
+// The stamps shown while a scene is introduced. Twelve-hour, to match the
+// times already in the chat and on WhatsApp ("9:39 PM", "8:14 AM").
+const FRIDAY: StageStamp = { when: "Friday, 9:39 PM", where: "Berlin · Friedrichshain" };
+const SATURDAY: StageStamp = { when: "Saturday, 8:14 AM", where: "Berlin · Friedrichshain" };
+const SUNDAY: StageStamp = { when: "Sunday, 9:20 AM", where: "Berlin · Friedrichshain" };
+const TRAIN: StageStamp = { when: "Sunday, 3:10 PM", where: "Leaving Berlin" };
 
 // The stay this story runs on. Read by Explore / My Trips / Trip Detail / Your
 // room while the All-Hands story is active, so the app agrees with the script:
@@ -73,8 +83,10 @@ const STARTERS_TRAIN = [
 export const ALLHANDS: PressBeat[] = [
 
   // ══════════════════════════════════════════════════════════════════════════
-  // T0 — Opening frame: the phone centred, showing an empty WhatsApp thread
-  // with Numa. No title text — the presenter opens the story, not the stage.
+  // T0 — Opening frame: the room, not the phone — Friday night, shown as
+  // photographed, the thermostat reading 26 °C. The phone is below the frame;
+  // the presenter opens the story, and the next press brings it up. From that
+  // press on, the story's lights-off state dims the room behind the phone.
   // ══════════════════════════════════════════════════════════════════════════
   {
     id: "title",
@@ -82,8 +94,11 @@ export const ALLHANDS: PressBeat[] = [
     background: STAGE,
     titleCard: true,
     steps: [
-      // WhatsApp first, so the reset below happens behind it and the story
-      // never opens on a flash of the app.
+      // The room first, so the very first frame is already the right one.
+      { kind: "backdrop", photo: "ac", via: "cut" },
+      { kind: "focus", mode: "scene", stamp: FRIDAY },
+      // WhatsApp first on the phone, so the reset below happens behind it and
+      // the phone never rises on a flash of the app.
       { kind: "surface", value: "whatsapp" },
       { kind: "clearThreads" },
       { kind: "clearRequest" },
@@ -100,6 +115,14 @@ export const ALLHANDS: PressBeat[] = [
   // ══════════════════════════════════════════════════════════════════════════
   // BEAT 01 — The room won't cool down
   // ══════════════════════════════════════════════════════════════════════════
+
+  // The phone rises onto the room — an empty WhatsApp thread with Numa.
+  {
+    id: "phone-rise",
+    segmentIndex: 1,
+    background: STAGE,
+    steps: [{ kind: "focus", mode: "phone" }],
+  },
 
   // T1 — Sarah messages Numa on WhatsApp. Where every guest problem starts.
   {
@@ -178,18 +201,9 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T5 — She taps back and finds an inbox. One thing in it, because she's only
-  // asked us one thing.
-  {
-    id: "inbox",
-    segmentIndex: 2,
-    background: STAGE,
-    steps: [
-      { kind: "hideChat" },
-    ],
-  },
-
-  // T6 — Home screen. Our logo, and the countdown, at the top of her phone.
+  // T6 — Straight from the chat to the home screen: our logo, and the countdown,
+  // at the top of her phone. The chat sheet stays open underneath the home and
+  // lock surfaces, so tapping the widget (T9) lands straight back in it.
   {
     id: "home-island",
     segmentIndex: 2,
@@ -236,7 +250,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T10 — Back to the inbox.
+  // T10 — Out to the inbox. One thing in it, because she's only asked us one thing.
   { id: "walk-inbox", segmentIndex: 3, background: STAGE, steps: [{ kind: "hideChat" }, { kind: "go", screen: "messages" }] },
 
   // T11 — Out to Explore. And she notices the button, floating at the bottom.
@@ -260,13 +274,16 @@ export const ALLHANDS: PressBeat[] = [
     steps: [
       // The AC is fixed and this is a different conversation — the request
       // stops following her around once she's asking about something else.
+      // Behind the phone, a breath of cool air crosses the room.
       { kind: "clearRequest" },
+      { kind: "pulse", name: "cool" },
       { kind: "starters", items: STARTERS_ROOM },
       { kind: "openChat" },
     ],
   },
 
-  // T16 — "Hang on. Let me try something." She taps the third one.
+  // T16 — "Hang on. Let me try something." She taps the third one. Behind the
+  // phone the room brightens with the lights, and stays bright until T17.
   {
     id: "lights-on",
     segmentIndex: 3,
@@ -279,7 +296,7 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T17 — No hunting for a switch in the dark.
+  // T17 — No hunting for a switch in the dark. The room behind the phone dims.
   {
     id: "lights-off",
     segmentIndex: 3,
@@ -288,21 +305,38 @@ export const ALLHANDS: PressBeat[] = [
       { kind: "userMsg", text: "turn off the lights" },
       { kind: "lumiTyping", ms: 800 },
       { kind: "scene", patch: { lights: { on: false, brightness: 0, warmth: "warm" } } },
-      { kind: "lumiMsg", text: "Lights off. Sleep well, Sarah 🌙" },
+      { kind: "lumiMsg", text: "Lights off 🌙" },
     ],
   },
 
-  // T18 — Next morning, from bed: open the blinds. And Berlin shows up.
+  // The night goes by. The phone leaves; the room dips to black and comes back
+  // up as Saturday morning — curtains still drawn, light leaking at the seam.
+  // The chat's date divider is pushed here, while the phone is off-stage.
+  {
+    id: "saturday",
+    segmentIndex: 3,
+    background: STAGE,
+    steps: [
+      { kind: "focus", mode: "scene" },
+      { kind: "backdrop", photo: "blinds-closed", via: "night" },
+      { kind: "scene", patch: { windowSky: "morning" } },
+      { kind: "divider", label: "Sat 11 Jul · 8:14 AM" },
+      { kind: "focus", mode: "scene", stamp: SATURDAY },
+    ],
+  },
+
+  // T18 — Next morning, from bed: open the blinds. And Berlin shows up — the
+  // open room spreads outward from the seam where the light was leaking.
   {
     id: "blinds-morning",
     segmentIndex: 3,
     background: STAGE,
     steps: [
-      { kind: "fadeToBlack", ms: 700 },
-      { kind: "scene", patch: { windowSky: "morning" } },
-      { kind: "divider", label: "Sat 11 Jul · 8:14 AM" },
+      { kind: "focus", mode: "phone" },
       { kind: "userMsg", text: "open the blinds" },
       { kind: "lumiTyping", ms: 800 },
+      { kind: "glance", ms: 2600 },
+      { kind: "backdrop", photo: "blinds-open", via: "part" },
       { kind: "scene", patch: { blinds: { position: 100 } } },
       { kind: "lumiMsg", text: "Blinds are open — good morning, Berlin ☀️" },
     ],
@@ -313,6 +347,7 @@ export const ALLHANDS: PressBeat[] = [
   // ══════════════════════════════════════════════════════════════════════════
 
   // T19 — Lunchtime. She wants to eat somewhere good and has no idea where.
+  // Same room, later: the photo dips and rises behind the phone.
   {
     id: "lunch-open",
     segmentIndex: 4,
@@ -320,7 +355,7 @@ export const ALLHANDS: PressBeat[] = [
     steps: [
       { kind: "closeChat" },
       { kind: "go", screen: "explore" },
-      { kind: "fadeToBlack", ms: 600 },
+      { kind: "backdrop", photo: "blinds-open", via: "night" },
       { kind: "starters", items: STARTERS_LUNCH },
       { kind: "openChat" },
     ],
@@ -369,16 +404,31 @@ export const ALLHANDS: PressBeat[] = [
     ],
   },
 
-  // T22 — Sunday morning. The last question of the stay.
+  // Sunday morning arrives. The sunrise starts dissolving in *behind* the phone,
+  // and the phone's exit reveals it — so Saturday's room never shows, sharp, in
+  // between. The phone resets to Explore while it's off-stage, so it rises
+  // already where she'll be.
+  {
+    id: "sunday",
+    segmentIndex: 4,
+    background: STAGE,
+    steps: [
+      { kind: "backdrop", photo: "sunday", via: "dissolve" },
+      { kind: "focus", mode: "scene" },
+      { kind: "closeChat" },
+      { kind: "go", screen: "explore" },
+      { kind: "starters", items: STARTERS_CHECKOUT },
+      { kind: "focus", mode: "scene", stamp: SUNDAY },
+    ],
+  },
+
+  // T22 — The last question of the stay.
   {
     id: "checkout-open",
     segmentIndex: 4,
     background: STAGE,
     steps: [
-      { kind: "closeChat" },
-      { kind: "go", screen: "explore" },
-      { kind: "fadeToBlack", ms: 600 },
-      { kind: "starters", items: STARTERS_CHECKOUT },
+      { kind: "focus", mode: "phone" },
       { kind: "openChat" },
     ],
   },
@@ -432,19 +482,34 @@ export const ALLHANDS: PressBeat[] = [
   // BEAT 05 — The train home
   // ══════════════════════════════════════════════════════════════════════════
 
-  // T25 — Sunday afternoon, on the train. The stay's over, nothing booked next.
+  // The stay's over. The train window starts arriving *behind* the phone as the
+  // room drifts away, and the phone's exit reveals it — straight from the phone
+  // to the train, with no sharp look back at the room in between. Everything
+  // about the stay clears while the phone is off-stage.
   {
-    id: "train-open",
+    id: "train",
     segmentIndex: 5,
     background: STAGE,
     steps: [
+      { kind: "backdrop", photo: "train", via: "travel" },
+      { kind: "focus", mode: "scene" },
       { kind: "closeChat" },
       { kind: "stayVisible", value: false },
       { kind: "setInStay", value: false },
       { kind: "clearRequest" },
       { kind: "go", screen: "explore" },
-      { kind: "fadeToBlack", ms: 700 },
       { kind: "starters", items: STARTERS_TRAIN },
+      { kind: "focus", mode: "scene", stamp: TRAIN },
+    ],
+  },
+
+  // T25 — Sunday afternoon, on the train. Nothing booked next.
+  {
+    id: "train-open",
+    segmentIndex: 5,
+    background: STAGE,
+    steps: [
+      { kind: "focus", mode: "phone" },
       { kind: "openChat" },
     ],
   },
@@ -509,7 +574,7 @@ export const ALLHANDS: PressBeat[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // T28 — End card
+  // T28 — End card, over the train window, darkened
   // ══════════════════════════════════════════════════════════════════════════
   {
     id: "end",
@@ -517,6 +582,7 @@ export const ALLHANDS: PressBeat[] = [
     background: STAGE,
     thesisCard: true,
     steps: [
+      { kind: "focus", mode: "scene" },
       { kind: "closeChat" },
       { kind: "surface", value: "app" },
       { kind: "go", screen: "explore" },

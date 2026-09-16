@@ -1,0 +1,18 @@
+{
+  "upstream": "../numa-lumi-branding-v2",
+  "commit": "cfc7b542a15ebdf65356ba7a0e53ca397c66a8a2",
+  "dirty": false,
+  "syncedAt": "2026-09-09T13:46:17.533Z",
+  "files": {
+    "directions/types.ts": "377834ff0848e8fa",
+    "directions/cube/index.tsx": "a5395675726f3090",
+    "directions/cube/shaders.ts": "039077c4a7819d76",
+    "directions/cube/motion.ts": "0632885da61bae60",
+    "directions/cube/air.ts": "baff94d348e4f1b8",
+    "directions/cube/wall.ts": "a4dd6876b7fa9f5b",
+    "directions/cube/light.ts": "22fb3a7b7d69429d",
+    "lib/cities.ts": "7abac15af896101e",
+    "shell/rig.ts": "077a77fa449fe4a6",
+    "lib/dials.ts": "d235941ecd0aa05f"
+  }
+}

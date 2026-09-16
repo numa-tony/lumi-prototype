@@ -125,8 +125,8 @@ export function ExploreScreen() {
                 className="h-[88px] w-[88px] shrink-0 rounded-lg object-cover"
               />
 
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                {/* Badge: bg-bg-warning (#fff0e9), text-text-warning (#b24612) */}
+              <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
+                {/* Badge — the card's only CTA, per Figma 7256-11647 */}
                 <TripBadge needsCheckIn={stay.needsCheckIn} />
 
                 {/* Core info: Body/Small/Regular — 14px, 300 (light), leading-5 (20px), tracking-[-0.2px] */}
@@ -134,16 +134,6 @@ export function ExploreScreen() {
                   <span className="text-[#191919]">{stay.property}</span>
                   <span className="text-[#6d706f]">{stay.dates}</span>
                   <span className="text-[#6d706f]">ID {stay.reservationId}</span>
-                </div>
-
-                {/* Check-in now: 14px, 600, underline */}
-                <div className="flex items-center gap-1 pb-2 pt-1">
-                  <span className="text-[14px] font-semibold leading-[1.3] tracking-[-0.2px] underline decoration-solid text-black">
-                    {stay.needsCheckIn ? "Check-in now" : "Access now"}
-                  </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191919" strokeWidth="2" aria-hidden>
-                    <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
                 </div>
               </div>
             </button>

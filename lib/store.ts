@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import type { ChatContext, PersistedThread, ScreenId } from "./types";
 import { demoSeedThreads, demoSeedThread } from "./mock/threads";
 import { INITIAL_SMART_ROOM, type SmartRoomDevices } from "./smartRoom";
-import type { PhoneSurface } from "./demo/types";
+import type { PhoneSurface, StageFocus, StagePhotoId, StagePulse, StageStamp, StageVia } from "./demo/types";
 import { createAcRequest, type RequestState } from "./demo/request";
 import { getStory } from "./demo/stories";
 
@@ -40,6 +40,10 @@ export interface StoryChatState {
   messages: UIMessage[];
   draft: string;       // typewriter text in input while she "types"
   lumiTyping: boolean; // show Lumi typing dots
+  // The quick-reply option currently under her finger. Story Mode holds this
+  // for a beat before the reply lands, so the audience sees the tap that
+  // produced it rather than a bubble appearing from nowhere.
+  tappedReply: string | null;
 }
 
 // Scripted voice-mode overlay for Story Mode (mimics VoiceSheet, no mic / no live AI)
@@ -49,6 +53,45 @@ export interface StoryVoiceState {
   transcript: string;  // her words, appearing word-by-word as if transcribed live
   response: string;    // Lumi's spoken confirmation
 }
+
+// ── The photographic stage (stories with `stage: "photos"`) ──────────────────
+export interface StageState {
+  photo: StagePhotoId | null;
+  // The photo being left behind. It waits underneath, whole, while the new one
+  // enters over it — so a dissolve never dips through black.
+  prevPhoto: StagePhotoId | null;
+  via: StageVia;
+  // Bump on every backdrop change. `seq` keys the entering photo so its
+  // entrance always plays from the start (even re-entering the same photo for a
+  // time-skip); `prevSeq` keys the one underneath, so it keeps its DOM node and
+  // never re-decodes.
+  seq: number;
+  prevSeq: number;
+  focus: StageFocus;
+  // Kept once the phone takes over, so the line fades out with its words still
+  // in it instead of blanking first.
+  stamp: StageStamp | null;
+  glance: boolean;
+  dip: boolean;
+  pulse: { name: StagePulse; seq: number } | null;
+  // Set while a backwards snap replays the story: the end state renders with
+  // every transition off, and nothing that mounts during it animates later.
+  instant: boolean;
+}
+
+export const INITIAL_STAGE: StageState = {
+  photo: null,
+  prevPhoto: null,
+  via: "cut",
+  seq: 0,
+  prevSeq: 0,
+  focus: "scene",
+  stamp: null,
+  glance: false,
+  dip: false,
+  pulse: null,
+  instant: false,
+};
 
 export interface DemoState {
   active: boolean;
@@ -72,9 +115,10 @@ export interface DemoState {
   starters: string[];
   // Whether the story's stay shows on Explore / My Trips (false on the train home).
   stayVisible: boolean;
+  stage: StageState;
 }
 
-const EMPTY_STORY_CHAT: StoryChatState = { messages: [], draft: "", lumiTyping: false };
+const EMPTY_STORY_CHAT: StoryChatState = { messages: [], draft: "", lumiTyping: false, tappedReply: null };
 const EMPTY_STORY_VOICE: StoryVoiceState = { open: false, mode: "idle", transcript: "", response: "" };
 
 const INITIAL_DEMO: DemoState = {
@@ -92,6 +136,7 @@ const INITIAL_DEMO: DemoState = {
   request: null,
   starters: [],
   stayVisible: true,
+  stage: INITIAL_STAGE,
 };
 
 interface AppState {
@@ -130,6 +175,7 @@ interface AppState {
   // Story chat — presentational (no live AI)
   openStoryChat: () => void;
   openStoryThread: (id: string) => void;   // load seeded thread into storyChat + open sheet
+  setStoryTappedReply: (text: string | null) => void;  // hold a quick-reply chip pressed
   setStoryDraft: (text: string) => void;
   pushStoryUserMsg: (text: string) => void;
   setLumiTyping: (v: boolean) => void;
@@ -158,6 +204,14 @@ interface AppState {
   startRequest: () => void;
   clearRequest: () => void;
   setStayVisible: (v: boolean) => void;
+  // The photographic stage
+  setStageBackdrop: (photo: StagePhotoId, via: StageVia) => void;
+  setStageFocus: (focus: StageFocus, stamp?: StageStamp) => void;
+  setStageGlance: (v: boolean) => void;
+  setStageDip: (v: boolean) => void;
+  pulseStage: (name: StagePulse) => void;
+  setStageInstant: (v: boolean) => void;
+  resetStage: () => void;
 
   createThread: (firstUserText: string) => string;
   saveThreadMessages: (id: string, messages: UIMessage[]) => void;
@@ -238,7 +292,7 @@ export const useApp = create<AppState>()(
 
       openStoryChat: () => {
         set((s) => ({
-          demo: { ...s.demo, storyChat: { messages: [], draft: "", lumiTyping: false } },
+          demo: { ...s.demo, storyChat: EMPTY_STORY_CHAT },
           chat: { kind: "stay", title: "Lumi" },
         }));
       },
@@ -246,12 +300,14 @@ export const useApp = create<AppState>()(
         const thread = demoSeedThread(id);
         if (!thread) return;
         set((s) => ({
-          demo: { ...s.demo, storyChat: { messages: thread.messages, draft: "", lumiTyping: false } },
+          demo: { ...s.demo, storyChat: { ...EMPTY_STORY_CHAT, messages: thread.messages } },
           chat: { kind: "thread", title: thread.topic, threadId: id, hint: thread.hint },
         }));
       },
       setStoryDraft: (text) =>
         set((s) => ({ demo: { ...s.demo, storyChat: { ...s.demo.storyChat, draft: text } } })),
+      setStoryTappedReply: (text) =>
+        set((s) => ({ demo: { ...s.demo, storyChat: { ...s.demo.storyChat, tappedReply: text } } })),
       pushStoryUserMsg: (text) => {
         const msg: UIMessage = {
           id: `story_u_${nanoid(6)}`,
@@ -264,6 +320,7 @@ export const useApp = create<AppState>()(
             storyChat: {
               ...s.demo.storyChat,
               draft: "",
+              tappedReply: null,
               messages: [...s.demo.storyChat.messages, msg],
             },
           },
@@ -297,7 +354,7 @@ export const useApp = create<AppState>()(
       },
       clearStoryChat: () =>
         set((s) => ({
-          demo: { ...s.demo, storyChat: { messages: [], draft: "", lumiTyping: false } },
+          demo: { ...s.demo, storyChat: EMPTY_STORY_CHAT },
           chat: null,
         })),
 
@@ -379,6 +436,51 @@ export const useApp = create<AppState>()(
       startRequest: () => set((s) => ({ demo: { ...s.demo, request: createAcRequest() } })),
       clearRequest: () => set((s) => ({ demo: { ...s.demo, request: null } })),
       setStayVisible: (v) => set((s) => ({ demo: { ...s.demo, stayVisible: v } })),
+
+      // ── The photographic stage ─────────────────────────────────────────────
+      setStageBackdrop: (photo, via) =>
+        set((s) => {
+          const st = s.demo.stage;
+          const same = st.photo === photo;
+          return {
+            demo: {
+              ...s.demo,
+              stage: {
+                ...st,
+                // Re-entering the same photo keeps whatever was underneath it.
+                prevPhoto: same ? st.prevPhoto : st.photo,
+                prevSeq: same ? st.prevSeq : st.seq,
+                photo,
+                via,
+                seq: st.seq + 1,
+              },
+            },
+          };
+        }),
+      setStageFocus: (focus, stamp) =>
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            stage: {
+              ...s.demo.stage,
+              focus,
+              // A scene brings its own line (or none); the phone keeps the
+              // last one so it can fade out whole.
+              stamp: focus === "scene" ? (stamp ?? null) : s.demo.stage.stamp,
+            },
+          },
+        })),
+      setStageGlance: (v) => set((s) => ({ demo: { ...s.demo, stage: { ...s.demo.stage, glance: v } } })),
+      setStageDip: (v) => set((s) => ({ demo: { ...s.demo, stage: { ...s.demo.stage, dip: v } } })),
+      pulseStage: (name) =>
+        set((s) => ({
+          demo: {
+            ...s.demo,
+            stage: { ...s.demo.stage, pulse: { name, seq: (s.demo.stage.pulse?.seq ?? 0) + 1 } },
+          },
+        })),
+      setStageInstant: (v) => set((s) => ({ demo: { ...s.demo, stage: { ...s.demo.stage, instant: v } } })),
+      resetStage: () => set((s) => ({ demo: { ...s.demo, stage: INITIAL_STAGE } })),
 
       setSmartRoom: (update) =>
         set((s) => ({

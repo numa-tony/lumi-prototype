@@ -20,6 +20,18 @@ function sleep(ms: number, token: CancelToken): Promise<void> {
   });
 }
 
+// ── Photographic stage timings ───────────────────────────────────────────────
+// Mirrors of the CSS in app/globals.css (the .stage block). The runner only
+// waits where the next step must not start before a move has landed.
+const STAGE_RISE_MS = 950;   // the phone settles onto the stage
+const STAGE_SINK_MS = 650;   // the phone clears the frame
+const NIGHT_DOWN_MS = 700;   // into black
+const NIGHT_HOLD_MS = 250;   // a held beat of dark before the new room rises
+const GLANCE_IN_MS = 450;    // the scrim lifts before the room changes
+const GLANCE_MS = 2200;      // from the lift to the start of the return
+// Overlapping glances: only the newest one may end the glance.
+let glanceSeq = 0;
+
 // Speak Sarah's request aloud during the voice climax. Uses the same Kokoro
 // provider as Lumi (/api/tts) but with a different, natural female voice
 // (af_sarah) so she sounds distinct from Lumi (af_heart). Falls back to browser
@@ -124,10 +136,25 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       break;
     }
 
-    case "tapReply":
-      // Instant tap — no typewriter, just push the message directly
+    case "tapReply": {
+      // She taps a quick-reply chip. Hold the chip pressed for a beat first —
+      // without it the reply bubble just appears and the audience never sees
+      // her make the choice.
+      if (animated) {
+        useApp.getState().setStoryTappedReply(step.text);
+        try {
+          await sleep(380, token);
+        } catch {
+          // Cancelled mid-press — release the chip and return WITHOUT pushing.
+          // See userMsg: the canceller owns the push.
+          useApp.getState().setStoryTappedReply(null);
+          return;
+        }
+      }
+      // pushStoryUserMsg releases the chip as the bubble lands.
       useApp.getState().pushStoryUserMsg(step.text);
       break;
+    }
 
     case "hideChat":
       s.hideStoryChat();
@@ -310,6 +337,63 @@ async function applyStep(step: Step, token: CancelToken, animated: boolean): Pro
       }
       break;
 
+    // ── Photographic stage ────────────────────────────────────────────────
+
+    case "backdrop": {
+      const via = step.via ?? "dissolve";
+      if (!animated) {
+        // Snapping or fast-forwarding: land on the photo. A snap renders it
+        // with transitions off; a fast-forward lets it finish arriving.
+        useApp.getState().setStageDip(false);
+        useApp.getState().setStageBackdrop(step.photo, via === "night" ? "dissolve" : via);
+        break;
+      }
+      if (via !== "night") {
+        useApp.getState().setStageBackdrop(step.photo, via);
+        break;
+      }
+      // Night: down into black, swap while nothing is visible, a held beat of
+      // dark, then the new room rises. Cancelled part-way, the canceller lands
+      // it (see userMsg) — writing here too could end the next beat's dip.
+      useApp.getState().setStageDip(true);
+      try { await sleep(NIGHT_DOWN_MS, token); } catch { return; }
+      useApp.getState().setStageBackdrop(step.photo, "cut");
+      try { await sleep(NIGHT_HOLD_MS, token); } catch { return; }
+      useApp.getState().setStageDip(false);
+      break;
+    }
+
+    case "focus":
+      useApp.getState().setStageFocus(step.mode, step.stamp);
+      if (animated) {
+        // Let the phone land (or leave) before the next step: typing must never
+        // start under a phone that is still moving.
+        try { await sleep(step.mode === "phone" ? STAGE_RISE_MS : STAGE_SINK_MS, token); } catch { /* state already set */ }
+      }
+      break;
+
+    case "glance": {
+      // A glance is a moment, not a state — there is nothing to snap to.
+      if (!animated) {
+        useApp.getState().setStageGlance(false);
+        break;
+      }
+      const id = ++glanceSeq;
+      useApp.getState().setStageGlance(true);
+      // The return runs on a timer rather than being awaited, so the room
+      // change that follows plays *inside* the glance instead of after it.
+      setTimeout(() => {
+        if (glanceSeq === id) useApp.getState().setStageGlance(false);
+      }, step.ms ?? GLANCE_MS);
+      try { await sleep(GLANCE_IN_MS, token); } catch { /* lifting either way */ }
+      break;
+    }
+
+    case "pulse":
+      // One-shot and decorative: never replayed by a snap or a fast-forward.
+      if (animated) useApp.getState().pulseStage(step.name);
+      break;
+
     default: {
       // Exhaustiveness guard — adding a Step kind without handling it here is a
       // compile error rather than a step that silently does nothing on stage.
@@ -346,6 +430,11 @@ export async function snapToBeat(n: number): Promise<void> {
   s.clearRequest();
   s.setStoryStarters([]);
   s.setStayVisible(true);
+  // The photographic stage replays to its end state with every transition off,
+  // so ← lands instantly instead of animating back from wherever it was.
+  glanceSeq++;
+  s.resetStage();
+  s.setStageInstant(true);
 
   const story = beats();
   const fakeToken: CancelToken = { cancelled: false };
@@ -354,6 +443,8 @@ export async function snapToBeat(n: number): Promise<void> {
       await applyStep(step, fakeToken, false);
     }
   }
+  // Let the snapped frame paint with transitions off, then hand motion back.
+  setTimeout(() => useApp.getState().setStageInstant(false), 80);
 }
 
 // Playback position, owned by the runner alone. A keydown closure can hold a

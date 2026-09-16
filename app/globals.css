@@ -3,6 +3,17 @@
 /* ---------------------------------------------------------------------------
    TWK Lausanne — the Numa typeface.
    DS uses weight-light (300) and weight-semibold (600).
+
+   These are the ONLY two weights that exist. Tailwind's font-medium (500) and
+   font-bold (700) don't fail loudly — CSS quietly falls back to a neighbouring
+   face (500 → 300, 700 → 600), so the text renders at a weight nobody chose.
+   Use font-light or font-semibold; nothing else.
+
+   Take replacement files from numa-web.ds-adoption/packages/library/public/
+   fonts/lausanne — the cuts the Figma library is set in. Check any swap with
+   fontTools: TTFont(f)['OS/2'].usWeightClass must match the weight it's served
+   at. The files here were once 350 and 700 mislabelled as 300 and 600, which
+   made the whole prototype read thicker than the frames.
 --------------------------------------------------------------------------- */
 @font-face {
   font-family: "TWK Lausanne";
@@ -181,6 +192,10 @@ html, body {
   font-weight: var(--font-weight-light);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Never let the browser fake a weight or a slant we haven't shipped — a
+     missing face should look wrong, not quietly bold. */
+  font-synthesis: none;
 }
 
 /* ── Utility: hide scrollbars (native-feel) ─────────────────── */
@@ -320,4 +335,274 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   .live-dot-ring { animation: none; }
+}
+
+/* ── Story Mode: the photographic stage ───────────────────────────────────────
+   All-Hands plays in front of photographs (components/demo/stage). Two focus
+   modes — the room owns the stage, or the phone does — and the moves between
+   them. Transitions for anything that can be interrupted, so a press mid-move
+   retargets instead of jumping; keyframes only for one-shot entrances. The
+   runner's waits mirror these durations (lib/demo/storyRunner.ts). */
+:root {
+  --stage-ease-house: cubic-bezier(0.32, 0.72, 0, 1);    /* the surface + island ease */
+  --stage-ease-settle: cubic-bezier(0.16, 1, 0.3, 1);    /* expo out: arriving, settling */
+  --stage-ease-exit: cubic-bezier(0.55, 0, 1, 0.45);     /* accelerating away */
+  --stage-ease-dissolve: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* A backwards snap lands on the end state with nothing in motion. */
+.stage[data-instant="true"],
+.stage[data-instant="true"] *,
+.stage-phone[data-instant="true"],
+.stage-phone[data-instant="true"] > .stage-rim {
+  transition: none !important;
+}
+
+/* Focus. Into phone focus the photo blurs and scales up a touch — the way a
+   lens magnifies slightly as focus pulls to the foreground, which also hides
+   the dark fringe a blur drags in at the frame edge. Back out, it settles
+   150ms after the phone has started to leave. */
+.stage-focus {
+  transform: scale(1);
+  filter: blur(0px);
+  transition: transform 900ms var(--stage-ease-settle) 150ms, filter 900ms var(--stage-ease-settle) 150ms;
+  will-change: transform, filter;
+}
+.stage[data-focus="phone"] .stage-focus {
+  transform: scale(1.04);
+  filter: blur(14px);
+  transition: transform 700ms var(--stage-ease-dissolve), filter 700ms var(--stage-ease-dissolve);
+}
+.stage[data-focus="phone"][data-glance="true"] .stage-focus {
+  filter: blur(4px);
+  transition: transform 700ms var(--stage-ease-dissolve), filter 500ms var(--stage-ease-settle);
+}
+
+/* The scrim's alpha is solved per photo (--scrim-alpha, from the manifest) so
+   the phone sits on the same darkness in every room. */
+.stage-scrim {
+  opacity: 0;
+  transition: opacity 900ms var(--stage-ease-settle) 150ms, background-color 1400ms ease;
+}
+.stage[data-focus="phone"] .stage-scrim {
+  opacity: var(--scrim-alpha);
+  transition: opacity 800ms var(--stage-ease-dissolve), background-color 1400ms ease;
+}
+.stage[data-focus="phone"][data-glance="true"] .stage-scrim {
+  opacity: calc(var(--scrim-alpha) * 0.35);
+  transition: opacity 500ms var(--stage-ease-settle), background-color 1400ms ease;
+}
+
+/* Night: down into black quickly, back up slowly. */
+.stage-dip {
+  opacity: 0;
+  transition: opacity 1400ms var(--stage-ease-settle);
+}
+.stage[data-dip="true"] .stage-dip {
+  opacity: 1;
+  transition: opacity 700ms cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+.stage-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+/* Film grain, stepped at 8fps. It ties five generated photographs together
+   and hides the banding a heavy blur finds in the dark. */
+.stage-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  animation: stage-grain 0.5s steps(1) infinite;
+}
+@keyframes stage-grain {
+  0%   { background-position: 0 0; }
+  25%  { background-position: -37px 21px; }
+  50%  { background-position: 18px -44px; }
+  75%  { background-position: -12px 9px; }
+}
+
+/* Ambient drift: a slow push-in only. Never a pan — on the train, the window
+   frame and the cup are fixed to the viewer, and a pan reads as the camera
+   moving rather than the train. */
+@keyframes stage-drift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.03); }
+}
+.stage-drift { animation: stage-drift 22s ease-in-out infinite alternate; }
+
+/* ── Photo entrances ── */
+@keyframes stage-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes stage-settle {
+  from { transform: scale(1.06); }
+  to   { transform: scale(1); }
+}
+/* The fade front-loads (expo out): a new place starts arriving behind the
+   phone, and it has to be mostly in by the time the phone's exit reveals the
+   room — an ease-in-out left the previous room showing for half a second. The
+   slow scale settle keeps the dissolve unhurried. */
+.stage-in-dissolve {
+  animation:
+    stage-fade-in 1400ms var(--stage-ease-settle) both,
+    stage-settle 2400ms var(--stage-ease-settle) both;
+}
+
+/* Part: the open room widens out from the curtain seam (--seam, measured). */
+@keyframes stage-part {
+  from { clip-path: inset(0 calc(100% - var(--seam, 50%)) 0 var(--seam, 50%)); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+.stage-in-part { animation: stage-part 1800ms var(--stage-ease-dissolve) both; }
+@keyframes stage-seam {
+  0%   { opacity: 0;   transform: translateX(-50%) scaleX(0.4); }
+  22%  { opacity: 0.9; transform: translateX(-50%) scaleX(1); }
+  100% { opacity: 0;   transform: translateX(-50%) scaleX(18); }
+}
+.stage-seam-light {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3%;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 170, 0.9), transparent);
+  mix-blend-mode: screen;
+  animation: stage-seam 1800ms var(--stage-ease-dissolve) both;
+}
+
+/* Travel: the room drifts away as the next place arrives from the side. */
+@keyframes stage-travel-in {
+  from { opacity: 0; transform: translateX(3%); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes stage-travel-out {
+  from { transform: none; filter: blur(0); }
+  to   { transform: translateX(-3%); filter: blur(6px); }
+}
+.stage-in-travel { animation: stage-travel-in 1600ms var(--stage-ease-settle) both; }
+.stage-out-travel { animation: stage-travel-out 1600ms var(--stage-ease-settle) both; }
+
+/* ── The Friday room's lights ── */
+.stage-lights {
+  opacity: 1;
+  /* off: a beat after the switch, the dark comes in */
+  transition: opacity 600ms cubic-bezier(0.5, 0, 0.75, 0) 200ms;
+}
+.stage-lights[data-on="true"] {
+  opacity: 0;
+  transition: opacity 900ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+@keyframes stage-lamp {
+  0%   { opacity: 0; }
+  38%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.stage-lamp-catch {
+  position: absolute;
+  width: 30%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, rgba(255, 190, 130, 0.55), transparent);
+  mix-blend-mode: screen;
+  animation: stage-lamp 1200ms ease-out both;
+}
+
+/* ── One-shot accents ── */
+@keyframes stage-cool {
+  0%   { opacity: 0; background-position: 100% 0; }
+  30%  { opacity: 1; }
+  100% { opacity: 0; background-position: 0% 0; }
+}
+.stage-cool {
+  background: linear-gradient(100deg, transparent 30%, rgba(150, 205, 255, 0.16) 50%, transparent 70%);
+  background-size: 300% 100%;
+  mix-blend-mode: screen;
+  animation: stage-cool 2400ms ease-out both;
+}
+
+/* ── The time-and-place stamp ──
+   On frosted glass: dark, translucent and blurred, so it reads on any of the
+   photos without laying a shade over the room. It leaves before the phone
+   arrives and comes back only once the room has settled — the card first,
+   then the time, then the place 90ms behind it. */
+.stage-stamp-card {
+  padding: clamp(14px, 1.1vw, 22px) clamp(18px, 1.45vw, 28px);
+  border-radius: clamp(18px, 1.45vw, 28px);
+  background:
+    radial-gradient(130% 150% at 100% 0%, rgba(255, 255, 255, 0.07), transparent 55%),
+    rgba(22, 22, 24, 0.52);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 16px 48px rgba(0, 0, 0, 0.22);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 300ms ease, transform 0s linear 300ms;
+}
+.stage[data-stamp="true"] .stage-stamp-card {
+  opacity: 1;
+  transform: none;
+  transition: opacity 700ms var(--stage-ease-settle) 600ms, transform 800ms var(--stage-ease-settle) 600ms;
+}
+.stage-stamp-line {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 200ms ease, transform 0s linear 300ms;
+}
+.stage[data-stamp="true"] .stage-stamp-line {
+  opacity: 1;
+  transform: none;
+  transition: opacity 600ms var(--stage-ease-settle) 760ms, transform 700ms var(--stage-ease-settle) 760ms;
+}
+.stage[data-stamp="true"] .stage-stamp-line + .stage-stamp-line {
+  transition-delay: 850ms;
+}
+
+/* ── The phone ──
+   Rising, the room steps back first, so the phone waits 120ms; it lands on the
+   house ease. Leaving is quicker than arriving, and accelerates away. */
+.stage-phone {
+  transform: none;
+  opacity: 1;
+  transition: transform 900ms var(--stage-ease-house) 120ms, opacity 300ms ease 120ms;
+}
+.stage-phone[data-offstage="true"] {
+  transform: translateY(calc(100% + 14vh));
+  opacity: 0;
+  transition: transform 650ms var(--stage-ease-exit), opacity 250ms ease 400ms;
+}
+/* The phone's parent clips it. Translated below the frame, the phone would
+   otherwise extend the page's scrollable area — and the chat's own
+   scrollIntoView then scrolls the whole page to chase it, dragging the phone
+   back up the screen and bending its next rise. `clip`, not `hidden`: a
+   hidden box can still be scrolled programmatically. */
+main:has(> .stage-phone) { overflow: clip; }
+
+/* The rim light: the room's own hue, arriving after the phone has landed. */
+.stage-rim {
+  opacity: 0.42;
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, transparent);
+  mask-image: radial-gradient(closest-side, #000 20%, transparent);
+  transition: opacity 600ms ease 400ms, background-color 1400ms ease;
+}
+.stage-phone[data-offstage="true"] .stage-rim {
+  opacity: 0;
+  transition: opacity 200ms ease, background-color 1400ms ease;
+}
+
+.stage-end-in { animation: stage-fade-in 1100ms var(--stage-ease-settle) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-drift,
+  .stage-grain,
+  .stage-out-travel { animation: none; }
+  .stage-in-dissolve,
+  .stage-in-part,
+  .stage-in-travel { animation: stage-fade-in 1000ms var(--stage-ease-settle) both; }
+  .stage-seam-light,
+  .stage-cool,
+  .stage-lamp-catch { display: none; }
+  .stage[data-focus="phone"] .stage-focus { transform: none; }
+  .stage-phone[data-offstage="true"] { transform: none; }
 }

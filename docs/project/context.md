@@ -80,8 +80,12 @@ components/
   chat/ChatSheet.tsx     bottom sheet wrapper (spring, rounded-t-[38px])
   chat/ThreadView.tsx    the LIVE chat (AI-backed)
   chat/StoryThreadView.tsx  the SCRIPTED chat — start screen, composer, pinned request
+  chat/useKnotPlacement.ts  moves the Lumi knot between the chat's anchors (v7's choreography)
   chat/widgets/          reservationCard · quickReply · mapWidget · propertyCarousel · …
+  lumi-knot/LumiKnot.tsx the live holographic knot — lazy three.js, disposed on unmount
+  lumi-knot/vendor/      numa-lumi-branding's knot, written by `npm run sync:knot` (never hand-edit)
   screens/               one file per ScreenId
+  screens/ListItem.tsx   the DS list row + divider, shared by Trip Detail and Your room
   dev/Annotations.tsx    Agentation toolbar (dev only)
 
 lib/
@@ -125,10 +129,14 @@ File key: `XAzcIpXCZYGvMwsNYWNUZg` (Lumi Vision). The All-Hands frames live on t
 | Inbox | 7224-10569 · list item 7224-10605 |
 | Live status dot | 7224-10821 |
 | iOS home / expanded island / lock | 7227-12254 / 7227-12592 / 7227-12539 |
-| Explore · My Trips · Trip Detail · Your room | 7256-11630 / 11842 / 13081 / 4436 |
-| Map · checkout · London carousel | 7228-13058 / 7229-13293 / 7263-28250 |
+| Explore · My Trips · Trip Detail · Your room | 7256-11630 / 11842 / **13081** / **4436** |
+| Trip card (Explore / My Trips) | 7256-11647 |
+| Map · checkout · London carousel | 7228-13058 / **7229-13293** / 7263-28250 |
 
-`/lumi-screen <name>` or the Figma MCP fetches any node.
+`/lumi-screen <name>` or the Figma MCP fetches any node. **Bold = ported
+literally**; those screens' numbers come from the frame, so measure against it
+before changing a value (`decisions.md` has the details, and the caveat that
+our screen is 368px wide against 393px artboards).
 
 ## Read on demand
 

@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="arrow_forward_ios">
+<mask id="mask0_0_9" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect id="Bounding box" width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_9)">
+<path id="arrow_forward_ios_2" d="M13.5413 1.66536L15.0205 3.14453L8.16634 9.9987L15.0205 16.8529L13.5413 18.332L5.20801 9.9987L13.5413 1.66536Z" fill="#EA2720"/>
+</g>
+</g>
+</svg>

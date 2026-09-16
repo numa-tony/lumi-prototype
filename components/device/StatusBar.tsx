@@ -4,7 +4,9 @@ import { useApp } from "@/lib/store";
 
 export function StatusBar() {
   const screen = useApp((s) => s.screen);
-  const onHero = screen === "explore" || screen === "tripDetail";
+  // Explore's hero is a dark photo; Trip Detail's is brand pink, so it keeps
+  // the dark glyphs (Figma 7256-13081).
+  const onHero = screen === "explore";
 
   return (
     <div

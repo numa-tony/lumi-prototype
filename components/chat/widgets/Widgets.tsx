@@ -95,7 +95,7 @@ export function StatusWidget({ data }: { data: StatusWidgetData }) {
           {meta.label}
         </span>
       </div>
-      {data.eta && <p className="mt-1 text-[13px] font-medium text-ink">{data.eta}</p>}
+      {data.eta && <p className="mt-1 text-[13px] font-semibold text-ink">{data.eta}</p>}
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
         <div className={`h-full rounded-full transition-all ${data.state === "resolved" ? "bg-go" : "bg-numa"}`} style={{ width: `${pct}%` }} />
       </div>
@@ -132,7 +132,7 @@ export function ListWidget({ data }: { data: ListWidgetData }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-semibold text-ink">{it.title}</p>
               {it.subtitle && <p className="truncate text-[12px] text-ink-soft">{it.subtitle}</p>}
-              {it.meta && <p className="text-[12px] font-medium text-ink-faint">{it.meta}</p>}
+              {it.meta && <p className="text-[12px] font-semibold text-ink-faint">{it.meta}</p>}
             </div>
             {it.action && (
               <span className="shrink-0 rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-semibold text-surface">{it.action}</span>
@@ -144,21 +144,38 @@ export function ListWidget({ data }: { data: ListWidgetData }) {
   );
 }
 
-export function QuickReply({ data, onRespond }: { data: QuickReplyData; onRespond?: (t: string) => void }) {
+export function QuickReply({
+  data,
+  onRespond,
+  pressed,
+}: {
+  data: QuickReplyData;
+  onRespond?: (t: string) => void;
+  // Story Mode holds one option down so the audience sees the tap that
+  // produced the reply. Live chat leaves this undefined and uses :active.
+  pressed?: string | null;
+}) {
   const options = [...data.options, "Something else"];
   return (
     <div className="space-y-2.5">
       {data.prompt && <p className="text-[16px] font-light text-ink">{data.prompt}</p>}
       <div className="flex flex-col gap-3">
-        {options.map((o) => (
-          <button
-            key={o}
-            onClick={() => onRespond?.(o)}
-            className="rounded-[10px] border border-[#e3e1df] bg-surface px-4 py-4 text-left text-[16px] font-semibold tracking-[-0.2px] text-ink active:scale-[0.99]"
-          >
-            {o}
-          </button>
-        ))}
+        {options.map((o) => {
+          const isPressed = pressed === o;
+          return (
+            <button
+              key={o}
+              onClick={() => onRespond?.(o)}
+              className={`rounded-[10px] border px-4 py-4 text-left text-[16px] font-semibold tracking-[-0.2px] text-ink transition-[transform,background-color,border-color] duration-150 active:scale-[0.99] ${
+                isPressed
+                  ? "scale-[0.97] border-[#c9c6c2] bg-[#ececea]"
+                  : "border-[#e3e1df] bg-surface"
+              }`}
+            >
+              {o}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -174,10 +191,19 @@ function Star({ className = "" }: { className?: string }) {
 
 // The difference between telling and doing: a real map, the walk drawn on it,
 // and the places ready to tap — not a paragraph of directions.
+// The walk across the map, in percentages of the widget box (Figma 7228-13058):
+// it leaves the rating pill's right edge and lands on the Numa pin.
+const WALK = {
+  from: { x: 31, y: 27 },  // right edge / vertical centre of the rating pill
+  to: { x: 85, y: 31 },    // centre of the "N" pin
+};
+
 export function MapWidget({ data }: { data: MapWidgetData }) {
   return (
     <div className="relative overflow-hidden rounded-[16px] bg-[#e9eee6]">
-      <img src="/allhands/map-berlin.png" alt="" className="h-[300px] w-full object-cover" />
+      {/* 3x export (1083x1278) of the same frame the walk coordinates were
+          measured on, so the pins still land on the same streets. */}
+      <img src="/allhands/map-berlin.jpg" alt="" decoding="async" className="h-[300px] w-full object-cover" />
 
       {/* expand affordance */}
       <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm">
@@ -186,21 +212,49 @@ export function MapWidget({ data }: { data: MapWidgetData }) {
         </svg>
       </span>
 
-      {/* the property, and the walk to the first spot */}
-      <span className="absolute right-[16%] top-[30%] flex h-11 w-11 items-center justify-center rounded-full bg-[#191919] text-[17px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
-        N
-      </span>
-      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 361 300" fill="none" aria-hidden>
+      {/* The walk, drawn first so the two markers paint over its ends.
+
+          Markers and path share ONE coordinate system — percentages of the
+          widget box — which is the whole point: the path used to be drawn in a
+          fixed 361x300 viewBox while the markers were placed in percentages, so
+          the dots only met the pins at one particular width and floated free
+          everywhere else. preserveAspectRatio="none" maps the viewBox straight
+          onto the box, and vector-effect="non-scaling-stroke" keeps the dots
+          round and evenly spaced under that non-uniform scale. */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        fill="none"
+        aria-hidden
+      >
         <path
-          d="M108 128 C 160 152, 210 140, 258 100"
+          // Runs all the way to the pin's centre; the pin is opaque and paints
+          // over the tail, so no width can open a gap between them.
+          d={`M ${WALK.from.x} ${WALK.from.y} C 45 ${WALK.from.y - 2}, 66 ${WALK.to.y - 3}, ${WALK.to.x} ${WALK.to.y}`}
           stroke="#191919"
           strokeWidth="2.5"
           strokeLinecap="round"
-          strokeDasharray="1 7"
+          strokeDasharray="0.5 6"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
+
+      {/* The property — the walk's far end, centred on WALK.to */}
+      <span
+        className="absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#191919] text-[17px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+        style={{ left: `${WALK.to.x}%`, top: `${WALK.to.y}%` }}
+      >
+        N
+      </span>
+
+      {/* The spot — anchored by its RIGHT edge so the dots leave from it
+          whatever the rating string is */}
       {data.pois[0]?.rating && (
-        <span className="absolute left-[18%] top-[36%] flex -translate-y-full items-center gap-1 rounded-lg bg-[#191919] px-2.5 py-1.5 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+        <span
+          className="absolute flex -translate-y-1/2 items-center gap-1 rounded-lg bg-[#191919] px-2.5 py-1.5 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+          style={{ right: `${100 - WALK.from.x}%`, top: `${WALK.from.y}%` }}
+        >
           <Star className="text-white" />
           {data.pois[0].rating}
         </span>

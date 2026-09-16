@@ -20,10 +20,13 @@ export function Widget({
   type,
   data,
   onRespond,
+  pressedReply,
 }: {
   type: WidgetType;
   data: unknown;
   onRespond?: (text: string) => void;
+  // Story Mode only — the quick-reply option currently held down.
+  pressedReply?: string | null;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = data as any;
@@ -35,7 +38,7 @@ export function Widget({
     case "listWidget":
       return <ListWidget data={d} />;
     case "quickReply":
-      return <QuickReply data={d} onRespond={onRespond} />;
+      return <QuickReply data={d} onRespond={onRespond} pressed={pressedReply} />;
     case "mapWidget":
       return <MapWidget data={d} />;
     case "locationPin":

@@ -12,6 +12,28 @@ import type { SmartRoomDevices } from "@/lib/smartRoom";
 // are full-frame surfaces that sit above it (WhatsApp, iOS home, iOS lock).
 export type PhoneSurface = "app" | "whatsapp" | "home" | "lock";
 
+// ── Photographic stage ────────────────────────────────────────────────────────
+// Stories with `stage: "photos"` play in front of photographs instead of the
+// illustrated room. The photo and who owns the stage — the room or the phone —
+// are separate axes: the room can change behind the phone, and focus can change
+// without the room changing. See docs/project/story-mode.md.
+
+export type StagePhotoId = "ac" | "blinds-closed" | "blinds-open" | "sunday" | "train";
+// How one photo gives way to the next.
+//   cut       instant
+//   dissolve  crossfade with a slow scale settle — time passing in one place
+//   night     dip to black, swap in the dark, rise — a night going by
+//   part      the new photo opens outward from the curtain seam
+//   travel    the old place drifts away as the new one arrives from the side
+export type StageVia = "cut" | "dissolve" | "night" | "part" | "travel";
+// scene: the photo owns the stage and the phone is below the frame.
+// phone: the phone owns it; the photo sinks behind a tinted scrim and a blur.
+export type StageFocus = "scene" | "phone";
+// The time-and-place line shown while a scene is being introduced.
+export interface StageStamp { when: string; where?: string }
+// One-shot accents across the photo, for moments the room reacts to.
+export type StagePulse = "cool";
+
 // ── Step types ────────────────────────────────────────────────────────────────
 // Each Step is one atomic action in a beat's sequence.
 // Convention: the FIRST step of each beat is Sarah's action (what the player
@@ -51,6 +73,11 @@ export type Step =
   | { kind: "fadeToBlack"; ms?: number }               // backdrop overlay fade (default 600)
   | { kind: "setInStay"; value: boolean }
   | { kind: "stayVisible"; value: boolean }            // show/hide the story's stay on Explore + My Trips
+  // Photographic stage (stories with `stage: "photos"`)
+  | { kind: "backdrop"; photo: StagePhotoId; via?: StageVia }  // change the photo (default: dissolve)
+  | { kind: "focus"; mode: StageFocus; stamp?: StageStamp }     // hand the stage to the room or the phone
+  | { kind: "glance"; ms?: number }                             // lift the scrim while the room changes
+  | { kind: "pulse"; name: StagePulse }                         // a one-shot accent on the photo
   | { kind: "clearThreads" }
   | { kind: "loadThread"; id: string }
   | { kind: "go"; screen: ScreenId }
@@ -102,11 +129,13 @@ export interface Story {
   // The phone surface the story opens on, applied the moment it starts so the
   // first frame is already the right one.
   initialSurface: PhoneSurface;
-  // Whether the world scenes behind the phone (the room, the front door) are
-  // mounted for this story. All-Hands runs on a black stage for now; its beats
-  // still drive `smartRoom` through `scene` steps, so switching this on is all
-  // it takes to light the room back up behind the phone.
+  // Whether the illustrated world scenes behind the phone (the room, the front
+  // door) are mounted for this story. Sarah's Day only — All-Hands plays in
+  // front of photographs instead (`stage`, below).
   scenes: boolean;
+  // "photos": play in front of the photographic stage (components/demo/stage),
+  // driven by backdrop / focus / glance / pulse steps.
+  stage?: "photos";
   segments: Segment[];
   beats: PressBeat[];
 }

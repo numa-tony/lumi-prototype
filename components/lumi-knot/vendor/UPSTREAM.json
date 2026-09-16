@@ -1,0 +1,14 @@
+{
+  "upstream": "../numa-lumi-branding",
+  "commit": "0c2ea6e9950fc84e66541fffc50ddc58308d25c0",
+  "dirty": false,
+  "syncedAt": "2026-09-14T09:04:17.441Z",
+  "files": {
+    "lumi-knot.js": "ecdefd5559547311",
+    "lumi-knot-states.js": "55e17dffa7342818",
+    "lumi-knot-morph.js": "f9f68c70329d03af"
+  },
+  "assets": {
+    "public/lumi-knot/matcap-holo.png": "30ee957e092bd268"
+  }
+}

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useApp } from "@/lib/store";
+import { getStory } from "@/lib/demo/stories";
 import { SettingsPanel } from "./panels/SettingsPanel";
 
 type ModalView = "settings" | null;
@@ -44,6 +45,11 @@ const NAV: {
 export function SidePanel() {
   const [modal, setModal] = useState<ModalView>(null);
   const demoActive = useApp((s) => s.demo.active);
+  const storyId = useApp((s) => s.demo.storyId);
+  // A photo-stage story centres the phone on the whole screen so the photo can
+  // be composed around it. Fading alone isn't enough: the panel would keep its
+  // 210px in the flow and push the phone 105px right of centre.
+  const outOfFlow = demoActive && getStory(storyId).stage === "photos";
   const startStory = useApp((s) => s.startStory);
 
   const handleNav = (action: NavAction) => {
@@ -55,11 +61,11 @@ export function SidePanel() {
     <>
       {/* Permanent sidebar — hidden in story mode */}
       <aside
-        className="relative z-20 flex w-[210px] shrink-0 flex-col px-6 py-8 transition-opacity duration-300"
+        className={`${outOfFlow ? "absolute inset-y-0 left-0" : "relative"} z-20 flex w-[210px] shrink-0 flex-col px-6 py-8 transition-opacity duration-300`}
         style={{ opacity: demoActive ? 0 : 1, pointerEvents: demoActive ? "none" : "auto" }}
       >
         <div className="mb-5">
-          <h1 className="text-[28px] font-bold leading-none tracking-tight text-white">
+          <h1 className="text-[28px] font-semibold leading-none tracking-tight text-white">
             Numa
           </h1>
           <p className="mt-1.5 text-[12px] text-[#666]">Lumi UX Vision</p>

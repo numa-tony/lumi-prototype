@@ -148,7 +148,7 @@ export function WhatsAppSurface() {
         />
         <div className="relative space-y-2">
           <div className="flex justify-center pb-1">
-            <span className="rounded-md bg-[#e2e0d8] px-2.5 py-1 text-[12px] font-medium text-[#5b6870] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]">
+            <span className="rounded-md bg-[#e2e0d8] px-2.5 py-1 text-[12px] font-light text-[#5b6870] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]">
               Today
             </span>
           </div>

@@ -75,7 +75,7 @@ export function BottomNav() {
                   <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-numa ring-2 ring-surface" />
                 )}
               </span>
-              <span className="text-[10px] font-medium tracking-tight">{t.label}</span>
+              <span className="text-[10px] font-semibold tracking-tight">{t.label}</span>
             </button>
           );
         })}
