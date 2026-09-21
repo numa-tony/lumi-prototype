@@ -76,7 +76,7 @@ const STARTERS_CHECKOUT = [
 ];
 const STARTERS_TRAIN = [
   "Plan my next trip",
-  "Which Numa should I stay at in London?",
+  "Send me an invoice of my last trip",
   "Show my past stays",
 ];
 
