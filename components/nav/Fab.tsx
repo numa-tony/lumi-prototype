@@ -3,7 +3,10 @@
 import { useApp, CHAT_CONTEXTS } from "@/lib/store";
 
 const IMG_LUMI_ORB = "/lumi-torus.png";
-const IMG_LUMI_CONE = "/lumi-cone.png";
+// The holographic door key from the FAB in Figma (7124-16743), drawn 32px. The
+// file is 128px (4x) WebP from the 1024px source — sharp on any retina screen,
+// ~6 KB on the wire.
+const IMG_DOOR_KEY = "/icons/door-key.webp";
 
 export function Fab() {
   const screen = useApp((s) => s.screen);
@@ -46,7 +49,14 @@ export function Fab() {
               <span className="h-[56px] w-px shrink-0 bg-[#eee]" />
               <button className="flex h-[56px] shrink-0 items-center gap-1 px-6 text-[16px] font-semibold tracking-[-0.2px] text-[#191919]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG_LUMI_CONE} alt="" className="h-9 w-9 shrink-0 object-contain" />
+                <img
+                  src={IMG_DOOR_KEY}
+                  alt=""
+                  width={32}
+                  height={32}
+                  decoding="async"
+                  className="h-8 w-8 shrink-0 object-contain"
+                />
                 Open door
               </button>
             </>

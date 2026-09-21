@@ -175,6 +175,11 @@
 
 ## Done
 
+- **FAB "Open door" icon is the holographic key.** It comes from the FAB in
+  Figma (7124-16743). `public/icons/door-key.webp` is 128px (4×), exported from
+  the 1024px source (6 KB, versus 631 KB for the source), and drawn at Figma's
+  32px. The old 64px `lumi-cone.png` is gone.
+
 - **The Lumi knot in the story chat.** Both stories get it, and it replaces the
   torus PNG and the typing dots:
   - Vendored from `numa-lumi-branding`: `scripts/sync-lumi-knot.mjs` and
